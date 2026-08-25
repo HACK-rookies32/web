@@ -32,7 +32,7 @@
   /* 회원이 입력한 줄바꿈을 그대로 살린다. */
   white-space: pre-wrap;
   font-size: var(--fs-body);
-  line-height: 22px;
+  line-height: var(--lh-body-long);
   color: var(--text);
 }
 

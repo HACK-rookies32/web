@@ -30,7 +30,7 @@
 
 .activity__icon--info {
   background: var(--info);
-  color: #ffffff;
+  color: var(--text-on-solid);
 }
 
 .activity__icon--danger {

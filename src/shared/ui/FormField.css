@@ -73,8 +73,9 @@
   appearance: none;
   padding-right: 40px;
   cursor: pointer;
-  /* 화살표는 토큰 색을 그대로 쓰기 위해 currentColor 로 그린 인라인 SVG 사용 */
-  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23564336' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  /* 화살표는 --select-arrow 토큰(테마별 SVG)을 쓴다.
+     data URI 안에서는 currentColor 가 해석되지 않아 라이트/다크를 토큰으로 나눠 둔다. */
+  background-image: var(--select-arrow);
   background-repeat: no-repeat;
   background-position: right 16px center;
 }

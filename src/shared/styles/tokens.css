@@ -30,10 +30,26 @@
   --text-muted: rgba(86, 67, 54, 0.7); /* 보조 설명 */
   --text-placeholder: #9ca3af;    /* 입력 placeholder */
   --text-on-accent: #ffffff;      /* accent 위 글자 */
+  --text-on-solid: #ffffff;       /* danger·info 등 채도 높은 단색 채움 위 글자 */
 
   /* ---- 선 -------------------------------------------------------------- */
   --border: #ddc1b0;
   --border-subtle: rgba(221, 193, 176, 0.3);
+
+  /* ---- 오버레이 스크림 --------------------------------------------------- */
+  /* 검정이 아니라 --text-strong(#241913) 을 풀어 쓴 웜 브라운이다. */
+  --scrim: rgba(36, 25, 19, 0.45);        /* 모달 */
+  --scrim-soft: rgba(36, 25, 19, 0.35);   /* 슬라이드오버 */
+
+  /* ---- accent 를 옅게 깐 장식 배경 (로그인 배경 블롭) --------------------- */
+  --accent-wash: rgba(245, 130, 32, 0.1);
+  --accent-wash-strong: rgba(150, 73, 0, 0.05);
+
+  /* ---- Select 화살표 ----------------------------------------------------
+     data URI 안에서는 CSS 변수도 currentColor 도 해석되지 않는다. 그래서
+     라이트/다크 각각의 --text 값을 SVG 안에 직접 박아 두고 테마별로 교체한다.
+     ⚠️ --text 를 바꾸면 이 두 곳(:root / 다크 블록 2개)도 같이 고칠 것. */
+  --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23564336' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   /* ---- 상태색 (fg / bg 쌍) — Figma 테이블 Pill 131:3607~3657 실측 -------- */
   --success: #137333;             /* 활성 */
@@ -89,6 +105,16 @@
   --fs-caption: 12px;  --lh-caption: 16px;   /* 캡션 */
   --fs-badge: 11px;    --lh-badge: 16.5px;   /* 역할 배지 */
 
+  /* 페이지 제목 — 상단바 제목(20px)과 구분하기 위해 본문 최상단만 크게 쓴다. */
+  --fs-page-title: 28px; --lh-page-title: 38px;
+  /* 대형 수치 — KPI 값 · 지갑 잔액처럼 숫자를 크게 보여주는 자리 */
+  --fs-metric: 30px;     --lh-metric: 38px;
+  /* 긴 본문 — 공지·문의 본문처럼 여러 줄이 이어지는 글 (--fs-body 와 함께 쓴다) */
+  --lh-body-long: 22px;
+
+  --tracking-title: -0.24px;   /* 제목 */
+  --tracking-metric: -0.4px;   /* 대형 수치 */
+
   /* ---- 기타 ------------------------------------------------------------- */
   --focus-ring: 0 0 0 3px rgba(245, 130, 32, 0.35);
   --transition: 140ms ease;
@@ -116,9 +142,13 @@
   --text-muted: rgba(228, 211, 199, 0.7);
   --text-placeholder: #8b7566;
   --text-on-accent: #241913;
+  --text-on-solid: #241913;
 
   --border: #4a3226;
   --border-subtle: rgba(74, 50, 38, 0.6);
+
+  /* 화살표도 다크용 --text(#e4d3c7) 로 다시 그린다. */
+  --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23e4d3c7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
   --success: #4ade80;  --success-bg: #14311f;
   --warning: #fbbf24;  --warning-bg: #3a2a0c;
@@ -153,9 +183,13 @@
     --text-muted: rgba(228, 211, 199, 0.7);
     --text-placeholder: #8b7566;
     --text-on-accent: #241913;
+    --text-on-solid: #241913;
 
     --border: #4a3226;
     --border-subtle: rgba(74, 50, 38, 0.6);
+
+    /* 화살표도 다크용 --text(#e4d3c7) 로 다시 그린다. */
+    --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23e4d3c7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
 
     --success: #4ade80;  --success-bg: #14311f;
     --warning: #fbbf24;  --warning-bg: #3a2a0c;

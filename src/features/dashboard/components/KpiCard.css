@@ -67,11 +67,11 @@
 }
 
 .kpi__value {
-  font-size: 30px;
-  line-height: 38px;
+  font-size: var(--fs-metric);
+  line-height: var(--lh-metric);
   font-weight: 700;
   color: var(--text-strong);
-  letter-spacing: -0.4px;
+  letter-spacing: var(--tracking-metric);
 }
 
 .kpi__delta {

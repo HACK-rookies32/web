@@ -34,9 +34,9 @@
 }
 
 .page-header__title {
-  font-size: 28px;
-  line-height: 38px;
-  letter-spacing: -0.24px;
+  font-size: var(--fs-page-title);
+  line-height: var(--lh-page-title);
+  letter-spacing: var(--tracking-title);
   color: var(--text-strong);
 }
 
