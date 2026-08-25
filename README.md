@@ -89,7 +89,11 @@ src/
 | `--border` | `#ddc1b0` | 테두리 |
 
 서체는 Noto Sans KR (Google Fonts), 폴백 `system-ui`.
-라이트/다크 모두 지원하며, `<html data-theme="dark">` 로 강제하거나 OS 설정을 따릅니다.
+
+라이트/다크 모두 지원합니다. **상단바 프로필 메뉴 → "화면 테마"** 에서 라이트 / 다크 / 시스템 설정을 고를 수 있고,
+선택값은 `localStorage`의 `careguard.theme` 에 저장됩니다. 아무것도 고르지 않으면 OS 설정(`prefers-color-scheme`)을 따릅니다.
+
+색감·간격·컴포넌트 스펙을 정리한 스타일 레퍼런스는 [`docs/FIGMA-STYLE.md`](docs/FIGMA-STYLE.md) 에 있습니다.
 
 공통 컴포넌트가 실제로 어떻게 보이는지는 개발 서버에서 **`/ui-kit`** 경로로 확인할 수 있습니다.
 

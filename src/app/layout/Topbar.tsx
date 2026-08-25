@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Icon, SearchInput } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { ROLE_LABEL } from '@/shared/lib/constants';
+import { ThemeSwitch } from './ThemeSwitch';
 import './Topbar.css';
 
 interface TopbarProps {
@@ -75,6 +76,10 @@ export function Topbar({ title, onToggleSidebar, unreadCount = 0 }: TopbarProps)
 
           {menuOpen ? (
             <div className="topbar__menu" role="menu">
+              <ThemeSwitch />
+
+              <div className="topbar__menu-sep" role="separator" />
+
               <button
                 type="button"
                 role="menuitem"
