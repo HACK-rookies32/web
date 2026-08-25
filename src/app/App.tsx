@@ -20,6 +20,9 @@ const MembersPage = lazy(() =>
 const MemberDetailPage = lazy(() =>
   import('@/features/members/pages/MemberDetailPage').then((m) => ({ default: m.MemberDetailPage })),
 );
+const PaymentsPage = lazy(() =>
+  import('@/features/payments/pages/PaymentsPage').then((m) => ({ default: m.PaymentsPage })),
+);
 const UiKitPage = lazy(() => import('./UiKitPage').then((m) => ({ default: m.UiKitPage })));
 
 /**
@@ -60,19 +63,7 @@ export function App() {
                   <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN']} />}>
                     <Route path="members" element={<MembersPage />} />
                     <Route path="members/:memberId" element={<MemberDetailPage />} />
-                    <Route
-                      path="payments"
-                      element={
-                        <PlaceholderPage
-                          title="결제·구독 관리"
-                          endpoints={[
-                            'GET /admin/members/{id}/subscription (가격 파라미터 추가 요청됨)',
-                            '환불 처리 API — 백엔드 요청 완료',
-                            '마스킹 해제는 SUPER_ADMIN 전용 · 감사 로그 대상',
-                          ]}
-                        />
-                      }
-                    />
+                    <Route path="payments" element={<PaymentsPage />} />
                   </Route>
 
                   {/* 공지 관리 — SUPER_ADMIN */}

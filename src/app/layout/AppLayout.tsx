@@ -2,6 +2,7 @@ import { Suspense, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { LoadingBlock } from '@/shared/ui';
 import { NAV_ITEMS } from '@/shared/lib/constants';
+import { RouteErrorBoundary } from '../RouteErrorBoundary';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import './AppLayout.css';
@@ -35,9 +36,11 @@ export function AppLayout() {
 
       <main className="app-layout__main">
         <div className="app-layout__content">
-          <Suspense fallback={<LoadingBlock label="화면을 불러오는 중" />}>
-            <Outlet />
-          </Suspense>
+          <RouteErrorBoundary resetKey={pathname}>
+            <Suspense fallback={<LoadingBlock label="화면을 불러오는 중" />}>
+              <Outlet />
+            </Suspense>
+          </RouteErrorBoundary>
         </div>
       </main>
     </div>
