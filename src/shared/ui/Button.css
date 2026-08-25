@@ -17,6 +17,12 @@
   display: inline-block;
 }
 
+/* buttonClass() 로 <a>·<Link> 에 버튼 모양을 입혔을 때
+   전역 a:hover 의 밑줄이 따라붙지 않게 한다. */
+a.btn:hover {
+  text-decoration: none;
+}
+
 .btn--block {
   width: 100%;
 }

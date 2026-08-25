@@ -7,6 +7,7 @@ import {
   Column,
   EmptyState,
   Icon,
+  ListToolbar,
   Modal,
   Pagination,
   RowActions,
@@ -224,44 +225,43 @@ export function NoticesPage() {
 
   return (
     <div className="notices">
-      <div className="notices__toolbar">
-        <SearchInput
-          className="notices__search"
-          value={keyword}
-          onSearch={handleSearch}
-          placeholder="제목 · 본문 · 작성자 검색"
-          aria-label="공지 검색"
-        />
+      <ListToolbar
+        search={
+          <SearchInput
+            value={keyword}
+            onSearch={handleSearch}
+            placeholder="제목 · 본문 · 작성자 검색"
+            aria-label="공지 검색"
+          />
+        }
+      >
+        <Select
+          value={exposeMobile}
+          onChange={(e) => patchParams({ expose: e.target.value === 'ALL' ? null : e.target.value })}
+          aria-label="모바일 노출 필터"
+        >
+          {EXPOSE_FILTERS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </Select>
 
-        <div className="notices__actions">
-          <Select
-            value={exposeMobile}
-            onChange={(e) => patchParams({ expose: e.target.value === 'ALL' ? null : e.target.value })}
-            aria-label="모바일 노출 필터"
-          >
-            {EXPOSE_FILTERS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </Select>
-
-          {canManage ? (
-            <>
-              <Button onClick={() => setBroadcastOpen(true)}>전체 알림 발송</Button>
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setEditing(null);
-                  setFormOpen(true);
-                }}
-              >
-                공지 작성
-              </Button>
-            </>
-          ) : null}
-        </div>
-      </div>
+        {canManage ? (
+          <>
+            <Button onClick={() => setBroadcastOpen(true)}>전체 알림 발송</Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              공지 작성
+            </Button>
+          </>
+        ) : null}
+      </ListToolbar>
 
       <Card flush>
         <Table

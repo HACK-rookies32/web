@@ -17,6 +17,44 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   block?: boolean;
 }
 
+interface ButtonClassOptions {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  block?: boolean;
+  loading?: boolean;
+  className?: string;
+}
+
+/**
+ * 버튼 클래스 문자열만 만든다.
+ *
+ * `<button>` 이 아닌 요소에 버튼 모양을 입혀야 할 때 쓴다. 예를 들어 라우터
+ * `<Link>` 는 Button 컴포넌트로 감쌀 수 없는데, 그렇다고 버튼 CSS 를 손으로
+ * 다시 그리면 Button 을 고칠 때 그쪽만 어긋난다.
+ *
+ *   <Link className={buttonClass({ variant: 'primary' })} to="...">회원 상세</Link>
+ *
+ * `<a>` 에 쓸 때 hover 밑줄은 Button.css 의 `a.btn:hover` 가 막아 준다.
+ */
+export function buttonClass({
+  variant = 'secondary',
+  size = 'md',
+  block = false,
+  loading = false,
+  className,
+}: ButtonClassOptions = {}): string {
+  return [
+    'btn',
+    `btn--${variant}`,
+    `btn--${size}`,
+    block ? 'btn--block' : '',
+    loading ? 'is-loading' : '',
+    className ?? '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
 /**
  * 공통 버튼.
  * - primary   : accent 채움 (Figma 131:1991 로그인 버튼)
@@ -38,16 +76,7 @@ export function Button({
   type = 'button',
   ...rest
 }: ButtonProps) {
-  const classes = [
-    'btn',
-    `btn--${variant}`,
-    `btn--${size}`,
-    block ? 'btn--block' : '',
-    loading ? 'is-loading' : '',
-    className ?? '',
-  ]
-    .filter(Boolean)
-    .join(' ');
+  const classes = buttonClass({ variant, size, block, loading, className });
 
   return (
     <button type={type} className={classes} disabled={disabled || loading} {...rest}>

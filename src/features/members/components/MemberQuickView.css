@@ -94,25 +94,10 @@
   color: var(--accent-strong);
 }
 
+/* 버튼 모양은 buttonClass({ variant: 'primary' }) 가 붙여 준다.
+   여기서는 푸터에서 폭을 나눠 갖는 것만 지정한다. */
 .quickview__cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   flex: 1 1 0;
-  height: 38px;
-  border-radius: var(--radius);
-  background: var(--accent);
-  color: var(--text-on-accent);
-  font-size: var(--fs-label);
-  line-height: var(--lh-label);
-  font-weight: 700;
-  box-shadow: var(--shadow-xs);
-  transition: background-color var(--transition);
-}
-
-.quickview__cta:hover {
-  background: var(--accent-hover);
-  text-decoration: none;
 }
 
 /* ---- 지갑 거래 요약 ---------------------------------------------------- */

@@ -7,6 +7,7 @@ import {
   Column,
   EmptyState,
   Icon,
+  ListToolbar,
   Pagination,
   RowActions,
   SearchInput,
@@ -133,14 +134,16 @@ export function StorePaymentsTab({
 
   return (
     <div className="funds__tab">
-      <div className="funds__toolbar">
-        <SearchInput
-          className="funds__search"
-          value={keyword}
-          onSearch={handleSearch}
-          placeholder="자녀명 · 보호자명 · 매장명 검색"
-          aria-label="매장 결제 검색"
-        />
+      <ListToolbar
+        search={
+          <SearchInput
+            value={keyword}
+            onSearch={handleSearch}
+            placeholder="자녀명 · 보호자명 · 매장명 검색"
+            aria-label="매장 결제 검색"
+          />
+        }
+      >
         <Select
           value={status}
           onChange={(e) => patchParams({ status: e.target.value === 'ALL' ? null : e.target.value })}
@@ -152,7 +155,7 @@ export function StorePaymentsTab({
             </option>
           ))}
         </Select>
-      </div>
+      </ListToolbar>
 
       <Card flush>
         <Table

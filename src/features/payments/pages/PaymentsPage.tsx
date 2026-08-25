@@ -19,6 +19,34 @@ type TabKey = 'charges' | 'payments' | 'wallets';
 const TAB_KEYS: TabKey[] = ['charges', 'payments', 'wallets'];
 
 /**
+ * 자금 지표 타일.
+ *
+ * 대시보드의 KpiCard 와는 다른 물건이다. 그쪽은 아이콘·증감·진행률이 붙고
+ * 클릭하면 해당 화면으로 이동하는 위젯이고, 이건 값만 보여주는 정적 타일이다.
+ * 억지로 하나로 합치면 양쪽 다 복잡해져서 따로 둔다.
+ */
+function FundsKpi({
+  label,
+  value,
+  foot,
+  alert = false,
+}: {
+  label: string;
+  value: string;
+  foot: string;
+  /** 환불처럼 주의가 필요한 지표. 색 외에 왼쪽 막대 형태로도 구분한다. */
+  alert?: boolean;
+}) {
+  return (
+    <article className={alert ? 'funds__kpi funds__kpi--alert' : 'funds__kpi'}>
+      <span className="funds__kpi-label">{label}</span>
+      <span className="funds__kpi-value tabular">{value}</span>
+      <span className="funds__kpi-foot">{foot}</span>
+    </article>
+  );
+}
+
+/**
  * 자금·결제 관리 (API 명세 5.9).
  *
  * 구독/PG 대행 모델이 폐기되고 자체 지갑 기반으로 바뀌면서 화면을 재구성했다.
@@ -112,28 +140,27 @@ export function PaymentsPage() {
     <div className="funds">
       {/* ---- KPI (GET /admin/stats) ---- */}
       <section className="funds__kpis" aria-label="자금 지표">
-        <article className="funds__kpi">
-          <span className="funds__kpi-label">총 충전액</span>
-          <span className="funds__kpi-value tabular">{formatCurrency(s?.totalCharged ?? 0)}</span>
-          <span className="funds__kpi-foot">충전 {formatNumber(s?.chargeCount ?? 0)}건</span>
-        </article>
-        <article className="funds__kpi">
-          <span className="funds__kpi-label">총 결제액</span>
-          <span className="funds__kpi-value tabular">{formatCurrency(s?.totalPaid ?? 0)}</span>
-          <span className="funds__kpi-foot">결제 {formatNumber(s?.paymentCount ?? 0)}건</span>
-        </article>
-        <article className="funds__kpi">
-          <span className="funds__kpi-label">미사용 잔액</span>
-          <span className="funds__kpi-value tabular">
-            {formatCurrency((s?.totalCharged ?? 0) - (s?.totalPaid ?? 0))}
-          </span>
-          <span className="funds__kpi-foot">충전액 − 결제액</span>
-        </article>
-        <article className="funds__kpi funds__kpi--alert">
-          <span className="funds__kpi-label">환불</span>
-          <span className="funds__kpi-value tabular">{formatNumber(s?.refundCount ?? 0)}건</span>
-          <span className="funds__kpi-foot">강제 환불 포함</span>
-        </article>
+        <FundsKpi
+          label="총 충전액"
+          value={formatCurrency(s?.totalCharged ?? 0)}
+          foot={`충전 ${formatNumber(s?.chargeCount ?? 0)}건`}
+        />
+        <FundsKpi
+          label="총 결제액"
+          value={formatCurrency(s?.totalPaid ?? 0)}
+          foot={`결제 ${formatNumber(s?.paymentCount ?? 0)}건`}
+        />
+        <FundsKpi
+          label="미사용 잔액"
+          value={formatCurrency((s?.totalCharged ?? 0) - (s?.totalPaid ?? 0))}
+          foot="충전액 − 결제액"
+        />
+        <FundsKpi
+          label="환불"
+          value={`${formatNumber(s?.refundCount ?? 0)}건`}
+          foot="강제 환불 포함"
+          alert
+        />
       </section>
 
       <Tabs

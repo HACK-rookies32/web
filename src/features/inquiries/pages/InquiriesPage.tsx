@@ -7,6 +7,7 @@ import {
   Column,
   EmptyState,
   Icon,
+  ListToolbar,
   Pagination,
   SearchInput,
   Select,
@@ -149,35 +150,34 @@ export function InquiriesPage() {
 
   return (
     <div className="inquiries">
-      <div className="inquiries__toolbar">
-        <SearchInput
-          className="inquiries__search"
-          value={keyword}
-          onSearch={handleSearch}
-          placeholder="제목 · 내용 · 작성자 검색"
-          aria-label="문의 검색"
-        />
+      <ListToolbar
+        search={
+          <SearchInput
+            value={keyword}
+            onSearch={handleSearch}
+            placeholder="제목 · 내용 · 작성자 검색"
+            aria-label="문의 검색"
+          />
+        }
+      >
+        {openCount > 0 ? (
+          <span className="inquiries__badge">
+            이 페이지 답변 대기 <strong className="tabular">{formatNumber(openCount)}</strong>건
+          </span>
+        ) : null}
 
-        <div className="inquiries__filters">
-          {openCount > 0 ? (
-            <span className="inquiries__badge">
-              이 페이지 답변 대기 <strong className="tabular">{formatNumber(openCount)}</strong>건
-            </span>
-          ) : null}
-
-          <Select
-            value={answered}
-            onChange={(e) => patchParams({ answered: e.target.value === 'ALL' ? null : e.target.value })}
-            aria-label="답변 상태 필터"
-          >
-            {ANSWER_FILTERS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </Select>
-        </div>
-      </div>
+        <Select
+          value={answered}
+          onChange={(e) => patchParams({ answered: e.target.value === 'ALL' ? null : e.target.value })}
+          aria-label="답변 상태 필터"
+        >
+          {ANSWER_FILTERS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </Select>
+      </ListToolbar>
 
       <Card flush>
         <Table

@@ -7,6 +7,7 @@ import {
   Column,
   EmptyState,
   Icon,
+  ListToolbar,
   Pagination,
   RowActions,
   SearchInput,
@@ -137,14 +138,16 @@ export function WalletsTab({
 
   return (
     <div className="funds__tab">
-      <div className="funds__toolbar">
-        <SearchInput
-          className="funds__search"
-          value={keyword}
-          onSearch={handleSearch}
-          placeholder="회원명 또는 이메일 검색"
-          aria-label="지갑 검색"
-        />
+      <ListToolbar
+        search={
+          <SearchInput
+            value={keyword}
+            onSearch={handleSearch}
+            placeholder="회원명 또는 이메일 검색"
+            aria-label="지갑 검색"
+          />
+        }
+      >
         <Select
           value={role}
           onChange={(e) => patchParams({ role: e.target.value === 'ALL' ? null : e.target.value })}
@@ -156,7 +159,7 @@ export function WalletsTab({
             </option>
           ))}
         </Select>
-      </div>
+      </ListToolbar>
 
       <Card flush>
         <Table
