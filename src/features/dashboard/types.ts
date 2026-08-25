@@ -46,11 +46,11 @@ export interface ActivityItem {
 
 /** 대시보드에 요약해 보여줄 1:1 문의. */
 export interface DashboardInquiry {
-  inquiryId: number;
-  /** 명세 5.4 기준 상태 2종 */
-  status: 'OPEN' | 'ANSWERED';
+  id: number;
+  /** 명세 5.4 기준 답변 완료 여부 */
+  answered: boolean;
   title: string;
-  authorUsername: string;
+  memberNickname: string;
   createdAt: string;
 }
 

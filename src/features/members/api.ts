@@ -134,7 +134,7 @@ export async function fetchMemberReportCsv(member: MemberDetail): Promise<string
         ['지갑 잔액', wallet?.balance ?? 0],
         ['최근 잔액 변동', wallet?.updatedAt ?? '-'],
         ['문의 건수', inquiries.length],
-        ['미답변 문의', inquiries.filter((i) => i.status === 'OPEN').length],
+        ['미답변 문의', inquiries.filter((i) => !i.answered).length],
       ],
     );
 

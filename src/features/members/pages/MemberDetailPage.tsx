@@ -27,7 +27,7 @@ import {
   maskName,
   maskPhone,
 } from '@/shared/lib/format';
-import { INQUIRY_STATUS, MEMBER_STATUS } from '@/shared/lib/status';
+import { MEMBER_STATUS, inquiryStatus } from '@/shared/lib/status';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
 import { useAuth } from '@/shared/auth/AuthContext';
 import {
@@ -165,7 +165,7 @@ export function MemberDetailPage() {
       header: '상태',
       width: '104px',
       render: (i) => (
-        <StatusPill tone={INQUIRY_STATUS[i.status].tone}>{INQUIRY_STATUS[i.status].label}</StatusPill>
+        <StatusPill tone={inquiryStatus(i.answered).tone}>{inquiryStatus(i.answered).label}</StatusPill>
       ),
     },
     { key: 'title', header: '제목', render: (i) => <span className="detail__strong">{i.title}</span> },
@@ -344,10 +344,10 @@ export function MemberDetailPage() {
               caption="회원 문의 기록"
               columns={inquiryColumns}
               rows={inquiries.data ?? []}
-              rowKey={(i) => i.inquiryId}
+              rowKey={(i) => i.id}
               loading={inquiries.isPending}
               error={inquiries.isError ? '문의 기록을 불러오지 못했습니다.' : undefined}
-              onRowClick={(i) => navigate(`/inquiries?id=${i.inquiryId}`)}
+              onRowClick={(i) => navigate(`/inquiries?id=${i.id}`)}
               emptyState={<EmptyState title="문의 기록이 없습니다" />}
             />
           </Card>

@@ -6,17 +6,16 @@ import type { Tone } from './types';
  */
 
 /**
- * 1:1 문의 상태. API 명세 5.4 의 status 쿼리(OPEN/ANSWERED)를 그대로 따른다.
+ * 1:1 문의 답변 여부.
  *
- * NOTE: Figma 시안에는 대기중/처리중/완료 3단계로 그려져 있으나,
- *       명세가 2단계이므로 명세를 기준으로 삼는다.
+ * 명세 5.4 의 응답 필드는 status 문자열이 아니라 answered(Boolean) 이다.
+ * 화면에서는 이 헬퍼를 거쳐 라벨과 톤을 얻는다.
  */
-export type InquiryStatus = 'OPEN' | 'ANSWERED';
-
-export const INQUIRY_STATUS: Record<InquiryStatus, { label: string; tone: Tone }> = {
-  OPEN: { label: '대기중', tone: 'danger' },
-  ANSWERED: { label: '답변완료', tone: 'neutral' },
-};
+export function inquiryStatus(answered: boolean): { label: string; tone: Tone } {
+  return answered
+    ? { label: '답변 완료', tone: 'success' }
+    : { label: '답변 대기', tone: 'danger' };
+}
 
 /** 회원 계정 상태. */
 export type MemberStatus = 'ACTIVE' | 'SUSPENDED' | 'WITHDRAWN';

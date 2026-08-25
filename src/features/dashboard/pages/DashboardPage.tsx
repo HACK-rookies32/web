@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, Column, EmptyState, LoadingBlock, StatusPill, Table } from '@/shared/ui';
 import { formatRelative } from '@/shared/lib/format';
-import { INQUIRY_STATUS } from '@/shared/lib/status';
+import { inquiryStatus } from '@/shared/lib/status';
 import { dashboardKeys, fetchDashboardSummary } from '../api';
 import { KpiCard } from '../components/KpiCard';
 import { SignupTrendChart } from '../components/SignupTrendChart';
@@ -28,7 +28,9 @@ export function DashboardPage() {
       header: '상태',
       width: '92px',
       render: (row) => (
-        <StatusPill tone={INQUIRY_STATUS[row.status].tone}>{INQUIRY_STATUS[row.status].label}</StatusPill>
+        <StatusPill tone={inquiryStatus(row.answered).tone}>
+          {inquiryStatus(row.answered).label}
+        </StatusPill>
       ),
     },
     {
@@ -36,7 +38,7 @@ export function DashboardPage() {
       header: '제목',
       render: (row) => <span className="dashboard__inquiry-title">{row.title}</span>,
     },
-    { key: 'author', header: '작성자', width: '112px', render: (row) => row.authorUsername },
+    { key: 'author', header: '작성자', width: '112px', render: (row) => row.memberNickname },
     {
       key: 'createdAt',
       header: '등록일',
@@ -115,8 +117,8 @@ export function DashboardPage() {
             caption="최근 1:1 문의 목록"
             columns={inquiryColumns}
             rows={data.recentInquiries}
-            rowKey={(r) => r.inquiryId}
-            onRowClick={(r) => navigate(`/inquiries?id=${r.inquiryId}`)}
+            rowKey={(r) => r.id}
+            onRowClick={(r) => navigate(`/inquiries?id=${r.id}`)}
             emptyState={<EmptyState title="접수된 문의가 없습니다" />}
           />
         </Card>

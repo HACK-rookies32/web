@@ -50,8 +50,8 @@ export interface MemberDevice {
 
 /** 회원 상세의 "1:1 문의 기록" 탭에 쓰는 요약. */
 export interface MemberInquiry {
-  inquiryId: number;
-  status: 'OPEN' | 'ANSWERED';
+  id: number;
+  answered: boolean;
   title: string;
   createdAt: string;
   answeredAt: string | null;

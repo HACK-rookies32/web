@@ -44,7 +44,8 @@ export interface NavItem {
  * 핸드오프 문서의 확정 결정에 따라 "리포트" 메뉴는 두지 않는다.
  * (CSV 리포트는 회원 상세의 모달에서 GET /admin/reports/*.csv 를 호출)
  *
- * INQUIRY_ADMIN 은 명세에 접근 범위가 명시되지 않아 "대시보드 + 1:1 문의"로 가정한다.
+ * 1:1 문의는 명세 5.4 기준 SUPER_ADMIN · INQUIRY_ADMIN 만 접근할 수 있다
+ * (GENERAL_ADMIN 은 403).
  */
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: '대시보드', icon: 'dashboard' },
@@ -55,7 +56,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/inquiries',
     label: '1:1 문의',
     icon: 'inquiries',
-    roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'INQUIRY_ADMIN'],
+    roles: ['SUPER_ADMIN', 'INQUIRY_ADMIN'],
   },
   {
     to: '/community',

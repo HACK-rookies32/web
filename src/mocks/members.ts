@@ -347,22 +347,22 @@ export const MOCK_DEVICES: Record<number, MemberDevice[]> = {
 export const MOCK_MEMBER_INQUIRIES: Record<number, MemberInquiry[]> = {
   1001: [
     {
-      inquiryId: 101,
-      status: 'OPEN',
+      id: 101,
+      answered: false,
       title: '비밀번호 찾기가 안됩니다.',
       createdAt: minutesAgo(35),
       answeredAt: null,
     },
     {
-      inquiryId: 205,
-      status: 'ANSWERED',
+      id: 205,
+      answered: true,
       title: '자녀 위치가 갱신되지 않아요',
       createdAt: daysAgo(14),
       answeredAt: daysAgo(13),
     },
     {
-      inquiryId: 312,
-      status: 'ANSWERED',
+      id: 312,
+      answered: true,
       title: '기기 등록 개수 제한이 있나요?',
       createdAt: daysAgo(60),
       answeredAt: daysAgo(59),
@@ -370,8 +370,8 @@ export const MOCK_MEMBER_INQUIRIES: Record<number, MemberInquiry[]> = {
   ],
   1002: [
     {
-      inquiryId: 102,
-      status: 'OPEN',
+      id: 102,
+      answered: false,
       title: '환불 요청합니다. 확인 부탁드려요.',
       createdAt: minutesAgo(230),
       answeredAt: null,
@@ -379,8 +379,8 @@ export const MOCK_MEMBER_INQUIRIES: Record<number, MemberInquiry[]> = {
   ],
   1003: [
     {
-      inquiryId: 288,
-      status: 'ANSWERED',
+      id: 288,
+      answered: true,
       title: '계정 정지 사유를 알고 싶습니다',
       createdAt: daysAgo(8),
       answeredAt: daysAgo(7),
