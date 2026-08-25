@@ -1,0 +1,143 @@
+.slideover-root {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+}
+
+.slideover__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(36, 25, 19, 0.35);
+  animation: slideover-fade 140ms ease;
+}
+
+.slideover {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  max-width: 100vw;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-left: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-lg);
+  animation: slideover-in 180ms ease;
+}
+
+.slideover__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.slideover__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.slideover__title {
+  font-size: var(--fs-heading);
+  line-height: var(--lh-heading);
+  color: var(--text-strong);
+}
+
+.slideover__subtitle {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text-muted);
+}
+
+.slideover__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  transition: background-color var(--transition);
+}
+
+.slideover__close:hover {
+  background: var(--surface-subtle);
+  color: var(--text-strong);
+}
+
+.slideover__body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.slideover__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.slideover__footer > * {
+  flex: 1 1 0;
+}
+
+/* ---- 정의형 목록 ------------------------------------------------------ */
+
+.detail-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-tint);
+  border-radius: var(--radius);
+}
+
+.detail-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.detail-row__label {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.detail-row__value {
+  margin: 0;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+  text-align: right;
+  word-break: break-all;
+}
+
+@keyframes slideover-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slideover-in {
+  from {
+    transform: translateX(24px);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,53 @@
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--surface-subtle);
+  min-width: 0;
+}
+
+.search--pill {
+  border-radius: var(--radius-pill);
+}
+
+.search--rounded {
+  border-radius: var(--radius);
+  border: 1px solid var(--border-subtle);
+}
+
+.search__icon {
+  position: absolute;
+  left: var(--space-3);
+  color: var(--text-placeholder);
+  pointer-events: none;
+}
+
+.search__input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: var(--space-2) var(--space-4) var(--space-2) 40px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-strong);
+  border-radius: inherit;
+}
+
+.search__input::placeholder {
+  color: var(--text-placeholder);
+}
+
+.search__input:focus {
+  outline: none;
+}
+
+/* 포커스 링은 입력창이 아니라 래퍼에 준다 (아이콘까지 감싸기 위해). */
+.search:focus-within {
+  box-shadow: var(--focus-ring);
+}
+
+/* 브라우저 기본 지우기 버튼 제거 */
+.search__input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}

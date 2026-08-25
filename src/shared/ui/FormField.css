@@ -1,0 +1,147 @@
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.field__label {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.field__required {
+  color: var(--danger);
+}
+
+.field__hint {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+.field__error {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--danger);
+}
+
+/* ---- 컨트롤 ----------------------------------------------------------- */
+
+.control {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 13px 16px;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-strong);
+  transition: border-color var(--transition);
+}
+
+.control::placeholder {
+  color: var(--text-placeholder);
+}
+
+.control:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+.control:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.control[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+.control:disabled {
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+}
+
+.control--area {
+  min-height: 132px;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.control--select {
+  appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+  /* 화살표는 토큰 색을 그대로 쓰기 위해 currentColor 로 그린 인라인 SVG 사용 */
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23564336' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+
+/* ---- 토글 ------------------------------------------------------------- */
+
+.toggle {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  cursor: pointer;
+}
+
+.toggle.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.toggle__track {
+  position: relative;
+  flex-shrink: 0;
+  width: 40px;
+  height: 22px;
+  margin-top: 1px;
+  background: var(--neutral-bg);
+  border-radius: var(--radius-pill);
+  transition: background-color var(--transition);
+}
+
+.toggle__thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 16px;
+  height: 16px;
+  background: var(--surface);
+  border-radius: var(--radius-pill);
+  box-shadow: var(--shadow-xs);
+  transition: transform var(--transition);
+}
+
+.toggle__input:checked + .toggle__track {
+  background: var(--accent);
+}
+
+.toggle__input:checked + .toggle__track .toggle__thumb {
+  transform: translateX(18px);
+}
+
+.toggle__input:focus-visible + .toggle__track {
+  box-shadow: var(--focus-ring);
+}
+
+.toggle__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toggle__label {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-strong);
+}
+
+.toggle__description {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}

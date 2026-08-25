@@ -1,0 +1,95 @@
+.toast-stack {
+  position: fixed;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  min-width: 280px;
+  max-width: 380px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  animation: toast-in 180ms ease;
+}
+
+/* 색뿐 아니라 왼쪽 막대라는 형태로도 톤을 구분한다. */
+.toast__mark {
+  flex-shrink: 0;
+  width: 4px;
+  align-self: stretch;
+  border-radius: var(--radius-pill);
+}
+
+.toast--success .toast__mark {
+  background: var(--success);
+}
+.toast--warning .toast__mark {
+  background: var(--warning);
+}
+.toast--danger .toast__mark {
+  background: var(--danger);
+}
+.toast--info .toast__mark {
+  background: var(--info);
+}
+.toast--neutral .toast__mark {
+  background: var(--neutral);
+}
+
+.toast__content {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.toast__title {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.toast__description {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+.toast__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.toast__close:hover {
+  background: var(--surface-subtle);
+  color: var(--text-strong);
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
