@@ -1,0 +1,278 @@
+/* =============================================================================
+   케어가드 어드민 — 디자인 토큰
+   출처: Figma "SK쉴더스 루키즈 H.A.C.K" (file YdID3StD0BGknABkdfYSYx)
+   추출 노드: 로그인 131:1957 / Aside 131:3798 / Header 131:3771
+
+   규칙: 컴포넌트 CSS에서 색상 하드코딩 금지. 반드시 이 파일의 변수만 사용한다.
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+
+:root {
+  /* ---- 브랜드 / 강조색 (Figma) ------------------------------------------ */
+  --accent: #f58220;              /* 주 버튼, 상단 강조선 */
+  --accent-hover: #d96d12;        /* 주 버튼 hover */
+  --accent-active-bg: #fe8931;    /* 사이드바 활성 메뉴 배경 */
+  --accent-active-fg: #652e00;    /* 사이드바 활성 메뉴 글자 */
+  --accent-strong: #964900;       /* 링크, 브랜드 텍스트, 아바타 배경 */
+
+  /* ---- 배경 / 표면 ------------------------------------------------------ */
+  --bg: #fff8f5;                  /* 페이지 · 사이드바 · 입력 배경 */
+  --bg-header: rgba(255, 248, 245, 0.9); /* 상단바 (backdrop-blur 동반) */
+  --surface: #ffffff;             /* 카드 · 테이블 · 모달 */
+  --surface-subtle: #fff1ea;      /* 상단바 검색창, 테이블 헤더 */
+  --surface-tint: #ffeade;        /* 강조 배경 (배지, 안내 박스) */
+  --surface-tint-strong: #ffdcc6; /* 역할 배지 배경 */
+
+  /* ---- 텍스트 ----------------------------------------------------------- */
+  --text-strong: #241913;         /* 제목 · 강조 본문 */
+  --text: #564336;                /* 기본 본문 */
+  --text-muted: rgba(86, 67, 54, 0.7); /* 보조 설명 */
+  --text-placeholder: #9ca3af;    /* 입력 placeholder */
+  --text-on-accent: #ffffff;      /* accent 위 글자 */
+
+  /* ---- 선 -------------------------------------------------------------- */
+  --border: #ddc1b0;
+  --border-subtle: rgba(221, 193, 176, 0.3);
+
+  /* ---- 상태색 (fg / bg 쌍) — Figma 테이블 Pill 131:3607~3657 실측 -------- */
+  --success: #137333;             /* 활성 */
+  --success-bg: #e6f4ea;
+  --warning: #a15c07;             /* 처리중 · 대기 */
+  --warning-bg: #fdecd3;
+  --danger: #ba1a1a;              /* 연체 · 알림 뱃지 */
+  --danger-bg: #ffdad6;
+  --info: #1a56db;
+  --info-bg: #e3ecfd;
+  --neutral: #564336;             /* 베이직 · 해지 */
+  --neutral-bg: #f9e4d9;
+  --tag-accent: #964900;          /* 프리미엄 */
+  --tag-accent-bg: #fff0e5;
+
+  /* 페이지네이션 활성 버튼 (accent 배경 위 글자) */
+  --accent-on-fill: #5b2a00;
+
+  /* ---- 반경 ------------------------------------------------------------- */
+  --radius-sm: 4px;               /* 역할 배지 */
+  --radius: 8px;                  /* 입력 · 버튼 · 메뉴 */
+  --radius-lg: 12px;              /* 카드 · 모달 */
+  --radius-pill: 9999px;
+
+  /* ---- 그림자 (Figma) ---------------------------------------------------- */
+  --shadow-xs: 0 1px 1px 0 rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 4px 0 rgba(0, 0, 0, 0.05);       /* 상단바 */
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --shadow-aside: 4px 0 6px rgba(0, 0, 0, 0.03);
+
+  /* ---- 간격 (Figma 8pt 그리드) ------------------------------------------- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* ---- 레이아웃 --------------------------------------------------------- */
+  --aside-width: 256px;
+  --header-height: 64px;
+  --content-max: 1440px;
+
+  /* ---- 타이포 ----------------------------------------------------------- */
+  --font-sans: 'Noto Sans KR', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --fs-display: 24px;  --lh-display: 32px;   /* 로그인 타이틀 */
+  --fs-title: 20px;    --lh-title: 28px;     /* 페이지 제목 (상단바) */
+  --fs-heading: 18px;  --lh-heading: 26px;   /* 카드 제목 */
+  --fs-body: 14px;     --lh-body: 20px;      /* 기본 본문 */
+  --fs-label: 13px;    --lh-label: 18px;     /* 라벨 · 버튼 */
+  --fs-caption: 12px;  --lh-caption: 16px;   /* 캡션 */
+  --fs-badge: 11px;    --lh-badge: 16.5px;   /* 역할 배지 */
+
+  /* ---- 기타 ------------------------------------------------------------- */
+  --focus-ring: 0 0 0 3px rgba(245, 130, 32, 0.35);
+  --transition: 140ms ease;
+}
+
+/* =============================================================================
+   다크 모드 — 웜 팔레트를 그대로 어둡게 반전. accent 계열은 채도를 유지한다.
+   ============================================================================= */
+:root[data-theme='dark'] {
+  --accent: #f58220;
+  --accent-hover: #ff9640;
+  --accent-active-bg: #a95515;
+  --accent-active-fg: #ffe6d2;
+  --accent-strong: #ffab63;
+
+  --bg: #1a120d;
+  --bg-header: rgba(26, 18, 13, 0.9);
+  --surface: #241913;
+  --surface-subtle: #2f211a;
+  --surface-tint: #3a2820;
+  --surface-tint-strong: #4a3226;
+
+  --text-strong: #fff8f5;
+  --text: #e4d3c7;
+  --text-muted: rgba(228, 211, 199, 0.7);
+  --text-placeholder: #8b7566;
+  --text-on-accent: #241913;
+
+  --border: #4a3226;
+  --border-subtle: rgba(74, 50, 38, 0.6);
+
+  --success: #4ade80;  --success-bg: #14311f;
+  --warning: #fbbf24;  --warning-bg: #3a2a0c;
+  --danger: #f87171;   --danger-bg: #3a1616;
+  --info: #60a5fa;     --info-bg: #16253f;
+  --neutral: #b9a394;  --neutral-bg: #322620;
+  --tag-accent: #ffab63; --tag-accent-bg: #3f2410;
+  --accent-on-fill: #2b1608;
+
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+  --shadow-aside: 4px 0 6px rgba(0, 0, 0, 0.25);
+}
+
+/* 사용자가 테마를 고르지 않았다면 OS 설정을 따른다. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --accent-hover: #ff9640;
+    --accent-active-bg: #a95515;
+    --accent-active-fg: #ffe6d2;
+    --accent-strong: #ffab63;
+
+    --bg: #1a120d;
+    --bg-header: rgba(26, 18, 13, 0.9);
+    --surface: #241913;
+    --surface-subtle: #2f211a;
+    --surface-tint: #3a2820;
+    --surface-tint-strong: #4a3226;
+
+    --text-strong: #fff8f5;
+    --text: #e4d3c7;
+    --text-muted: rgba(228, 211, 199, 0.7);
+    --text-placeholder: #8b7566;
+    --text-on-accent: #241913;
+
+    --border: #4a3226;
+    --border-subtle: rgba(74, 50, 38, 0.6);
+
+    --success: #4ade80;  --success-bg: #14311f;
+    --warning: #fbbf24;  --warning-bg: #3a2a0c;
+    --danger: #f87171;   --danger-bg: #3a1616;
+    --info: #60a5fa;     --info-bg: #16253f;
+    --neutral: #b9a394;  --neutral-bg: #322620;
+    --tag-accent: #ffab63; --tag-accent-bg: #3f2410;
+    --accent-on-fill: #2b1608;
+
+    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.5);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
+    --shadow-aside: 4px 0 6px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* =============================================================================
+   전역 리셋 & 기본 타이포
+   ============================================================================= */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
+p { margin: 0; }
+
+a {
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+
+/* 키보드 포커스만 링을 표시한다 (DoD: 키보드 포커스 표시). */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius);
+}
+
+/* 숫자 정렬 칸 — 자릿수 흔들림 방지 */
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* 스크린리더 전용 텍스트 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+::selection {
+  background: var(--surface-tint-strong);
+  color: var(--text-strong);
+}
+
+/* 스크롤바 — 웜 팔레트에 맞춘다 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
