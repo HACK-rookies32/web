@@ -14,6 +14,12 @@ const LoginPage = lazy(() =>
 const DashboardPage = lazy(() =>
   import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
 );
+const MembersPage = lazy(() =>
+  import('@/features/members/pages/MembersPage').then((m) => ({ default: m.MembersPage })),
+);
+const MemberDetailPage = lazy(() =>
+  import('@/features/members/pages/MemberDetailPage').then((m) => ({ default: m.MemberDetailPage })),
+);
 const UiKitPage = lazy(() => import('./UiKitPage').then((m) => ({ default: m.UiKitPage })));
 
 /**
@@ -41,7 +47,8 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <ToastProvider>
-          <BrowserRouter>
+          {/* v7 동작을 미리 켜 둔다. 추후 업그레이드 시 동작이 바뀌지 않는다. */}
+          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
 
@@ -51,34 +58,8 @@ export function App() {
 
                   {/* 회원 관리 — SUPER_ADMIN · GENERAL_ADMIN */}
                   <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN']} />}>
-                    <Route
-                      path="members"
-                      element={
-                        <PlaceholderPage
-                          title="회원 관리"
-                          endpoints={[
-                            'GET /admin/members?keyword&role&page&size',
-                            'GET /admin/members/{id}',
-                            'PATCH · DELETE /admin/members/{id} (SUPER_ADMIN)',
-                            'GET /admin/members/{id}/devices',
-                          ]}
-                        />
-                      }
-                    />
-                    <Route
-                      path="members/:memberId"
-                      element={
-                        <PlaceholderPage
-                          title="회원 상세"
-                          endpoints={[
-                            'GET /admin/members/{id}',
-                            'GET /admin/members/{id}/devices',
-                            'GET /admin/inquiries?memberId',
-                            'GET /admin/reports/members.csv',
-                          ]}
-                        />
-                      }
-                    />
+                    <Route path="members" element={<MembersPage />} />
+                    <Route path="members/:memberId" element={<MemberDetailPage />} />
                     <Route
                       path="payments"
                       element={
