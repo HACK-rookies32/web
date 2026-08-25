@@ -11,7 +11,7 @@
 .modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(36, 25, 19, 0.45);
+  background: var(--scrim);
   animation: modal-fade 140ms ease;
 }
 

@@ -29,13 +29,13 @@
 .login__blob--top {
   top: -96px;
   left: -96px;
-  background: rgba(245, 130, 32, 0.1);
+  background: var(--accent-wash);
 }
 
 .login__blob--bottom {
   right: -96px;
   bottom: -96px;
-  background: rgba(150, 73, 0, 0.05);
+  background: var(--accent-wash-strong);
 }
 
 /* ---- 카드 ------------------------------------------------------------- */
@@ -70,7 +70,7 @@
 .login__title {
   font-size: var(--fs-display);
   line-height: var(--lh-display);
-  letter-spacing: -0.24px;
+  letter-spacing: var(--tracking-title);
   color: var(--text-strong);
   text-align: center;
 }

@@ -57,7 +57,7 @@
   background: var(--surface-subtle);
   color: var(--text-muted);
   font-size: var(--fs-badge);
-  line-height: 18px;
+  line-height: var(--lh-badge);
 }
 
 .notices__muted {
@@ -87,7 +87,7 @@
   /* 목 데이터의 줄바꿈을 그대로 살린다. */
   white-space: pre-wrap;
   font-size: var(--fs-body);
-  line-height: 22px;
+  line-height: var(--lh-body-long);
   color: var(--text);
 }
 

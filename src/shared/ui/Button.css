@@ -86,7 +86,7 @@
 
 .btn--danger {
   background: var(--danger);
-  color: #ffffff;
+  color: var(--text-on-solid);
 }
 .btn--danger:hover:not(:disabled) {
   filter: brightness(1.1);

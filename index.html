@@ -6,6 +6,21 @@
     <link rel="icon" type="image/png" href="/src/assets/brand/logo-mark.png" />
     <title>케어가드 어드민</title>
     <meta name="description" content="자녀보호앱 관리자 콘솔" />
+    <script>
+      /* 첫 페인트 전에 저장된 테마를 적용한다. React 마운트를 기다리면
+         다크 사용자에게 흰 화면이 한 번 번쩍인다.
+         키 'careguard.theme' 는 src/shared/lib/constants.ts 의
+         THEME_STORAGE_KEY 와 반드시 같아야 한다. 저장값이 없으면
+         속성을 붙이지 않아 CSS 가 OS 설정(prefers-color-scheme)을 따른다. */
+      try {
+        var savedTheme = localStorage.getItem('careguard.theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+          document.documentElement.setAttribute('data-theme', savedTheme);
+        }
+      } catch (e) {
+        /* localStorage 접근이 막힌 환경에서는 OS 설정을 따른다 */
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

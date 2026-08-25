@@ -35,10 +35,10 @@
 }
 
 .funds__kpi-value {
-  font-size: 26px;
-  line-height: 34px;
+  font-size: var(--fs-metric);
+  line-height: var(--lh-metric);
   font-weight: 700;
-  letter-spacing: -0.4px;
+  letter-spacing: var(--tracking-metric);
   color: var(--text-strong);
 }
 

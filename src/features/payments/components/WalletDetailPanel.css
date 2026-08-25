@@ -14,10 +14,10 @@
 }
 
 .wallet-panel__balance-value {
-  font-size: 30px;
-  line-height: 38px;
+  font-size: var(--fs-metric);
+  line-height: var(--lh-metric);
   font-weight: 700;
-  letter-spacing: -0.4px;
+  letter-spacing: var(--tracking-metric);
   color: var(--accent-strong);
 }
 
