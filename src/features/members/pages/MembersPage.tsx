@@ -7,6 +7,7 @@ import {
   Column,
   EmptyState,
   Icon,
+  ListToolbar,
   Modal,
   Pagination,
   RowActions,
@@ -245,43 +246,41 @@ export function MembersPage() {
 
   return (
     <div className="members">
-      <div className="members__toolbar">
-        <SearchInput
-          className="members__search"
-          value={keyword}
-          onSearch={handleSearch}
-          placeholder="회원명 · 이메일 · 아이디 검색"
-          aria-label="회원 검색"
-        />
+      <ListToolbar
+        search={
+          <SearchInput
+            value={keyword}
+            onSearch={handleSearch}
+            placeholder="회원명 · 이메일 · 아이디 검색"
+            aria-label="회원 검색"
+          />
+        }
+      >
+        <Select
+          value={status}
+          onChange={(e) => patchParams({ status: e.target.value === 'ALL' ? null : e.target.value })}
+          aria-label="계정 상태 필터"
+        >
+          {STATUS_FILTERS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </Select>
 
-        <div className="members__filters">
-          <Select
-            className="members__status"
-            value={status}
-            onChange={(e) => patchParams({ status: e.target.value === 'ALL' ? null : e.target.value })}
-            aria-label="계정 상태 필터"
+        {canManage ? (
+          <Button
+            variant="primary"
+            iconLeft={<PlusGlyph />}
+            onClick={() => {
+              setEditing(null);
+              setFormOpen(true);
+            }}
           >
-            {STATUS_FILTERS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </Select>
-
-          {canManage ? (
-            <Button
-              variant="primary"
-              iconLeft={<PlusGlyph />}
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-            >
-              회원 추가
-            </Button>
-          ) : null}
-        </div>
-      </div>
+            회원 추가
+          </Button>
+        ) : null}
+      </ListToolbar>
 
       <Card flush>
         <Table

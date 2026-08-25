@@ -6,7 +6,7 @@
  * 여기 있는 컴포넌트를 고칠 때는 다른 화면에 영향이 가므로 팀원에게 공지할 것.
  */
 
-export { Button } from './Button';
+export { Button, buttonClass } from './Button';
 export type { ButtonVariant, ButtonSize } from './Button';
 
 export { Card } from './Card';
@@ -14,6 +14,7 @@ export { EmptyState } from './EmptyState';
 export { FormField, TextInput, TextArea, Select, Toggle } from './FormField';
 export { Icon } from './Icon';
 export type { IconName } from './Icon';
+export { ListToolbar } from './ListToolbar';
 export { Modal, CloseGlyph } from './Modal';
 export { PageHeader } from './PageHeader';
 export { Pagination } from './Pagination';

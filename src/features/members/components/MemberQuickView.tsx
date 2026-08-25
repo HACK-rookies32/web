@@ -1,6 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Button, DetailBox, DetailRow, EmptyState, SlideOver, Spinner, StatusPill } from '@/shared/ui';
+import {
+  Button,
+  buttonClass,
+  DetailBox,
+  DetailRow,
+  EmptyState,
+  SlideOver,
+  Spinner,
+  StatusPill,
+} from '@/shared/ui';
 import { formatCurrency, formatDate, formatRelative, maskEmail, maskName } from '@/shared/lib/format';
 import { MEMBER_STATUS } from '@/shared/lib/status';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
@@ -43,7 +52,11 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
         member ? (
           <>
             <Button onClick={onClose}>닫기</Button>
-            <Link className="quickview__cta" to={`/members/${member.memberId}`}>
+            {/* Link 는 Button 컴포넌트로 감쌀 수 없어 클래스만 가져다 쓴다. */}
+            <Link
+              className={buttonClass({ variant: 'primary', className: 'quickview__cta' })}
+              to={`/members/${member.memberId}`}
+            >
               회원 상세 보기
             </Link>
           </>

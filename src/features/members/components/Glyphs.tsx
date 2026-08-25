@@ -34,7 +34,7 @@ export function ChevronGlyph({ open }: { open: boolean }) {
       viewBox="0 0 10 6"
       fill="none"
       aria-hidden="true"
-      style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform 140ms ease' }}
+      style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform var(--transition)' }}
     >
       <path
         d="M1 1l4 4 4-4"

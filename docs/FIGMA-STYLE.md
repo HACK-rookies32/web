@@ -250,12 +250,20 @@ weight 규칙: 제목·버튼 **700**, 표 헤더·활성 메뉴·표 1차 값 *
 
 ```
 PageHeader (제목 + 설명 + 우측 액션 버튼)
-└ Card
-   ├ card__header : 좌측 SearchInput·Select 필터 / 우측 건수·보조 액션
-   └ card__body--flush
-      └ Table (헤더 sticky · 행 hover 액션 · 로딩/에러/빈 상태 내장)
-         └ table-wrap__footer : Pagination
+├ ListToolbar : search={<SearchInput/>} + children(Select 필터 · 액션 버튼)
+└ Card flush
+   └ Table (헤더 sticky · 행 hover 액션 · 로딩/에러/빈 상태 내장)
+      └ table-wrap__footer : Pagination
 ```
+
+```tsx
+<ListToolbar search={<SearchInput value={keyword} onSearch={handleSearch} aria-label="…" />}>
+  <Select value={filter} onChange={…} aria-label="…">…</Select>
+  {canManage ? <Button variant="primary">추가</Button> : null}
+</ListToolbar>
+```
+
+**툴바 CSS 를 화면마다 다시 쓰지 않는다.** 검색 폭(`1 1 320px` / max 420px), select 폭(min 160px)·배경, 액션 gap(8px)은 `ListToolbar` 가 전부 처리한다.
 
 - 검색어·필터·페이지는 **URL 쿼리**로 관리한다 (새로고침·링크 공유·뒤로 가기가 동작해야 함)
 - 상세는 **행 확장** 또는 **SlideOver**, 편집·삭제는 **Modal**
@@ -287,15 +295,20 @@ PageHeader (제목 + 설명 + 우측 액션 버튼)
 
 검증: 개발 서버에서 라이트·다크 각각 계산된 스타일 값을 직접 읽어 확인. 회원·공지·문의·자금 4개 화면 Select 화살표, KPI·페이지 제목 크기, 스크림, danger 버튼, info 아이콘 전부 확인. 콘솔 에러 0, 1280px에서 가로 밀림 없음. `npm run build` 통과.
 
+### ✅ 2026-08-25 2차 처리 완료 (중복 제거)
+
+7. **툴바 6중 복제 → `ListToolbar`** — 문서에 4곳으로 적었지만 실제로는 **6곳**이었다(자금 화면은 충전·매장 결제·지갑 탭이 각자 복제). `shared/ui/ListToolbar` 로 흡수하면서 갈려 있던 값도 통일했다.
+   - select `min-width` 148px / 160px → **160px**
+   - 액션 묶음 `gap` 8px / 12px → **8px**(`--space-2`)
+   - 개별 화면의 `__toolbar` · `__search` · `__filters` · `__actions` CSS 블록을 전부 삭제했다. 새 목록 화면은 `<ListToolbar search={<SearchInput/>}>필터·버튼</ListToolbar>` 만 쓰면 된다
+8. **`buttonClass()` 신설 → `quickview__cta` 의 Button 복제 제거** — `Button` 은 `<button>` 을 렌더하므로 라우터 `<Link>` 에 쓸 수 없었다. 클래스 문자열만 만드는 `buttonClass()` 를 별도로 내보내 `<Link className={buttonClass({ variant: 'primary' })}>` 로 해결했다. `shared/ui` 가 라우터에 의존하지 않아도 된다. `a.btn:hover { text-decoration: none }` 도 함께 추가했다(전역 `a:hover` 밑줄 방지). `.quickview__cta` 는 `flex: 1 1 0` 한 줄로 줄었다
+9. **자금 화면 KPI 마크업 4중 반복 → `FundsKpi`** — 같은 `<article>` 이 4번 반복되고 있었다. 페이지 안의 작은 컴포넌트로 뺐다. **대시보드 `KpiCard` 와 합치지는 않았다** — 그쪽은 아이콘·증감·진행률이 붙고 클릭하면 이동하는 위젯이고 이건 정적 타일이라, 합치면 양쪽 다 복잡해진다
+10. **`Glyphs.tsx` 인라인 transition** — `'transform 140ms ease'` → `'transform var(--transition)'`. 인라인 스타일에서도 CSS 변수는 해석된다
+
+검증: 회원·공지·문의·자금(충전/지갑) 5개 툴바가 동일하게 렌더되는 것(검색 420px · select 160px · gap 8px · 한 줄 · 화살표 정상), `quickview__cta` 가 `<a class="btn btn--primary btn--md">` 로 렌더되며 옆 버튼과 높이 38px·폭 172px 로 일치하는 것, 다크 모드 유지, `FundsKpi` 4개(환불만 alert), 콘솔 에러 0, 1280px 가로 밀림 없음, `npm run build` 통과.
+
 ### 남은 일
 
-7. **툴바 블록 4중 복제** — `members__toolbar` / `notices__toolbar` / `inquiries__toolbar` / `funds__toolbar` 가 사실상 동일하다(검색 `flex: 1 1 320px; max-width: 420px`, select `width:auto; padding-block: 8px; background: surface`). 값이 두 군데서 갈린다:
-   - select `min-width`: 회원·공지·문의 **148px** vs 자금 **160px**
-   - 필터 묶음 `gap`: 회원·공지 **8px** vs 문의 **12px**
-   → `shared/ui` 에 `ListToolbar` 를 만들어 흡수하는 게 맞다
-8. **KPI 카드가 두 벌** — `KpiCard.css`(대시보드, 패딩 `16 24 24`)와 `PaymentsPage.css .funds__kpi`(자금, 패딩 `16 24`). 값 크기는 통일했지만 카드 자체는 여전히 자금 화면이 별도 구현이다
-9. **`quickview__cta` 가 Button 을 손으로 복제** — `MemberQuickView.css:118` 이 `.btn--primary.btn--md`(height 38 · accent · shadow-xs · weight 700)를 그대로 다시 그렸다. `<a>` 라서 Button 컴포넌트를 못 쓴 것으로 보인다. → Button 에 `as="a"` / `href` 지원을 넣는 편이 낫다
-10. **`Glyphs.tsx:37` 인라인 `transition: 'transform 140ms ease'`** — `var(--transition)` 로 교체
 11. **다크 모드 스크림 세기 재검토** — `--scrim` 은 라이트·다크 동일 값(`rgba(36,25,19,.45)`)이다. 어두운 배경 위에서는 거의 어둡게 만들지 못하므로 다크 전용 값을 줄지 판단 필요
 12. **의도 확인 필요한 토큰 밖 값 2건** — `LoginPage.css:108` `.login__input { font-size: 16px }`(본문 14px과 다름), `StatusPill.css:7` `line-height: 20px`. 둘 다 Figma 실측일 가능성이 있어 이번에 손대지 않았다
 13. **직접 그린 아이콘을 Figma 원본으로 교체** — `features/dashboard/components/KpiCard.tsx`, `features/members/components/Glyphs.tsx`

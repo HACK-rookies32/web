@@ -106,7 +106,7 @@ src/
 ├─ app/            # 라우터, 프로바이더, 전역 셸(Sidebar/Topbar), RouteErrorBoundary
 ├─ shared/
 │  ├─ api/         # client.ts(axios+봉투 언랩+JWT), mock.ts(지연·페이징 유틸)
-│  ├─ ui/          # 공통 컴포넌트 14종 (배럴: @/shared/ui)
+│  ├─ ui/          # 공통 컴포넌트 15종 (배럴: @/shared/ui)
 │  ├─ auth/        # AuthContext, ProtectedRoute, useAuth, useRole
 │  ├─ lib/         # types, constants(nav·roles), format(마스킹·CSV), status, wallet
 │  └─ styles/      # tokens.css
@@ -116,9 +116,11 @@ src/
                    # 한 feature = pages/ + components/ + api.ts + types.ts
 ```
 
-**공통 UI 14종** (`@/shared/ui`): `Button` `Card` `PageHeader` `Table` `Pagination` `Modal` `SlideOver` `StatusPill` `Toast` `FormField`(+`TextInput` `TextArea` `Select` `Toggle`) `Tabs` `SearchInput` `EmptyState` `Spinner` `Icon`
+**공통 UI 15종** (`@/shared/ui`): `Button`(+`buttonClass`) `Card` `PageHeader` `ListToolbar` `Table` `Pagination` `Modal` `SlideOver` `StatusPill` `Toast` `FormField`(+`TextInput` `TextArea` `Select` `Toggle`) `Tabs` `SearchInput` `EmptyState` `Spinner` `Icon`
 
 - `Table` 은 컬럼 설정형 제네릭이고 **로딩·에러·빈 상태를 표 내부에서 처리**한다. 행 확장, 행 클릭, hover 시 노출되는 액션 칸을 지원한다.
+- `ListToolbar` 는 목록 화면 상단(검색 + 필터·액션)이다. **툴바 CSS 를 화면마다 새로 쓰지 않는다** — 검색 폭·select 폭·gap 을 전부 처리한다. `<ListToolbar search={<SearchInput/>}>필터·버튼</ListToolbar>`
+- `buttonClass()` 는 버튼 클래스 문자열만 만든다. 라우터 `<Link>` 처럼 `<button>` 이 아닌 요소에 버튼 모양을 입힐 때 쓴다. 버튼 CSS 를 손으로 다시 그리지 말 것.
 - 새 화면을 만들 때 **공통 컴포넌트를 먼저 찾아 쓴다.** 비슷한 것을 새로 만들지 않는다.
 - 개발 서버의 **`/ui-kit`** 경로에 스타일 가이드 페이지가 있다. 공통 컴포넌트를 고친 뒤 여기서 회귀를 눈으로 확인한다.
 
