@@ -1,0 +1,152 @@
+/**
+ * 표시용 포맷터 모음.
+ * 개인정보 마스킹은 반드시 이 파일의 유틸을 거치도록 한다 (화면마다 다르게 가리는 것을 방지).
+ */
+
+/* ---------------------------------------------------------------- 날짜 ---- */
+
+const pad = (n: number) => String(n).padStart(2, '0');
+
+/** 2023-11-24 */
+export function formatDate(iso: string | null | undefined): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+/** 2023-11-24 10:23:45 */
+export function formatDateTime(iso: string | null | undefined): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+  return `${formatDate(iso)} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+/** "3분 전", "2시간 전", "어제" 처럼 상대 시각으로. */
+export function formatRelative(iso: string | null | undefined): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '-';
+
+  const diffMs = Date.now() - d.getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return '방금 전';
+  if (min < 60) return `${min}분 전`;
+
+  const hour = Math.floor(min / 60);
+  if (hour < 24) return `${hour}시간 전`;
+
+  const day = Math.floor(hour / 24);
+  if (day === 1) return '어제';
+  if (day < 7) return `${day}일 전`;
+  return formatDate(iso);
+}
+
+/* ---------------------------------------------------------------- 숫자 ---- */
+
+/** 1,248 */
+export function formatNumber(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return '-';
+  return n.toLocaleString('ko-KR');
+}
+
+/** ₩38,520,000 */
+export function formatCurrency(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return '-';
+  return `₩${n.toLocaleString('ko-KR')}`;
+}
+
+/** 45.2K — KPI 카드처럼 좁은 칸에서 쓴다. */
+export function formatCompact(n: number | null | undefined): string {
+  if (n === null || n === undefined || Number.isNaN(n)) return '-';
+  if (Math.abs(n) < 1000) return String(n);
+  if (Math.abs(n) < 1_000_000) return `${(n / 1000).toFixed(1)}K`;
+  return `${(n / 1_000_000).toFixed(1)}M`;
+}
+
+/* -------------------------------------------------------------- 마스킹 ---- */
+
+/**
+ * 카드번호 마스킹. API 명세 5.2 의 maskedCard 형식을 따른다.
+ * `1234-****-****-5678` — 앞 4자리와 뒤 4자리를 남기고 가운데를 가린다.
+ *
+ * 마스킹 해제는 SUPER_ADMIN 권한 + 감사 로그 기록이 전제다. 화면에서 직접
+ * 원문을 조립하지 말고 반드시 이 유틸의 unmasked 인자를 쓸 것.
+ */
+export function maskCard(cardNumber: string, unmasked = false): string {
+  const digits = cardNumber.replace(/\D/g, '');
+  if (digits.length < 8) return '****-****-****-****';
+
+  const groups = digits.match(/.{1,4}/g) ?? [];
+  if (unmasked) return groups.join('-');
+
+  return groups
+    .map((g, i) => (i === 0 || i === groups.length - 1 ? g : '*'.repeat(g.length)))
+    .join('-');
+}
+
+/** 김민욱 → 김*욱 / 김수 → 김*  */
+export function maskName(name: string): string {
+  if (!name) return '-';
+  if (name.length <= 2) return `${name[0]}*`;
+  return `${name[0]}${'*'.repeat(name.length - 2)}${name[name.length - 1]}`;
+}
+
+/** min***@gmail.com */
+export function maskEmail(email: string): string {
+  const [local, domain] = email.split('@');
+  if (!domain) return email;
+  const head = local.slice(0, 3);
+  return `${head}${'*'.repeat(Math.max(local.length - 3, 1))}@${domain}`;
+}
+
+/** 010-1234-5678 → 010-****-5678 */
+export function maskPhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length < 8) return phone;
+  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
+}
+
+/** 서울시 강남구 테헤란로 123 → 서울시 강남구 테헤란로 *** */
+export function maskAddress(address: string): string {
+  const parts = address.trim().split(/\s+/);
+  if (parts.length <= 3) return address;
+  return `${parts.slice(0, 3).join(' ')} ***`;
+}
+
+/** 192.168.0.14 → 192.168.*.* */
+export function maskIp(ip: string): string {
+  const parts = ip.split('.');
+  if (parts.length !== 4) return ip;
+  return `${parts[0]}.${parts[1]}.*.*`;
+}
+
+/* ---------------------------------------------------------------- CSV ---- */
+
+/** 값 하나를 CSV 셀로 이스케이프한다. */
+function csvCell(value: unknown): string {
+  const s = value === null || value === undefined ? '' : String(value);
+  return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+/**
+ * 2차원 데이터를 CSV 문자열로. Excel 한글 깨짐 방지를 위해 BOM 을 붙인다.
+ */
+export function toCsv(headers: string[], rows: unknown[][]): string {
+  const lines = [headers.map(csvCell).join(','), ...rows.map((r) => r.map(csvCell).join(','))];
+  return `﻿${lines.join('\r\n')}`;
+}
+
+/** 브라우저에서 CSV 문자열을 파일로 내려받는다. */
+export function downloadCsv(filename: string, csv: string): void {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
