@@ -23,6 +23,12 @@ const MemberDetailPage = lazy(() =>
 const PaymentsPage = lazy(() =>
   import('@/features/payments/pages/PaymentsPage').then((m) => ({ default: m.PaymentsPage })),
 );
+const NoticesPage = lazy(() =>
+  import('@/features/notices/pages/NoticesPage').then((m) => ({ default: m.NoticesPage })),
+);
+const InquiriesPage = lazy(() =>
+  import('@/features/inquiries/pages/InquiriesPage').then((m) => ({ default: m.InquiriesPage })),
+);
 const UiKitPage = lazy(() => import('./UiKitPage').then((m) => ({ default: m.UiKitPage })));
 
 /**
@@ -68,20 +74,7 @@ export function App() {
 
                   {/* 공지 관리 — SUPER_ADMIN */}
                   <Route element={<ProtectedRoute roles={['SUPER_ADMIN']} />}>
-                    <Route
-                      path="notices"
-                      element={
-                        <PlaceholderPage
-                          title="공지 관리"
-                          endpoints={[
-                            'GET · POST /admin/notices',
-                            'PATCH · DELETE /admin/notices/{id}',
-                            'GET /admin/notices/{id} — 백엔드 요청 완료',
-                            'POST /admin/notifications/broadcast',
-                          ]}
-                        />
-                      }
-                    />
+                    <Route path="notices" element={<NoticesPage />} />
                     <Route
                       path="harmful-keywords"
                       element={
@@ -122,21 +115,9 @@ export function App() {
 
                   {/* 1:1 문의 — SUPER_ADMIN · GENERAL_ADMIN · INQUIRY_ADMIN */}
                   <Route
-                    element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN', 'INQUIRY_ADMIN']} />}
+                    element={<ProtectedRoute roles={['SUPER_ADMIN', 'INQUIRY_ADMIN']} />}
                   >
-                    <Route
-                      path="inquiries"
-                      element={
-                        <PlaceholderPage
-                          title="1:1 문의"
-                          endpoints={[
-                            'GET /admin/inquiries?status=OPEN|ANSWERED&page&size',
-                            'GET /admin/inquiries/{id}',
-                            'POST /admin/inquiries/{id}/answer',
-                          ]}
-                        />
-                      }
-                    />
+                    <Route path="inquiries" element={<InquiriesPage />} />
                   </Route>
 
                   {/* 커뮤니티 관리 — SUPER_ADMIN · COMMUNITY_ADMIN */}
