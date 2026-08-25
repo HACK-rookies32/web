@@ -1,0 +1,89 @@
+.dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.dashboard__kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.dashboard__columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+}
+
+/* 1440×1024 기준 레이아웃을 유지하되, 좁아지면 단계적으로 접는다. */
+@media (max-width: 1180px) {
+  .dashboard__kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ---- 기간 선택 -------------------------------------------------------- */
+
+.dashboard__range {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 2px;
+  border-radius: var(--radius);
+  background: var(--surface-subtle);
+}
+
+.dashboard__range-btn {
+  padding: var(--space-1) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text);
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+}
+
+.dashboard__range-btn:hover {
+  color: var(--accent-strong);
+}
+
+.dashboard__range-btn.is-active {
+  background: var(--surface);
+  color: var(--accent-strong);
+  box-shadow: var(--shadow-xs);
+}
+
+/* ---- 기타 ------------------------------------------------------------- */
+
+.dashboard__more {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--accent-strong);
+}
+
+.dashboard__inquiry-title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-strong);
+  font-weight: 500;
+}
+
+.dashboard__muted {
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
