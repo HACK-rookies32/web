@@ -1,0 +1,80 @@
+.csv-modal {
+  min-height: 132px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.csv-modal__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.csv-modal__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-pill);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.csv-modal__text {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-strong);
+}
+
+.csv-modal__error {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--danger);
+}
+
+.csv-modal__filename {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+/* ---- 생성 전 미리보기 ------------------------------------------------- */
+
+.csv-modal__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  margin: 0;
+  padding: var(--space-4);
+  background: var(--surface-tint);
+  border-radius: var(--radius);
+}
+
+.csv-modal__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.csv-modal__row dt {
+  flex-shrink: 0;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text);
+}
+
+.csv-modal__row dd {
+  margin: 0;
+  text-align: right;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+  color: var(--text-strong);
+}
