@@ -2,19 +2,15 @@ import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
 import { toCsv } from '@/shared/lib/format';
 import type { Page } from '@/shared/lib/types';
-import {
-  MOCK_DEVICES,
-  MOCK_MEMBERS,
-  MOCK_MEMBER_INQUIRIES,
-  MOCK_SUBSCRIPTIONS,
-} from '@/mocks/members';
+import { MOCK_DEVICES, MOCK_MEMBERS, MOCK_MEMBER_INQUIRIES } from '@/mocks/members';
+import { MOCK_WALLETS } from '@/mocks/payments';
+import type { WalletSummary } from '@/shared/lib/wallet';
 import type {
   MemberDetail,
   MemberDevice,
   MemberInquiry,
   MemberListItem,
   MemberListParams,
-  MemberSubscription,
   MemberUpdateRequest,
 } from './types';
 
@@ -24,7 +20,7 @@ export const memberKeys = {
   list: (params: MemberListParams) => ['members', params] as const,
   detail: (id: number) => ['member', id] as const,
   devices: (id: number) => ['member', id, 'devices'] as const,
-  subscription: (id: number) => ['member', id, 'subscription'] as const,
+  wallet: (id: number) => ['member', id, 'wallet'] as const,
   inquiries: (id: number) => ['member', id, 'inquiries'] as const,
 };
 
@@ -61,10 +57,16 @@ export async function fetchMemberDevices(memberId: number): Promise<MemberDevice
   return request<MemberDevice[]>({ url: `/admin/members/${memberId}/devices`, method: 'GET' });
 }
 
-/** GET /admin/members/{id}/subscription */
-export async function fetchMemberSubscription(memberId: number): Promise<MemberSubscription | null> {
-  if (USE_MOCK) return mockResponse(MOCK_SUBSCRIPTIONS[memberId] ?? null);
-  return request<MemberSubscription>({ url: `/admin/members/${memberId}/subscription`, method: 'GET' });
+/**
+ * 회원 지갑 조회 (GET /admin/wallets/{userId}).
+ *
+ * 구독 모델이 폐기되면서 회원 상세의 결제 요약은 지갑 잔액으로 대체되었다.
+ * 명세 5.2 에 GET /admin/members/{id}/subscription 이 아직 남아 있으나
+ * 구독 개념 자체가 사라졌으므로 사용하지 않는다.
+ */
+export async function fetchMemberWallet(memberId: number): Promise<WalletSummary | null> {
+  if (USE_MOCK) return mockResponse(MOCK_WALLETS.find((w) => w.userId === memberId) ?? null);
+  return request<WalletSummary>({ url: `/admin/wallets/${memberId}`, method: 'GET' });
 }
 
 /**
@@ -115,7 +117,7 @@ export async function fetchMemberReportCsv(member: MemberDetail): Promise<string
   if (USE_MOCK) {
     const devices = MOCK_DEVICES[member.memberId] ?? [];
     const inquiries = MOCK_MEMBER_INQUIRIES[member.memberId] ?? [];
-    const subscription = MOCK_SUBSCRIPTIONS[member.memberId];
+    const wallet = MOCK_WALLETS.find((w) => w.userId === member.memberId);
 
     const csv = toCsv(
       ['항목', '값'],
@@ -129,9 +131,8 @@ export async function fetchMemberReportCsv(member: MemberDetail): Promise<string
         ['가입일', member.createdAt],
         ['연결 자녀 수', member.children.length],
         ['등록 기기 수', devices.length],
-        ['구독 상태', subscription?.status ?? '-'],
-        ['구독 플랜', subscription?.planName ?? '-'],
-        ['다음 결제일', subscription?.nextBillingDate ?? '-'],
+        ['지갑 잔액', wallet?.balance ?? 0],
+        ['최근 잔액 변동', wallet?.updatedAt ?? '-'],
         ['문의 건수', inquiries.length],
         ['미답변 문의', inquiries.filter((i) => i.status === 'OPEN').length],
       ],

@@ -23,18 +23,18 @@ import {
   formatDateTime,
   formatRelative,
   maskAddress,
-  maskCard,
   maskEmail,
   maskName,
   maskPhone,
 } from '@/shared/lib/format';
-import { INQUIRY_STATUS, MEMBER_STATUS, SUBSCRIPTION_STATUS } from '@/shared/lib/status';
+import { INQUIRY_STATUS, MEMBER_STATUS } from '@/shared/lib/status';
+import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
 import { useAuth } from '@/shared/auth/AuthContext';
 import {
   fetchMember,
   fetchMemberDevices,
   fetchMemberInquiries,
-  fetchMemberSubscription,
+  fetchMemberWallet,
   memberKeys,
   updateMember,
 } from '../api';
@@ -55,7 +55,7 @@ const DEVICE_STATUS = {
 /**
  * 회원 상세 (Figma 131:816 / 131:2761 / 131:2).
  * 탭 3개: 기본 정보 / 연결 기기 관리 / 1:1 문의 기록.
- * 결제 내역은 별도 "결제·구독 관리" 화면으로 뺀다 (확정 결정 1번).
+ * 자금 내역은 별도 "자금·결제 관리" 화면으로 뺀다 (확정 결정 1번).
  */
 export function MemberDetailPage() {
   const { memberId: rawId } = useParams();
@@ -85,9 +85,9 @@ export function MemberDetailPage() {
     enabled: Number.isFinite(memberId),
   });
 
-  const subscription = useQuery({
-    queryKey: memberKeys.subscription(memberId),
-    queryFn: () => fetchMemberSubscription(memberId),
+  const wallet = useQuery({
+    queryKey: memberKeys.wallet(memberId),
+    queryFn: () => fetchMemberWallet(memberId),
     enabled: Number.isFinite(memberId),
   });
 
@@ -256,36 +256,48 @@ export function MemberDetailPage() {
               </Card>
 
               <Card
-                title="구독 요약"
+                title="지갑 요약"
                 action={
-                  <Link className="detail__link" to={`/payments?memberId=${m.memberId}`}>
-                    결제 내역 전체 보기
+                  <Link className="detail__link" to={`/payments?tab=wallets&keyword=${encodeURIComponent(m.name)}`}>
+                    자금·결제 내역 보기
                   </Link>
                 }
               >
-                {subscription.isPending ? (
-                  <LoadingBlock label="구독 정보를 불러오는 중" />
-                ) : subscription.data ? (
-                  <DetailBox>
-                    <DetailRow
-                      label="상태"
-                      value={
-                        <StatusPill tone={SUBSCRIPTION_STATUS[subscription.data.status].tone}>
-                          {SUBSCRIPTION_STATUS[subscription.data.status].label}
-                        </StatusPill>
-                      }
-                    />
-                    <DetailRow label="플랜" value={subscription.data.planName} />
-                    <DetailRow label="결제 금액" value={formatCurrency(subscription.data.price)} />
-                    <DetailRow label="결제수단" value={subscription.data.method} />
-                    <DetailRow
-                      label="카드번호"
-                      value={<span className="tabular">{maskCard(subscription.data.maskedCard)}</span>}
-                    />
-                    <DetailRow label="다음 결제일" value={formatDate(subscription.data.nextBillingDate)} />
-                  </DetailBox>
+                {wallet.isPending ? (
+                  <LoadingBlock label="지갑 정보를 불러오는 중" />
+                ) : wallet.data ? (
+                  <>
+                    <DetailBox>
+                      <DetailRow label="현재 잔액" value={formatCurrency(wallet.data.balance)} />
+                      <DetailRow label="최근 변동" value={formatDateTime(wallet.data.updatedAt)} />
+                      <DetailRow
+                        label="연결 자녀 지갑"
+                        value={wallet.data.relatedNames.map(maskName).join(', ') || '-'}
+                      />
+                    </DetailBox>
+
+                    {wallet.data.recentTransactions.length > 0 ? (
+                      <ul className="detail__ledger">
+                        {wallet.data.recentTransactions.slice(0, 4).map((t) => (
+                          <li key={t.txId} className="detail__tx">
+                            <StatusPill tone={WALLET_TX[t.type].tone}>{WALLET_TX[t.type].label}</StatusPill>
+                            <span className="detail__tx-time">{formatDateTime(t.createdAt)}</span>
+                            <span
+                              className={
+                                t.amount >= 0
+                                  ? 'detail__tx-amount is-plus tabular'
+                                  : 'detail__tx-amount is-minus tabular'
+                              }
+                            >
+                              {formatSignedAmount(t.amount)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </>
                 ) : (
-                  <EmptyState title="구독 정보가 없습니다" />
+                  <EmptyState title="지갑 정보가 없습니다" />
                 )}
               </Card>
             </div>

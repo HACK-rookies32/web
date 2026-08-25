@@ -15,7 +15,7 @@ export type AuditAction =
   | 'MEMBER_DELETE'
   | 'MEMBER_SUSPEND'
   | 'PAYMENT_REFUND'
-  | 'CARD_UNMASK'
+  | 'WALLET_ADJUST'
   | 'NOTICE_CREATE'
   | 'NOTICE_DELETE'
   | 'POST_DELETE'
@@ -39,7 +39,7 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   MEMBER_DELETE: '회원 삭제',
   MEMBER_SUSPEND: '계정 정지',
   PAYMENT_REFUND: '환불 처리',
-  CARD_UNMASK: '카드번호 마스킹 해제',
+  WALLET_ADJUST: '지갑 잔액 수동 조정',
   NOTICE_CREATE: '공지 작성',
   NOTICE_DELETE: '공지 삭제',
   POST_DELETE: '게시글 삭제',
@@ -76,9 +76,9 @@ const seed: AuditLog[] = [
     logId: 40003,
     adminId: 1,
     adminUsername: 'admin01',
-    action: 'CARD_UNMASK',
-    target: 'member:1001',
-    description: '환불 문의 확인을 위한 카드번호 조회',
+    action: 'WALLET_ADJUST',
+    target: 'wallet:509',
+    description: '결제 취소 건 잔액 보정 (+2,000원)',
     createdAt: hoursAgo(26),
   },
   {

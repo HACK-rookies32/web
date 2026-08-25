@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { Button, DetailBox, DetailRow, EmptyState, SlideOver, Spinner, StatusPill } from '@/shared/ui';
-import { formatCurrency, formatDate, formatRelative, maskCard, maskEmail, maskName } from '@/shared/lib/format';
-import { MEMBER_STATUS, SUBSCRIPTION_STATUS } from '@/shared/lib/status';
-import { fetchMemberDevices, fetchMemberSubscription, memberKeys } from '../api';
+import { formatCurrency, formatDate, formatRelative, maskEmail, maskName } from '@/shared/lib/format';
+import { MEMBER_STATUS } from '@/shared/lib/status';
+import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
+import { fetchMemberDevices, fetchMemberWallet, memberKeys } from '../api';
 import type { MemberListItem } from '../types';
 import { DeviceGlyph } from './Glyphs';
 import './MemberQuickView.css';
@@ -26,9 +27,9 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
     enabled: member !== null,
   });
 
-  const subscription = useQuery({
-    queryKey: memberKeys.subscription(memberId),
-    queryFn: () => fetchMemberSubscription(memberId),
+  const wallet = useQuery({
+    queryKey: memberKeys.wallet(memberId),
+    queryFn: () => fetchMemberWallet(memberId),
     enabled: member !== null,
   });
 
@@ -91,47 +92,53 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
             )}
           </section>
 
-          {/* ---- 결제 요약 ---- */}
+          {/* ---- 지갑 요약 ---- */}
           <section className="quickview__section">
-            <h3 className="quickview__heading">결제 요약</h3>
+            <h3 className="quickview__heading">지갑 요약</h3>
 
-            {subscription.isPending ? (
+            {wallet.isPending ? (
               <div className="quickview__loading">
                 <Spinner size={18} />
               </div>
-            ) : subscription.data ? (
+            ) : wallet.data ? (
               <>
                 <DetailBox>
+                  <DetailRow label="현재 잔액" value={formatCurrency(wallet.data.balance)} />
                   <DetailRow
-                    label="구독 상태"
-                    value={
-                      <StatusPill tone={SUBSCRIPTION_STATUS[subscription.data.status].tone}>
-                        {SUBSCRIPTION_STATUS[subscription.data.status].label}
-                      </StatusPill>
-                    }
-                  />
-                  <DetailRow label="플랜" value={subscription.data.planName} />
-                  <DetailRow label="결제 금액" value={formatCurrency(subscription.data.price)} />
-                  <DetailRow
-                    label="결제수단"
-                    value={
-                      <span className="tabular">
-                        {subscription.data.method} ({maskCard(subscription.data.maskedCard)})
-                      </span>
-                    }
+                    label="최근 변동"
+                    value={formatRelative(wallet.data.updatedAt)}
                   />
                   <DetailRow
-                    label="다음 결제일"
-                    value={formatDate(subscription.data.nextBillingDate)}
+                    label="연결 자녀 지갑"
+                    value={wallet.data.relatedNames.map(maskName).join(', ') || '-'}
                   />
                 </DetailBox>
 
-                <Link className="quickview__link" to={`/payments?memberId=${member.memberId}`}>
-                  결제 내역 전체 보기
+                {wallet.data.recentTransactions.length > 0 ? (
+                  <ul className="quickview__ledger">
+                    {wallet.data.recentTransactions.slice(0, 3).map((t) => (
+                      <li key={t.txId} className="quickview__tx">
+                        <StatusPill tone={WALLET_TX[t.type].tone}>{WALLET_TX[t.type].label}</StatusPill>
+                        <span
+                          className={
+                            t.amount >= 0
+                              ? 'quickview__tx-amount is-plus tabular'
+                              : 'quickview__tx-amount is-minus tabular'
+                          }
+                        >
+                          {formatSignedAmount(t.amount)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                <Link className="quickview__link" to={`/payments?tab=wallets&keyword=${encodeURIComponent(member.name)}`}>
+                  자금·결제 내역 전체 보기
                 </Link>
               </>
             ) : (
-              <EmptyState title="구독 정보가 없습니다" description="현재 이용 중인 구독이 없습니다." />
+              <EmptyState title="지갑 정보가 없습니다" description="아직 생성된 지갑이 없습니다." />
             )}
           </section>
         </>

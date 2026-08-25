@@ -77,7 +77,7 @@ export function UiKitPage() {
     },
     {
       key: 'plan',
-      header: '구독 플랜',
+      header: '요금제',
       render: (row) => (
         <StatusPill tone={row.plan === '프리미엄' ? 'accent' : 'neutral'}>{row.plan}</StatusPill>
       ),

@@ -49,7 +49,7 @@ export interface NavItem {
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: '대시보드', icon: 'dashboard' },
   { to: '/members', label: '회원 관리', icon: 'members', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
-  { to: '/payments', label: '결제·구독 관리', icon: 'payments', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
+  { to: '/payments', label: '자금·결제 관리', icon: 'payments', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
   { to: '/notices', label: '공지 관리', icon: 'notices', roles: ['SUPER_ADMIN'] },
   {
     to: '/inquiries',

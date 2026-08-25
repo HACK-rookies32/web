@@ -2,7 +2,6 @@ import type {
   MemberDetail,
   MemberDevice,
   MemberInquiry,
-  MemberSubscription,
 } from '@/features/members/types';
 
 /** n일 전 ISO 문자열. */
@@ -342,50 +341,6 @@ export const MOCK_DEVICES: Record<number, MemberDevice[]> = {
       registeredAt: daysAgo(120),
     },
   ],
-};
-
-/** 회원별 구독 정보. */
-export const MOCK_SUBSCRIPTIONS: Record<number, MemberSubscription> = {
-  1001: {
-    status: 'ACTIVE',
-    planName: '프리미엄',
-    price: 29900,
-    nextBillingDate: '2026-09-24',
-    method: '카드',
-    maskedCard: '4321567812349876',
-  },
-  1002: {
-    status: 'ACTIVE',
-    planName: '베이직',
-    price: 9900,
-    nextBillingDate: '2026-09-11',
-    method: '카드',
-    maskedCard: '5310221199884321',
-  },
-  1003: {
-    status: 'OVERDUE',
-    planName: '베이직',
-    price: 9900,
-    nextBillingDate: '2026-08-11',
-    method: '카드',
-    maskedCard: '9876123443218765',
-  },
-  1004: {
-    status: 'ACTIVE',
-    planName: '프리미엄',
-    price: 29900,
-    nextBillingDate: '2026-09-02',
-    method: '간편결제 (카카오페이)',
-    maskedCard: '1122334455667788',
-  },
-  1005: {
-    status: 'CANCELED',
-    planName: '베이직',
-    price: 9900,
-    nextBillingDate: null,
-    method: '카드',
-    maskedCard: '7788990011223344',
-  },
 };
 
 /** 회원별 1:1 문의 기록. */

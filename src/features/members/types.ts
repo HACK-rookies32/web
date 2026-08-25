@@ -1,4 +1,4 @@
-import type { MemberStatus, SubscriptionStatus } from '@/shared/lib/status';
+import type { MemberStatus } from '@/shared/lib/status';
 import type { PageParams } from '@/shared/lib/types';
 
 /** 회원 목록 행에 딸려 오는 자녀 요약 (명세 5.2 — 부모 검색 시 자녀도 함께 반환). */
@@ -46,21 +46,6 @@ export interface MemberDevice {
   status: 'ONLINE' | 'OFFLINE' | 'BLOCKED';
   lastSeenAt: string;
   registeredAt: string;
-}
-
-/**
- * GET /admin/members/{id}/subscription 의 data.
- *
- * NOTE: price 는 명세에 없어 백엔드에 추가 요청한 필드다.
- *       (요청 전까지는 목 데이터로만 채워진다)
- */
-export interface MemberSubscription {
-  status: SubscriptionStatus;
-  planName: string;
-  price: number;
-  nextBillingDate: string | null;
-  method: string;
-  maskedCard: string;
 }
 
 /** 회원 상세의 "1:1 문의 기록" 탭에 쓰는 요약. */

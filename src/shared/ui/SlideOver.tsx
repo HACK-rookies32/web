@@ -18,7 +18,7 @@ interface SlideOverProps {
 
 /**
  * 오른쪽에서 밀려 나오는 패널.
- * 회원 관리의 "빠른 보기", 결제·구독 관리의 "결제 상세 정보"에 쓴다.
+ * 회원 관리의 "빠른 보기", 자금·결제 관리의 "지갑 상세"에 쓴다.
  */
 export function SlideOver({ open, onClose, title, subtitle, footer, width = 400, children }: SlideOverProps) {
   const panelRef = useRef<HTMLDivElement>(null);

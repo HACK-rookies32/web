@@ -114,3 +114,39 @@
   background: var(--accent-hover);
   text-decoration: none;
 }
+
+/* ---- 지갑 거래 요약 ---------------------------------------------------- */
+
+.quickview__ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quickview__tx {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.quickview__tx-amount {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+}
+
+.quickview__tx-amount.is-plus {
+  color: var(--success);
+}
+
+.quickview__tx-amount.is-minus {
+  color: var(--danger);
+}

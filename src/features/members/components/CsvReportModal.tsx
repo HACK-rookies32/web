@@ -61,7 +61,7 @@ export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
       open={open}
       onClose={onClose}
       title="회원 리포트 CSV 다운로드"
-      description="이 회원의 기본 정보 · 기기 · 구독 · 문의 요약을 CSV 파일로 만듭니다."
+      description="이 회원의 기본 정보 · 기기 · 지갑 · 문의 요약을 CSV 파일로 만듭니다."
       footer={
         <>
           <Button onClick={onClose} disabled={phase === 'generating'}>
@@ -115,7 +115,7 @@ export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
             </div>
             <div className="csv-modal__row">
               <dt>포함 항목</dt>
-              <dd>기본 정보, 연결 자녀, 등록 기기, 구독, 문의 요약</dd>
+              <dd>기본 정보, 연결 자녀, 등록 기기, 지갑 잔액, 문의 요약</dd>
             </div>
             <div className="csv-modal__row">
               <dt>파일명</dt>

@@ -18,15 +18,6 @@ export const INQUIRY_STATUS: Record<InquiryStatus, { label: string; tone: Tone }
   ANSWERED: { label: '답변완료', tone: 'neutral' },
 };
 
-/** 구독 상태. 명세 5.2 GET /admin/members/{id}/subscription 의 status. */
-export type SubscriptionStatus = 'ACTIVE' | 'OVERDUE' | 'CANCELED';
-
-export const SUBSCRIPTION_STATUS: Record<SubscriptionStatus, { label: string; tone: Tone }> = {
-  ACTIVE: { label: '활성', tone: 'success' },
-  OVERDUE: { label: '연체', tone: 'danger' },
-  CANCELED: { label: '해지', tone: 'neutral' },
-};
-
 /** 회원 계정 상태. */
 export type MemberStatus = 'ACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
 

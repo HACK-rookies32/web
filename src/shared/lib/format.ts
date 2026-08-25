@@ -51,10 +51,11 @@ export function formatNumber(n: number | null | undefined): string {
   return n.toLocaleString('ko-KR');
 }
 
-/** ₩38,520,000 */
+/** ₩38,520,000 — 음수는 -₩87,999 처럼 부호를 기호 앞에 둔다. */
 export function formatCurrency(n: number | null | undefined): string {
   if (n === null || n === undefined || Number.isNaN(n)) return '-';
-  return `₩${n.toLocaleString('ko-KR')}`;
+  const sign = n < 0 ? '-' : '';
+  return `${sign}₩${Math.abs(n).toLocaleString('ko-KR')}`;
 }
 
 /** 45.2K — KPI 카드처럼 좁은 칸에서 쓴다. */

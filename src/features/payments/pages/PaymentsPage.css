@@ -1,87 +1,24 @@
-.payments {
+.funds {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-}
-
-/* ---- 회원 컨텍스트 배너 ------------------------------------------------ */
-
-.payments__context {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface-tint);
-  font-size: var(--fs-label);
-  line-height: var(--lh-label);
-  color: var(--text);
-}
-
-.payments__context strong {
-  color: var(--accent-strong);
-}
-
-.payments__context-clear {
-  border: 0;
-  background: transparent;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--fs-label);
-  font-weight: 700;
-  color: var(--accent-strong);
-}
-
-.payments__context-clear:hover {
-  text-decoration: underline;
-}
-
-/* ---- 툴바 ------------------------------------------------------------- */
-
-.payments__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  flex-wrap: wrap;
-}
-
-.payments__search {
-  flex: 1 1 320px;
-  max-width: 420px;
-}
-
-.payments__filters {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.payments__filters select {
-  width: auto;
-  min-width: 156px;
-  padding-top: var(--space-2);
-  padding-bottom: var(--space-2);
-  background-color: var(--surface);
+  gap: var(--space-5);
 }
 
 /* ---- KPI -------------------------------------------------------------- */
 
-.payments__kpis {
+.funds__kpis {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
 @media (max-width: 1180px) {
-  .payments__kpis {
+  .funds__kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-.payments__kpi {
+.funds__kpi {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -91,13 +28,13 @@
   box-shadow: var(--shadow-card);
 }
 
-.payments__kpi-label {
+.funds__kpi-label {
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   color: var(--text);
 }
 
-.payments__kpi-value {
+.funds__kpi-value {
   font-size: 26px;
   line-height: 34px;
   font-weight: 700;
@@ -105,43 +42,78 @@
   color: var(--text-strong);
 }
 
-.payments__kpi-foot {
+.funds__kpi-foot {
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-muted);
 }
 
-/* 환불 요청은 형태(왼쪽 막대)로도 구분한다. */
-.payments__kpi--alert {
+/* 환불은 형태(왼쪽 막대)로도 구분한다. */
+.funds__kpi--alert {
   border-left: 3px solid var(--warning);
+}
+
+/* ---- 탭 본문 ---------------------------------------------------------- */
+
+.funds__tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.funds__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.funds__search {
+  flex: 1 1 320px;
+  max-width: 420px;
+}
+
+.funds__toolbar select {
+  width: auto;
+  min-width: 160px;
+  padding-top: var(--space-2);
+  padding-bottom: var(--space-2);
+  background-color: var(--surface);
 }
 
 /* ---- 표 셀 ------------------------------------------------------------ */
 
-.payments__status {
-  display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.payments__method {
-  color: var(--text);
-  white-space: nowrap;
-}
-
-.payments__amount {
+.funds__amount {
   font-weight: 500;
   color: var(--text-strong);
 }
 
-.payments__muted {
+.funds__balance {
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
+.funds__muted {
   color: var(--text-muted);
 }
 
-/* ---- 하단 ------------------------------------------------------------- */
+.funds__refund-btn {
+  color: var(--danger);
+  white-space: nowrap;
+}
 
-.payments__footnote {
+.funds__refund-btn:hover:not(:disabled) {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* ---- 안내 ------------------------------------------------------------- */
+
+.funds__note {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--surface-subtle);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
   color: var(--text-muted);

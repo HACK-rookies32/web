@@ -1,58 +1,33 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useSearchParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  Column,
-  DetailBox,
-  DetailRow,
-  EmptyState,
-  Icon,
-  Modal,
-  Pagination,
-  SearchInput,
-  Select,
-  SlideOver,
-  StackedCell,
-  StatusPill,
-  Table,
-  useToast,
-} from '@/shared/ui';
-import { formatCurrency, formatDate, formatNumber, maskCard, maskEmail, maskName } from '@/shared/lib/format';
-import { SUBSCRIPTION_STATUS, type SubscriptionStatus } from '@/shared/lib/status';
-import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
+import { useSearchParams } from 'react-router-dom';
+import { SlideOver, Tabs, useToast } from '@/shared/ui';
+import { formatCurrency, formatNumber, maskName } from '@/shared/lib/format';
+import type { ChargeStatus, StorePaymentStatus, WalletSummary } from '@/shared/lib/wallet';
 import { useAuth } from '@/shared/auth/AuthContext';
-import {
-  fetchPaymentDetail,
-  fetchPaymentSummary,
-  fetchPayments,
-  paymentKeys,
-  refundPayment,
-  unmaskCard,
-} from '../api';
-import type { PaymentListItem, PaymentMethodType } from '../types';
-import { PaymentDetailPanel } from '../components/PaymentDetailPanel';
+import { adjustWallet, fetchFundStats, fundKeys, refundStorePayment } from '../api';
+import type { StorePayment } from '../types';
+import { ChargesTab } from '../components/ChargesTab';
+import { StorePaymentsTab } from '../components/StorePaymentsTab';
+import { WalletsTab } from '../components/WalletsTab';
+import { WalletDetailPanel } from '../components/WalletDetailPanel';
+import { RefundModal } from '../components/RefundModal';
+import { AdjustBalanceModal } from '../components/AdjustBalanceModal';
 import './PaymentsPage.css';
 
-const STATUS_FILTERS: { value: SubscriptionStatus | 'ALL'; label: string }[] = [
-  { value: 'ALL', label: '구독 상태: 전체' },
-  { value: 'ACTIVE', label: '활성' },
-  { value: 'OVERDUE', label: '연체' },
-  { value: 'CANCELED', label: '해지' },
-];
-
-const METHOD_FILTERS: { value: PaymentMethodType | 'ALL'; label: string }[] = [
-  { value: 'ALL', label: '결제수단: 전체' },
-  { value: 'CARD', label: '카드' },
-  { value: 'EASY_PAY', label: '간편결제' },
-];
+type TabKey = 'charges' | 'payments' | 'wallets';
+const TAB_KEYS: TabKey[] = ['charges', 'payments', 'wallets'];
 
 /**
- * 결제·구독 관리 (Figma 131:3498).
+ * 자금·결제 관리 (API 명세 5.9).
  *
- * 회원 컨텍스트(/payments?memberId=)로 들어오면 해당 회원 건만 본다.
- * 환불 처리와 카드 마스킹 해제는 SUPER_ADMIN 전용이며 둘 다 감사 로그 대상이다.
+ * 구독/PG 대행 모델이 폐기되고 자체 지갑 기반으로 바뀌면서 화면을 재구성했다.
+ *
+ *   충전 내역   — 부모가 카드로 지갑을 충전한 기록
+ *   매장 결제   — 자녀가 QR 로 매장에서 결제한 기록 (강제 환불 대상)
+ *   회원 지갑   — 회원별 잔액과 거래 원장 (잔액 수동 조정 대상)
+ *
+ * 조회는 SUPER_ADMIN·GENERAL_ADMIN, 강제 환불과 잔액 조정은 SUPER_ADMIN 전용이다.
  */
 export function PaymentsPage() {
   const toast = useToast();
@@ -61,25 +36,19 @@ export function PaymentsPage() {
   const canManage = hasRole(['SUPER_ADMIN']);
 
   const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab') as TabKey | null;
+  const tab: TabKey = tabParam && TAB_KEYS.includes(tabParam) ? tabParam : 'charges';
+
   const keyword = searchParams.get('keyword') ?? '';
-  const status = (searchParams.get('status') as SubscriptionStatus | 'ALL' | null) ?? 'ALL';
-  const method = (searchParams.get('method') as PaymentMethodType | 'ALL' | null) ?? 'ALL';
+  const page = Number(searchParams.get('page') ?? '0');
   const memberIdParam = searchParams.get('memberId');
   const memberId = memberIdParam ? Number(memberIdParam) : undefined;
-  const page = Number(searchParams.get('page') ?? '0');
 
-  const [selected, setSelected] = useState<PaymentListItem | null>(null);
-  const [refundTarget, setRefundTarget] = useState<PaymentListItem | null>(null);
-  /** 마스킹 해제된 카드 원문. subscriptionId → 원문 */
-  const [revealed, setRevealed] = useState<Record<number, string>>({});
+  const [walletTarget, setWalletTarget] = useState<WalletSummary | null>(null);
+  const [refundTarget, setRefundTarget] = useState<StorePayment | null>(null);
+  const [adjustTarget, setAdjustTarget] = useState<WalletSummary | null>(null);
 
-  const params = useMemo(
-    () => ({ keyword, status, method, memberId, page, size: DEFAULT_PAGE_SIZE }),
-    [keyword, status, method, memberId, page],
-  );
-
-  const list = useQuery({ queryKey: paymentKeys.list(params), queryFn: () => fetchPayments(params) });
-  const summary = useQuery({ queryKey: paymentKeys.summary, queryFn: fetchPaymentSummary });
+  const stats = useQuery({ queryKey: fundKeys.stats, queryFn: fetchFundStats });
 
   const patchParams = useCallback(
     (patch: Record<string, string | null>, resetPage = true) => {
@@ -96,307 +65,157 @@ export function PaymentsPage() {
     [setSearchParams],
   );
 
-  const handleSearch = useCallback((value: string) => patchParams({ keyword: value }), [patchParams]);
+  /** 탭을 바꾸면 탭마다 의미가 다른 필터는 비운다. */
+  function changeTab(next: TabKey) {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams();
+      params.set('tab', next);
+      const kept = prev.get('memberId');
+      if (kept) params.set('memberId', kept);
+      return params;
+    });
+  }
 
   const refundMutation = useMutation({
-    mutationFn: (subscriptionId: number) =>
-      refundPayment({ subscriptionId, adminUsername: session?.username ?? 'unknown' }),
+    mutationFn: (vars: { paymentId: number; reason: string }) =>
+      refundStorePayment({ ...vars, adminUsername: session?.username ?? 'unknown' }),
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: paymentKeys.all });
-      queryClient.invalidateQueries({ queryKey: paymentKeys.detail(result.subscriptionId) });
+      queryClient.invalidateQueries({ queryKey: fundKeys.all });
       setRefundTarget(null);
       toast.success(
-        '환불이 처리되었습니다',
-        `${maskName(result.memberName)} 회원에게 ${formatCurrency(result.amount)}이 환불되었으며 감사 로그에 기록되었습니다.`,
+        '강제 환불이 처리되었습니다',
+        `${maskName(result.childName)} 자녀에게 ${formatCurrency(result.amount)}이 원복되었으며 감사 로그에 기록되었습니다.`,
       );
     },
-    onError: () => toast.error('환불 처리에 실패했습니다', '잠시 후 다시 시도해 주세요.'),
+    onError: (e) =>
+      toast.error('환불 처리에 실패했습니다', e instanceof Error ? e.message : undefined),
   });
 
-  const unmaskMutation = useMutation({
-    mutationFn: (subscriptionId: number) =>
-      unmaskCard({ subscriptionId, adminUsername: session?.username ?? 'unknown' }),
-    onSuccess: (cardNumber, subscriptionId) => {
-      setRevealed((prev) => ({ ...prev, [subscriptionId]: cardNumber }));
-      toast.showToast({
-        tone: 'warning',
-        title: '카드번호 원문을 표시합니다',
-        description: '이 조회는 감사 로그에 기록되었습니다. 30초 후 자동으로 다시 가려집니다.',
-      });
-      window.setTimeout(() => {
-        setRevealed((prev) => {
-          const next = { ...prev };
-          delete next[subscriptionId];
-          return next;
-        });
-      }, 30_000);
+  const adjustMutation = useMutation({
+    mutationFn: (vars: { userId: number; amount: number; reason: string }) =>
+      adjustWallet({ ...vars, adminUsername: session?.username ?? 'unknown' }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: fundKeys.all });
+      setAdjustTarget(null);
+      toast.success(
+        '잔액을 조정했습니다',
+        `${maskName(result.userName)} 지갑 잔액이 ${formatCurrency(result.balance)}이 되었으며 감사 로그에 기록되었습니다.`,
+      );
     },
-    onError: () => toast.error('마스킹 해제에 실패했습니다'),
+    onError: (e) =>
+      toast.error('잔액 조정에 실패했습니다', e instanceof Error ? e.message : undefined),
   });
 
-  function toggleUnmask(subscriptionId: number) {
-    if (revealed[subscriptionId]) {
-      setRevealed((prev) => {
-        const next = { ...prev };
-        delete next[subscriptionId];
-        return next;
-      });
-      return;
-    }
-    unmaskMutation.mutate(subscriptionId);
-  }
-
-  async function openRefundFromPanel(subscriptionId: number) {
-    const detail = await fetchPaymentDetail(subscriptionId);
-    setRefundTarget(detail);
-  }
-
-  const columns: Column<PaymentListItem>[] = [
-    {
-      key: 'member',
-      header: '회원',
-      width: '22%',
-      render: (row) => (
-        <StackedCell primary={maskName(row.memberName)} secondary={maskEmail(row.memberEmail)} />
-      ),
-    },
-    {
-      key: 'plan',
-      header: '구독 플랜',
-      width: '108px',
-      render: (row) => (
-        <StatusPill tone={row.planName === '프리미엄' ? 'accent' : 'neutral'}>{row.planName}</StatusPill>
-      ),
-    },
-    {
-      key: 'status',
-      header: '상태',
-      width: '88px',
-      render: (row) => (
-        <span className="payments__status">
-          <StatusPill tone={SUBSCRIPTION_STATUS[row.status].tone}>
-            {SUBSCRIPTION_STATUS[row.status].label}
-          </StatusPill>
-          {row.refundRequested ? <StatusPill tone="warning">환불 요청</StatusPill> : null}
-        </span>
-      ),
-    },
-    {
-      key: 'method',
-      header: '결제수단',
-      render: (row) => (
-        <span className="tabular payments__method">
-          {row.method} ({maskCard(row.cardNumber)})
-        </span>
-      ),
-    },
-    {
-      key: 'nextBillingDate',
-      header: '다음 결제일',
-      numeric: true,
-      width: '112px',
-      render: (row) =>
-        row.nextBillingDate ? formatDate(row.nextBillingDate) : <span className="payments__muted">-</span>,
-    },
-    {
-      key: 'amount',
-      header: '결제 금액',
-      align: 'right',
-      numeric: true,
-      width: '104px',
-      render: (row) => <span className="payments__amount">{formatCurrency(row.amount)}</span>,
-    },
-    {
-      key: 'actions',
-      header: '액션',
-      align: 'center',
-      width: '72px',
-      hoverOnly: true,
-      render: (row) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="btn--icon-only"
-          aria-label={`${maskName(row.memberName)} 결제 상세`}
-          onClick={(e) => {
-            e.stopPropagation();
-            setSelected(row);
-          }}
-        >
-          <Icon name="eye-view" />
-        </Button>
-      ),
-    },
-  ];
-
-  const kpis = summary.data;
+  const s = stats.data;
 
   return (
-    <div className="payments">
-      {memberId ? (
-        <div className="payments__context">
-          <span>
-            회원 <strong className="tabular">#{memberId}</strong> 의 결제 내역만 보고 있습니다.
+    <div className="funds">
+      {/* ---- KPI (GET /admin/stats) ---- */}
+      <section className="funds__kpis" aria-label="자금 지표">
+        <article className="funds__kpi">
+          <span className="funds__kpi-label">총 충전액</span>
+          <span className="funds__kpi-value tabular">{formatCurrency(s?.totalCharged ?? 0)}</span>
+          <span className="funds__kpi-foot">충전 {formatNumber(s?.chargeCount ?? 0)}건</span>
+        </article>
+        <article className="funds__kpi">
+          <span className="funds__kpi-label">총 결제액</span>
+          <span className="funds__kpi-value tabular">{formatCurrency(s?.totalPaid ?? 0)}</span>
+          <span className="funds__kpi-foot">결제 {formatNumber(s?.paymentCount ?? 0)}건</span>
+        </article>
+        <article className="funds__kpi">
+          <span className="funds__kpi-label">미사용 잔액</span>
+          <span className="funds__kpi-value tabular">
+            {formatCurrency((s?.totalCharged ?? 0) - (s?.totalPaid ?? 0))}
           </span>
-          <button type="button" className="payments__context-clear" onClick={() => patchParams({ memberId: null })}>
-            전체 보기
-          </button>
-        </div>
-      ) : null}
-
-      <div className="payments__toolbar">
-        <SearchInput
-          className="payments__search"
-          value={keyword}
-          onSearch={handleSearch}
-          placeholder="회원명 또는 이메일 검색"
-          aria-label="결제 검색"
-        />
-
-        <div className="payments__filters">
-          <Select
-            value={status}
-            onChange={(e) => patchParams({ status: e.target.value === 'ALL' ? null : e.target.value })}
-            aria-label="구독 상태 필터"
-          >
-            {STATUS_FILTERS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </Select>
-
-          <Select
-            value={method}
-            onChange={(e) => patchParams({ method: e.target.value === 'ALL' ? null : e.target.value })}
-            aria-label="결제수단 필터"
-          >
-            {METHOD_FILTERS.map((f) => (
-              <option key={f.value} value={f.value}>
-                {f.label}
-              </option>
-            ))}
-          </Select>
-        </div>
-      </div>
-
-      {/* ---- KPI ---- */}
-      <section className="payments__kpis" aria-label="결제 지표">
-        <article className="payments__kpi">
-          <span className="payments__kpi-label">활성 구독</span>
-          <span className="payments__kpi-value tabular">{formatNumber(kpis?.activeSubscriptions ?? 0)}</span>
-          <span className="payments__kpi-foot">전월 대비 +5.2% 증가</span>
+          <span className="funds__kpi-foot">충전액 − 결제액</span>
         </article>
-        <article className="payments__kpi">
-          <span className="payments__kpi-label">이번 달 매출</span>
-          <span className="payments__kpi-value tabular">{formatCurrency(kpis?.monthlyRevenue ?? 0)}</span>
-          <span className="payments__kpi-foot">전월 대비 +12.4% 증가</span>
-        </article>
-        <article className="payments__kpi">
-          <span className="payments__kpi-label">결제 실패</span>
-          <span className="payments__kpi-value tabular">{formatNumber(kpis?.failedPayments ?? 0)}건</span>
-          <span className="payments__kpi-foot">전월 대비 2건 감소</span>
-        </article>
-        <article className="payments__kpi payments__kpi--alert">
-          <span className="payments__kpi-label">환불 요청</span>
-          <span className="payments__kpi-value tabular">{formatNumber(kpis?.refundRequests ?? 0)}건</span>
-          <span className="payments__kpi-foot">전월 대비 동일</span>
+        <article className="funds__kpi funds__kpi--alert">
+          <span className="funds__kpi-label">환불</span>
+          <span className="funds__kpi-value tabular">{formatNumber(s?.refundCount ?? 0)}건</span>
+          <span className="funds__kpi-foot">강제 환불 포함</span>
         </article>
       </section>
 
-      <Card flush>
-        <Table
-          caption="결제·구독 목록"
-          columns={columns}
-          rows={list.data?.content ?? []}
-          rowKey={(r) => r.subscriptionId}
-          loading={list.isPending}
-          error={list.isError ? '결제 목록을 불러오지 못했습니다.' : undefined}
-          onRowClick={(row) => setSelected(row)}
-          emptyState={
-            <EmptyState
-              title="조회된 결제 내역이 없습니다"
-              description="검색어나 필터를 바꿔보세요."
-              icon={<Icon name="search" />}
-              action={
-                <Button size="sm" onClick={() => setSearchParams(new URLSearchParams())}>
-                  필터 초기화
-                </Button>
-              }
-            />
-          }
-          footer={
-            list.data && list.data.totalElements > 0 ? (
-              <Pagination
-                page={list.data.page}
-                totalPages={list.data.totalPages}
-                totalElements={list.data.totalElements}
-                size={list.data.size}
-                onChange={(next) => patchParams({ page: String(next) }, false)}
-              />
-            ) : undefined
-          }
-        />
-      </Card>
-
-      {/* ---- 결제 상세 슬라이드오버 ---- */}
-      <SlideOver
-        open={selected !== null}
-        onClose={() => setSelected(null)}
-        title="결제 상세 정보"
-        subtitle={selected ? maskEmail(selected.memberEmail) : undefined}
+      <Tabs
+        aria-label="자금·결제 관리 탭"
+        value={tab}
+        onChange={changeTab}
+        items={[
+          { key: 'charges', label: '충전 내역' },
+          { key: 'payments', label: '매장 결제 내역' },
+          { key: 'wallets', label: '회원 지갑' },
+        ]}
       >
-        {selected ? (
-          <PaymentDetailPanel
-            subscriptionId={selected.subscriptionId}
-            unmaskedCard={revealed[selected.subscriptionId] ?? null}
-            canManage={canManage}
-            unmasking={unmaskMutation.isPending}
-            onUnmask={() => toggleUnmask(selected.subscriptionId)}
-            onRefund={() => void openRefundFromPanel(selected.subscriptionId)}
+        {tab === 'charges' ? (
+          <ChargesTab
+            keyword={keyword}
+            status={(searchParams.get('status') as ChargeStatus | 'ALL' | null) ?? 'ALL'}
+            userId={memberId}
+            page={page}
+            patchParams={patchParams}
+            setSearchParams={setSearchParams}
           />
         ) : null}
+
+        {tab === 'payments' ? (
+          <StorePaymentsTab
+            keyword={keyword}
+            status={(searchParams.get('status') as StorePaymentStatus | 'ALL' | null) ?? 'ALL'}
+            page={page}
+            canManage={canManage}
+            patchParams={patchParams}
+            setSearchParams={setSearchParams}
+            onRefund={setRefundTarget}
+          />
+        ) : null}
+
+        {tab === 'wallets' ? (
+          <WalletsTab
+            keyword={keyword}
+            role={(searchParams.get('role') as 'ALL' | 'PARENT' | 'CHILD' | null) ?? 'ALL'}
+            page={page}
+            canManage={canManage}
+            patchParams={patchParams}
+            setSearchParams={setSearchParams}
+            onOpen={setWalletTarget}
+            onAdjust={setAdjustTarget}
+          />
+        ) : null}
+      </Tabs>
+
+      {!canManage ? (
+        <p className="funds__note">
+          강제 환불과 잔액 수동 조정은 슈퍼 관리자만 사용할 수 있습니다. 조회는 모두 가능합니다.
+        </p>
+      ) : null}
+
+      {/* ---- 지갑 상세 슬라이드오버 ---- */}
+      <SlideOver
+        open={walletTarget !== null}
+        onClose={() => setWalletTarget(null)}
+        title="지갑 상세"
+        subtitle={walletTarget ? maskName(walletTarget.userName) : undefined}
+      >
+        {walletTarget ? <WalletDetailPanel userId={walletTarget.userId} /> : null}
       </SlideOver>
 
-      {/* ---- 환불 확인 모달 ---- */}
-      <Modal
-        open={refundTarget !== null}
+      <RefundModal
+        payment={refundTarget}
+        submitting={refundMutation.isPending}
         onClose={() => setRefundTarget(null)}
-        size="sm"
-        title="환불을 처리할까요?"
-        description="환불은 되돌릴 수 없으며, 이 작업은 감사 로그에 기록됩니다."
-        footer={
-          <>
-            <Button onClick={() => setRefundTarget(null)} disabled={refundMutation.isPending}>
-              취소
-            </Button>
-            <Button
-              variant="primary"
-              loading={refundMutation.isPending}
-              onClick={() => refundTarget && refundMutation.mutate(refundTarget.subscriptionId)}
-            >
-              환불 처리
-            </Button>
-          </>
+        onSubmit={(reason) =>
+          refundTarget && refundMutation.mutate({ paymentId: refundTarget.paymentId, reason })
         }
-      >
-        {refundTarget ? (
-          <DetailBox>
-            <DetailRow label="회원" value={maskName(refundTarget.memberName)} />
-            <DetailRow label="구독 플랜" value={refundTarget.planName} />
-            <DetailRow
-              label="결제수단"
-              value={<span className="tabular">{maskCard(refundTarget.cardNumber)}</span>}
-            />
-            <DetailRow label="환불 금액" value={formatCurrency(refundTarget.amount)} />
-          </DetailBox>
-        ) : null}
-      </Modal>
+      />
 
-      <p className="payments__footnote">
-        구독 정보는 회원 상세에서도 확인할 수 있습니다.{' '}
-        <Link to="/members">회원 관리로 이동</Link>
-      </p>
+      <AdjustBalanceModal
+        wallet={adjustTarget}
+        submitting={adjustMutation.isPending}
+        onClose={() => setAdjustTarget(null)}
+        onSubmit={(amount, reason) =>
+          adjustTarget && adjustMutation.mutate({ userId: adjustTarget.userId, amount, reason })
+        }
+      />
     </div>
   );
 }
