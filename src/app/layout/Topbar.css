@@ -1,0 +1,161 @@
+.topbar {
+  grid-area: header;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: 0 var(--space-5);
+  background: var(--bg-header);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow-sm);
+}
+
+.topbar__left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.topbar__title {
+  font-size: var(--fs-title);
+  line-height: var(--lh-title);
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar__right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  flex-shrink: 0;
+}
+
+.topbar__search {
+  width: 320px;
+}
+
+/* ---- 아이콘 버튼 ------------------------------------------------------ */
+
+.topbar__icon-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+}
+
+.topbar__icon-btn:hover {
+  background: var(--surface-tint);
+  color: var(--accent-strong);
+}
+
+.topbar__dot {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--danger);
+  border: 2px solid var(--bg);
+}
+
+/* ---- 프로필 ----------------------------------------------------------- */
+
+.topbar__profile {
+  position: relative;
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--border);
+}
+
+.topbar__profile-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: var(--radius);
+}
+
+.topbar__profile-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+
+.topbar__name {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.topbar__role {
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-tint-strong);
+  color: var(--accent-strong);
+  font-size: var(--fs-badge);
+  line-height: var(--lh-badge);
+}
+
+.topbar__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: var(--accent-strong);
+  color: var(--text-on-accent);
+}
+
+/* ---- 프로필 메뉴 ------------------------------------------------------ */
+
+.topbar__menu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  min-width: 160px;
+  padding: var(--space-1);
+  background: var(--surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 30;
+}
+
+.topbar__menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
+}
+
+.topbar__menu-item:hover {
+  background: var(--surface-subtle);
+  color: var(--accent-strong);
+}
