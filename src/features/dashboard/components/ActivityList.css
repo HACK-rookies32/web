@@ -17,8 +17,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--dashboard-icon-size);
+  height: var(--dashboard-icon-size);
   flex-shrink: 0;
   border-radius: var(--radius-pill);
 }
@@ -41,7 +41,7 @@
 .activity__body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-1);
   min-width: 0;
 }
 
