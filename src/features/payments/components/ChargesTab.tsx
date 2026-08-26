@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SetURLSearchParams } from 'react-router-dom';
-import { Column, Select, StackedCell, StatusPill } from '@/shared/ui';
+import { Button, Column, RowActions, Select, StackedCell, StatusPill } from '@/shared/ui';
 import { FundsTabLayout } from './FundsTabLayout';
 import { formatCurrency, formatDateTime, maskEmail, maskName } from '@/shared/lib/format';
 import { CHARGE_STATUS, type ChargeStatus } from '@/shared/lib/wallet';
@@ -22,8 +22,10 @@ interface ChargesTabProps {
   status: ChargeStatus | 'ALL';
   userId?: number;
   page: number;
+  canManage: boolean;
   patchParams: (patch: Record<string, string | null>, resetPage?: boolean) => void;
   setSearchParams: SetURLSearchParams;
+  onRefund: (charge: ChargeItem) => void;
 }
 
 /** 전체 회원의 지갑 충전 내역 (GET /admin/charges). */
@@ -32,8 +34,10 @@ export function ChargesTab({
   status,
   userId,
   page,
+  canManage,
   patchParams,
   setSearchParams,
+  onRefund,
 }: ChargesTabProps) {
   const params = useMemo(
     () => ({ keyword, status, userId, page, size: DEFAULT_PAGE_SIZE }),
@@ -87,6 +91,27 @@ export function ChargesTab({
         ) : (
           <span className="muted">-</span>
         ),
+    },
+    {
+      key: 'actions',
+      header: '액션',
+      align: 'center',
+      width: canManage ? '108px' : '48px',
+      hoverOnly: true,
+      render: (row) =>
+        canManage && row.status === 'PAID' ? (
+          <RowActions>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="funds__refund-btn"
+              onClick={() => onRefund(row)}
+              aria-label={`${maskName(row.userName)} 회원의 ${formatCurrency(row.amount)} 충전 취소`}
+            >
+              충전 취소
+            </Button>
+          </RowActions>
+        ) : null,
     },
   ];
 

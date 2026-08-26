@@ -3,15 +3,17 @@ import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import {
   MOCK_CHARGES,
-  MOCK_FUND_STATS,
   MOCK_STORE_PAYMENTS,
   MOCK_WALLETS,
+  computeFundStats,
 } from '@/mocks/payments';
 import type { Page } from '@/shared/lib/types';
 import type {
   ChargeItem,
   ChargeListParams,
   FundStats,
+  RefundRequest,
+  RefundResult,
   StorePayment,
   StorePaymentListParams,
   WalletListParams,
@@ -38,6 +40,7 @@ export const fundKeys = {
 };
 
 /* 목 모드에서 환불·조정 결과를 세션 동안 유지하기 위한 작업 사본. */
+let chargeStore: ChargeItem[] = [...MOCK_CHARGES];
 let paymentStore: StorePayment[] = [...MOCK_STORE_PAYMENTS];
 let walletStore: WalletSummary[] = MOCK_WALLETS.map((w) => ({ ...w }));
 let nextTxId = 91000;
@@ -46,7 +49,8 @@ let nextTxId = 91000;
 
 /** GET /admin/stats */
 export async function fetchFundStats(): Promise<FundStats> {
-  if (USE_MOCK) return mockResponse(MOCK_FUND_STATS);
+  // 환불·충전 취소가 곧바로 반영되도록 지금 저장소로 계산한다.
+  if (USE_MOCK) return mockResponse(computeFundStats(chargeStore, paymentStore));
   return request<FundStats>({ url: '/admin/stats', method: 'GET', params: { groupBy: 'DAY' } });
 }
 
@@ -55,7 +59,8 @@ export async function fetchFundStats(): Promise<FundStats> {
 /** GET /admin/charges */
 export async function fetchCharges(params: ChargeListParams): Promise<Page<ChargeItem>> {
   if (USE_MOCK) {
-    const filtered = MOCK_CHARGES.filter((c) => (params.userId ? c.userId === params.userId : true))
+    const filtered = chargeStore
+      .filter((c) => (params.userId ? c.userId === params.userId : true))
       .filter((c) => (params.status && params.status !== 'ALL' ? c.status === params.status : true))
       .filter((c) => matchesKeyword(c, params.keyword, ['userName', 'userEmail', 'method']));
 
@@ -84,69 +89,172 @@ export async function fetchStorePayments(
   return request<Page<StorePayment>>({ url: '/admin/payments', method: 'GET', params });
 }
 
+/* ------------------------------------------------------------- 환불 ---- */
+
 /**
- * POST /admin/payments/{paymentId}/refund — 강제 환불 (SUPER_ADMIN)
- * 자녀 잔액 원복 + wallet_transaction(REFUND) + 감사 로그를 서버가 기록한다.
+ * POST /admin/wallets/refund — 강제 환불 · 충전 취소 (SUPER_ADMIN)
+ *
+ * 대상마다 경로를 따로 두지 않고 `targetType` + `targetId` 로 구분한다.
+ * 어느 쪽이든 결국 하는 일은 같다 — 지갑 잔액을 되돌리고
+ * `wallet_transaction(REFUND)` 과 감사 로그를 남긴다. 다만 **방향이 반대**다.
+ *
+ *   PAYMENT — 자녀가 매장에서 쓴 돈을 되돌린다 → 자녀 지갑 **증가**
+ *   CHARGE  — 부모 카드로 충전액이 되돌아간다 → 부모 지갑 **차감**
+ *
+ * CHARGE 는 이미 써버려 잔액이 모자라면 취소할 수 없다(명세상 409 CONFLICT).
  */
-export async function refundStorePayment(vars: {
-  paymentId: number;
-  reason: string;
-  adminUsername: string;
-}): Promise<StorePayment> {
+export async function refund(
+  vars: RefundRequest & { adminUsername: string },
+): Promise<RefundResult> {
   if (USE_MOCK) {
-    const index = paymentStore.findIndex((p) => p.paymentId === vars.paymentId);
-    if (index < 0) throw new Error('존재하지 않는 결제 건입니다.');
-
-    const target = paymentStore[index];
     const now = new Date().toISOString();
-    const next: StorePayment = {
-      ...target,
-      status: 'REFUNDED',
-      refundedAt: now,
-      refundReason: vars.reason,
-      balanceAfter: target.balanceAfter + target.amount,
-    };
-    paymentStore = paymentStore.map((p, i) => (i === index ? next : p));
 
-    // 자녀 지갑 잔액 원복 + REFUND 거래 기록
-    walletStore = walletStore.map((w) => {
-      if (w.userId !== target.childId) return w;
-      const balance = w.balance + target.amount;
-      return {
-        ...w,
-        balance,
-        updatedAt: now,
-        recentTransactions: [
-          {
-            txId: (nextTxId += 1),
-            type: 'REFUND',
-            amount: target.amount,
-            balanceAfter: balance,
-            refId: `payment:${target.paymentId}`,
-            memo: vars.reason,
-            createdAt: now,
-          },
-          ...w.recentTransactions,
-        ],
-      };
+    if (vars.targetType === 'PAYMENT') {
+      const index = paymentStore.findIndex((p) => p.paymentId === vars.targetId);
+      if (index < 0) throw new Error('존재하지 않는 결제 건입니다.');
+
+      const target = paymentStore[index];
+      if (target.status !== 'PAID') {
+        throw new Error('결제 완료된 건만 환불할 수 있습니다.');
+      }
+
+      paymentStore = paymentStore.map((p, i) =>
+        i === index
+          ? {
+              ...p,
+              status: 'REFUNDED',
+              refundedAt: now,
+              refundReason: vars.reason,
+              balanceAfter: p.balanceAfter + p.amount,
+            }
+          : p,
+      );
+
+      const wallet = applyRefundToWallet({
+        userId: target.childId,
+        delta: target.amount,
+        refId: `payment:${target.paymentId}`,
+        reason: vars.reason,
+        at: now,
+      });
+
+      appendAuditLog({
+        adminUsername: vars.adminUsername,
+        action: 'PAYMENT_REFUND',
+        target: `payment:${target.paymentId}`,
+        description: `${target.childName} 자녀의 ${target.merchantName} 결제 ${target.amount.toLocaleString('ko-KR')}원 강제 환불 — ${vars.reason}`,
+      });
+
+      return mockResponse(
+        {
+          targetType: 'PAYMENT',
+          targetId: target.paymentId,
+          userId: target.childId,
+          userName: wallet?.userName ?? target.childName,
+          walletId: wallet?.walletId ?? 0,
+          amount: target.amount,
+          delta: target.amount,
+          balanceAfter: wallet?.balance ?? 0,
+          refundedAt: now,
+          reason: vars.reason,
+        },
+        700,
+      );
+    }
+
+    const index = chargeStore.findIndex((c) => c.chargeId === vars.targetId);
+    if (index < 0) throw new Error('존재하지 않는 충전 건입니다.');
+
+    const target = chargeStore[index];
+    if (target.status !== 'PAID') {
+      throw new Error('완료된 충전 건만 환불할 수 있습니다.');
+    }
+
+    const before = walletStore.find((w) => w.userId === target.userId);
+    if (before && before.balance < target.amount) {
+      throw new Error(
+        `잔액이 부족해 취소할 수 없습니다. 현재 잔액 ${before.balance.toLocaleString('ko-KR')}원 · 취소 금액 ${target.amount.toLocaleString('ko-KR')}원`,
+      );
+    }
+
+    chargeStore = chargeStore.map((c, i) =>
+      i === index ? { ...c, status: 'CANCELED', canceledAt: now, cancelReason: vars.reason } : c,
+    );
+
+    const wallet = applyRefundToWallet({
+      userId: target.userId,
+      delta: -target.amount,
+      refId: `charge:${target.chargeId}`,
+      reason: vars.reason,
+      at: now,
     });
 
-    // 서버 연동 후에는 서버가 자동 기록하므로 이 블록은 제거한다.
     appendAuditLog({
       adminUsername: vars.adminUsername,
       action: 'PAYMENT_REFUND',
-      target: `payment:${target.paymentId}`,
-      description: `${target.childName} 자녀의 ${target.merchantName} 결제 ${target.amount.toLocaleString('ko-KR')}원 강제 환불 — ${vars.reason}`,
+      target: `charge:${target.chargeId}`,
+      description: `${target.userName} 회원의 ${target.method} 충전 ${target.amount.toLocaleString('ko-KR')}원 취소 — ${vars.reason}`,
     });
 
-    return mockResponse(next, 700);
+    return mockResponse(
+      {
+        targetType: 'CHARGE',
+        targetId: target.chargeId,
+        userId: target.userId,
+        userName: wallet?.userName ?? target.userName,
+        walletId: wallet?.walletId ?? 0,
+        amount: target.amount,
+        delta: -target.amount,
+        balanceAfter: wallet?.balance ?? 0,
+        refundedAt: now,
+        reason: vars.reason,
+      },
+      700,
+    );
   }
 
-  return request<StorePayment>({
-    url: `/admin/payments/${vars.paymentId}/refund`,
+  return request<RefundResult>({
+    url: '/admin/wallets/refund',
     method: 'POST',
-    data: { reason: vars.reason },
+    data: { targetType: vars.targetType, targetId: vars.targetId, reason: vars.reason },
   });
+}
+
+/** 목 전용 — 지갑 잔액을 옮기고 REFUND 원장을 남긴 뒤 갱신된 지갑을 돌려준다. */
+function applyRefundToWallet(input: {
+  userId: number;
+  /** 증가면 양수, 차감이면 음수. */
+  delta: number;
+  refId: string;
+  reason: string;
+  at: string;
+}): WalletSummary | undefined {
+  let updated: WalletSummary | undefined;
+
+  walletStore = walletStore.map((w) => {
+    if (w.userId !== input.userId) return w;
+    const balance = w.balance + input.delta;
+    updated = {
+      ...w,
+      balance,
+      updatedAt: input.at,
+      recentTransactions: [
+        {
+          txId: (nextTxId += 1),
+          type: 'REFUND',
+          amount: input.delta,
+          balanceAfter: balance,
+          refId: input.refId,
+          memo: input.reason,
+          createdAt: input.at,
+        },
+        ...w.recentTransactions,
+      ],
+    };
+    return updated;
+  });
+
+  return updated;
 }
 
 /* ------------------------------------------------------------- 지갑 ---- */
