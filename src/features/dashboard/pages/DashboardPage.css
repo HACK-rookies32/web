@@ -1,4 +1,6 @@
 .dashboard {
+  --dashboard-icon-size: 36px;
+
   display: flex;
   flex-direction: column;
   gap: var(--space-5);
@@ -6,7 +8,8 @@
 
 .dashboard__kpis {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-auto-rows: 1fr;
   gap: var(--space-4);
 }
 
@@ -14,17 +17,11 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
-  align-items: start;
+  align-items: stretch;
 }
 
-/* 1440×1024 기준 레이아웃을 유지하되, 좁아지면 단계적으로 접는다. */
-@media (max-width: 1180px) {
-  .dashboard__kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-@media (max-width: 900px) {
+/* 사이드바를 포함한 1280px 화면에서는 요약 카드가 잘리지 않도록 한 열로 쌓는다. */
+@media (max-width: 1350px) {
   .dashboard__columns {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -86,4 +83,5 @@
 .dashboard__muted {
   color: var(--text-muted);
   font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
 }
