@@ -19,6 +19,7 @@ import {
   useToast,
 } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
@@ -35,6 +36,7 @@ import './CommunityPage.css';
 export function CommunityPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const syncAuditLog = useAuditLogSync();
   const { hasRole, session } = useAuth();
   const { searchParams, patchParams, page } = useListParams();
   const sort = searchParams.get('sort') ?? 'id,desc';
@@ -82,6 +84,7 @@ export function CommunityPage() {
     mutationFn: (postId: number) => deleteCommunityPost({ postId, adminUsername }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
+      syncAuditLog();
       patchParams({ id: null }, false);
       setDeleteTarget(null);
       toast.success('게시글을 삭제했습니다', '삭제 활동은 감사 로그에 기록됩니다.');
@@ -94,6 +97,7 @@ export function CommunityPage() {
       banCommunityMember({ ...vars, adminUsername }),
     onSuccess: () => {
       const released = durationDays === 0;
+      syncAuditLog();
       closeBanModal();
       toast.success(released ? '사용자 밴을 해제했습니다' : '사용자 밴을 적용했습니다');
     },

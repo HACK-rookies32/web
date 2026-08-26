@@ -30,6 +30,7 @@ import {
 import { MEMBER_STATUS, inquiryStatus } from '@/shared/lib/status';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import {
   fetchMember,
   fetchMemberDevices,
@@ -63,7 +64,8 @@ export function MemberDetailPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { hasRole } = useAuth();
+  const { hasRole, session } = useAuth();
+  const syncAuditLog = useAuditLogSync();
   const canManage = hasRole(['SUPER_ADMIN']);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -98,10 +100,16 @@ export function MemberDetailPage() {
   });
 
   const suspendMutation = useMutation({
-    mutationFn: () => updateMember(memberId, { status: 'SUSPENDED' }),
+    mutationFn: () =>
+      updateMember({
+        memberId,
+        body: { status: 'SUSPENDED' },
+        adminUsername: session?.username ?? 'unknown',
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
       queryClient.invalidateQueries({ queryKey: memberKeys.detail(memberId) });
+      syncAuditLog();
       setSuspendOpen(false);
       toast.success('계정을 정지했습니다', '이 작업은 감사 로그에 기록되었습니다.');
     },

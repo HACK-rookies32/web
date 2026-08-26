@@ -17,7 +17,9 @@ import {
   useToast,
 } from '@/shared/ui';
 import { formatDateTime, josa } from '@/shared/lib/format';
+import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
+import { useAuth } from '@/shared/auth/AuthContext';
 import {
   createHarmfulKeyword,
   deleteHarmfulKeyword,
@@ -30,6 +32,8 @@ import './HarmfulKeywordsPage.css';
 export function HarmfulKeywordsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
+  const syncAuditLog = useAuditLogSync();
   const { patchParams, getParam } = useListParams();
   const [keyword, setKeyword] = useState('');
   const search = getParam('keyword');
@@ -51,9 +55,11 @@ export function HarmfulKeywordsPage() {
   }, [query.data, search]);
 
   const createMutation = useMutation({
-    mutationFn: createHarmfulKeyword,
+    mutationFn: (body: { keyword: string }) =>
+      createHarmfulKeyword({ body, adminUsername: session?.username ?? 'unknown' }),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: harmfulKeywordKeys.all });
+      syncAuditLog();
       setAddOpen(false);
       setKeyword('');
       setFieldError('');
@@ -68,9 +74,11 @@ export function HarmfulKeywordsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteHarmfulKeyword,
+    mutationFn: (id: number) =>
+      deleteHarmfulKeyword({ id, adminUsername: session?.username ?? 'unknown' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: harmfulKeywordKeys.all });
+      syncAuditLog();
       setDeleteTarget(null);
       toast.success('차단 키워드를 제외했습니다');
     },

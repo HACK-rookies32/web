@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button, Modal, Spinner, useToast } from '@/shared/ui';
 import { downloadCsv, formatDate, maskName } from '@/shared/lib/format';
+import { useAuth } from '@/shared/auth/AuthContext';
+import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { fetchMemberReportCsv } from '../api';
 import type { MemberDetail } from '../types';
 import { DownloadGlyph } from './Glyphs';
@@ -22,6 +24,8 @@ type Phase = 'idle' | 'generating' | 'done' | 'error';
  */
 export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
   const toast = useToast();
+  const { session } = useAuth();
+  const syncAuditLog = useAuditLogSync();
   const [phase, setPhase] = useState<Phase>('idle');
   const [csv, setCsv] = useState<string | null>(null);
 
@@ -38,9 +42,14 @@ export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
   async function generate() {
     setPhase('generating');
     try {
-      const result = await fetchMemberReportCsv(member);
+      const result = await fetchMemberReportCsv({
+        member,
+        adminUsername: session?.username ?? 'unknown',
+      });
       setCsv(result);
       setPhase('done');
+      // 리포트 생성은 감사 대상 활동(REPORT_DOWNLOAD)이다.
+      syncAuditLog();
     } catch {
       setPhase('error');
     }

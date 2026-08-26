@@ -20,6 +20,7 @@ import {
 import { formatDateTime, formatRelative } from '@/shared/lib/format';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
 import {
   broadcastNotification,
@@ -49,6 +50,7 @@ const EXPOSE_FILTERS = [
 export function NoticesPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const syncAuditLog = useAuditLogSync();
   const { hasRole, session } = useAuth();
   const canManage = hasRole(['SUPER_ADMIN']);
   const adminUsername = session?.username ?? 'unknown';
@@ -82,6 +84,7 @@ export function NoticesPage() {
         : createNotice({ body: vars.body, adminUsername }),
     onSuccess: (notice, vars) => {
       queryClient.invalidateQueries({ queryKey: noticeKeys.all });
+      syncAuditLog();
       setFormOpen(false);
       setEditing(null);
       toast.success(
@@ -97,6 +100,7 @@ export function NoticesPage() {
       deleteNotice({ noticeId: target.noticeId, title: target.title, adminUsername }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: noticeKeys.all });
+      syncAuditLog();
       setDeleteTarget(null);
       toast.success('공지를 삭제했습니다', '이 작업은 감사 로그에 기록되었습니다.');
     },
@@ -107,6 +111,7 @@ export function NoticesPage() {
     mutationFn: (body: Parameters<typeof broadcastNotification>[0]['body']) =>
       broadcastNotification({ body, adminUsername }),
     onSuccess: () => {
+      syncAuditLog();
       setBroadcastOpen(false);
       toast.success('전체 알림을 발송했습니다', '모든 회원에게 푸시 전송이 접수되었습니다.');
     },
