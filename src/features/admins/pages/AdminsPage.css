@@ -1,0 +1,31 @@
+.admins {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.admins__muted {
+  color: var(--text-muted);
+}
+
+.admins__role-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.admins__role-change {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+}
+
+.admins__role-change strong {
+  color: var(--accent-strong);
+}

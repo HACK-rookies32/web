@@ -5,7 +5,6 @@ import { AuthProvider } from '@/shared/auth/AuthContext';
 import { ProtectedRoute } from '@/shared/auth/ProtectedRoute';
 import { ToastProvider } from '@/shared/ui';
 import { AppLayout } from './layout/AppLayout';
-import { PlaceholderPage } from './PlaceholderPage';
 
 /* 페이지는 라우트 단위로 lazy 로드한다. */
 const LoginPage = lazy(() =>
@@ -39,6 +38,9 @@ const CommunityPage = lazy(() =>
 );
 const AuditLogsPage = lazy(() =>
   import('@/features/audit-logs/pages/AuditLogsPage').then((m) => ({ default: m.AuditLogsPage })),
+);
+const AdminsPage = lazy(() =>
+  import('@/features/admins/pages/AdminsPage').then((m) => ({ default: m.AdminsPage })),
 );
 const UiKitPage = lazy(() => import('./UiKitPage').then((m) => ({ default: m.UiKitPage })));
 
@@ -88,23 +90,16 @@ export function App() {
                     <Route path="notices" element={<NoticesPage />} />
                     <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
                     <Route path="audit-logs" element={<AuditLogsPage />} />
-                    <Route
-                      path="admins"
-                      element={
-                        <PlaceholderPage
-                          title="관리자 계정 관리"
-                          endpoints={[
-                            'GET /admin/admins (배열 반환 — 페이징 아님)',
-                            'PATCH /admin/admins/{id}',
-                          ]}
-                        />
-                      }
-                    />
+                    <Route path="admins" element={<AdminsPage />} />
                   </Route>
 
                   {/* 1:1 문의 — SUPER_ADMIN · GENERAL_ADMIN · INQUIRY_ADMIN */}
                   <Route
-                    element={<ProtectedRoute roles={['SUPER_ADMIN', 'INQUIRY_ADMIN']} />}
+                    element={
+                      <ProtectedRoute
+                        roles={['SUPER_ADMIN', 'GENERAL_ADMIN', 'INQUIRY_ADMIN']}
+                      />
+                    }
                   >
                     <Route path="inquiries" element={<InquiriesPage />} />
                   </Route>
