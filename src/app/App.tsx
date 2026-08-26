@@ -1,9 +1,9 @@
-import { lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider } from '@/shared/auth/AuthContext';
 import { ProtectedRoute } from '@/shared/auth/ProtectedRoute';
-import { ToastProvider } from '@/shared/ui';
+import { LoadingBlock, ToastProvider } from '@/shared/ui';
 import { AppLayout } from './layout/AppLayout';
 
 /* 페이지는 라우트 단위로 lazy 로드한다. */
@@ -71,49 +71,60 @@ export function App() {
         <ToastProvider>
           {/* v7 동작을 미리 켜 둔다. 추후 업그레이드 시 동작이 바뀌지 않는다. */}
           <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
+            {/*
+              페이지는 전부 lazy 다. AppLayout 안에도 Suspense 가 있지만 /login 은
+              레이아웃 밖이라 경계가 없었다. 지금도 크래시는 나지 않지만 청크를
+              받는 동안 빈 화면이 보이므로, 라우트 전체를 감싸 로딩 표시를 준다.
+            */}
+            <Suspense fallback={<LoadingBlock label="화면을 불러오는 중" />}>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
 
-              <Route element={<ProtectedRoute />}>
-                <Route element={<AppLayout />}>
-                  <Route index element={<DashboardPage />} />
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<AppLayout />}>
+                    <Route index element={<DashboardPage />} />
 
-                  {/* 회원 관리 — SUPER_ADMIN · GENERAL_ADMIN */}
-                  <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN']} />}>
-                    <Route path="members" element={<MembersPage />} />
-                    <Route path="members/:memberId" element={<MemberDetailPage />} />
-                    <Route path="payments" element={<PaymentsPage />} />
+                    {/* 회원 관리 — SUPER_ADMIN · GENERAL_ADMIN */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN']} />}>
+                      <Route path="members" element={<MembersPage />} />
+                      <Route path="members/:memberId" element={<MemberDetailPage />} />
+                      <Route path="payments" element={<PaymentsPage />} />
+                    </Route>
+
+                    {/* 공지 관리 — SUPER_ADMIN */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN']} />}>
+                      <Route path="notices" element={<NoticesPage />} />
+                      <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
+                      <Route path="audit-logs" element={<AuditLogsPage />} />
+                      <Route path="admins" element={<AdminsPage />} />
+                    </Route>
+
+                    {/* 1:1 문의 — SUPER_ADMIN · INQUIRY_ADMIN (명세 5.4) */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'INQUIRY_ADMIN']} />}>
+                      <Route path="inquiries" element={<InquiriesPage />} />
+                    </Route>
+
+                    {/*
+                      커뮤니티 관리 — 명세 5.5 의 목록 조회(GET /admin/community/posts)만
+                      GENERAL_ADMIN 에 열려 있다. 화면 진입은 3개 역할에 열어 두고,
+                      상세·삭제·밴은 CommunityPage 안에서 SUPER · COMMUNITY 로 좁힌다.
+                    */}
+                    <Route
+                      element={
+                        <ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN']} />
+                      }
+                    >
+                      <Route path="community" element={<CommunityPage />} />
+                    </Route>
+
+                    {/* 공통 UI 스타일 가이드 */}
+                    <Route path="ui-kit" element={<UiKitPage />} />
                   </Route>
-
-                  {/* 공지 관리 — SUPER_ADMIN */}
-                  <Route element={<ProtectedRoute roles={['SUPER_ADMIN']} />}>
-                    <Route path="notices" element={<NoticesPage />} />
-                    <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
-                    <Route path="audit-logs" element={<AuditLogsPage />} />
-                    <Route path="admins" element={<AdminsPage />} />
-                  </Route>
-
-                  {/* 1:1 문의 — SUPER_ADMIN · GENERAL_ADMIN · INQUIRY_ADMIN */}
-                  <Route
-                    element={
-                      <ProtectedRoute roles={['SUPER_ADMIN', 'INQUIRY_ADMIN']} />
-                    }
-                  >
-                    <Route path="inquiries" element={<InquiriesPage />} />
-                  </Route>
-
-                  {/* 커뮤니티 관리 — 목록·삭제는 세 관리자 역할, 상세·밴은 화면 내부에서 제한 */}
-                  <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'COMMUNITY_ADMIN']} />}>
-                    <Route path="community" element={<CommunityPage />} />
-                  </Route>
-
-                  {/* 공통 UI 스타일 가이드 */}
-                  <Route path="ui-kit" element={<UiKitPage />} />
                 </Route>
-              </Route>
 
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Suspense>
           </BrowserRouter>
         </ToastProvider>
       </AuthProvider>

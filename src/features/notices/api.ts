@@ -165,7 +165,3 @@ export async function broadcastNotification(vars: {
   });
 }
 
-/** 목 데이터를 초기 상태로 되돌린다 (개발 편의용). */
-export function resetNoticeStore(): void {
-  noticeStore = [...MOCK_NOTICES];
-}

@@ -68,22 +68,16 @@ export function DashboardPage() {
         ))}
       </section>
 
+      {/*
+        TODO(api): 가입 추이는 기간을 바꿀 수 있어야 하지만 집계 API 가 명세에 없다.
+        예전에는 7일/30일/1년 버튼이 있었는데 onClick 이 없어 눌러도 아무 일이
+        일어나지 않았고 "7일" 에 활성 표시만 박혀 있었다. 고를 수 없는 것을
+        고를 수 있는 것처럼 보이지 않게 지금 기간만 글로 알린다.
+      */}
       <Card
         title="일일 사용자 가입 추이"
         description="최근 7일간의 신규 가입자 추이"
-        action={
-          <div className="dashboard__range" role="group" aria-label="기간 선택">
-            <button type="button" className="dashboard__range-btn is-active">
-              7일
-            </button>
-            <button type="button" className="dashboard__range-btn">
-              30일
-            </button>
-            <button type="button" className="dashboard__range-btn">
-              1년
-            </button>
-          </div>
-        }
+        action={<span className="dashboard__range-label">최근 7일</span>}
       >
         <SignupTrendChart points={data.signupTrend} />
       </Card>

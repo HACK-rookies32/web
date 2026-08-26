@@ -1,21 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SetURLSearchParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  Column,
-  EmptyState,
-  Icon,
-  ListToolbar,
-  Pagination,
-  RowActions,
-  SearchInput,
-  Select,
-  StackedCell,
-  StatusPill,
-  Table,
-} from '@/shared/ui';
+import { Button, Column, RowActions, Select, StackedCell, StatusPill } from '@/shared/ui';
+import { FundsTabLayout } from './FundsTabLayout';
 import { formatCurrency, formatDateTime, maskName } from '@/shared/lib/format';
 import { STORE_PAYMENT_STATUS, type StorePaymentStatus } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
@@ -133,17 +120,12 @@ export function StorePaymentsTab({
   ];
 
   return (
-    <div className="funds__tab">
-      <ListToolbar
-        search={
-          <SearchInput
-            value={keyword}
-            onSearch={handleSearch}
-            placeholder="자녀명 · 보호자명 · 매장명 검색"
-            aria-label="매장 결제 검색"
-          />
-        }
-      >
+    <FundsTabLayout
+      searchPlaceholder="자녀명 · 보호자명 · 매장명 검색"
+      searchLabel="매장 결제 검색"
+      keyword={keyword}
+      onSearch={handleSearch}
+      filter={
         <Select
           value={status}
           onChange={(e) => patchParams({ status: e.target.value === 'ALL' ? null : e.target.value })}
@@ -155,41 +137,17 @@ export function StorePaymentsTab({
             </option>
           ))}
         </Select>
-      </ListToolbar>
-
-      <Card flush>
-        <Table
-          caption="매장 결제 내역"
-          columns={columns}
-          rows={data?.content ?? []}
-          rowKey={(r) => r.paymentId}
-          loading={isPending}
-          error={isError ? '결제 내역을 불러오지 못했습니다.' : undefined}
-          emptyState={
-            <EmptyState
-              title="조회된 결제 내역이 없습니다"
-              description="검색어나 상태 필터를 바꿔보세요."
-              icon={<Icon name="search" />}
-              action={
-                <Button size="sm" onClick={() => setSearchParams(new URLSearchParams({ tab: 'payments' }))}>
-                  필터 초기화
-                </Button>
-              }
-            />
-          }
-          footer={
-            data && data.totalElements > 0 ? (
-              <Pagination
-                page={data.page}
-                totalPages={data.totalPages}
-                totalElements={data.totalElements}
-                size={data.size}
-                onChange={(next) => patchParams({ page: String(next) }, false)}
-              />
-            ) : undefined
-          }
-        />
-      </Card>
-    </div>
+      }
+      caption="매장 결제 내역"
+      columns={columns}
+      data={data}
+      rowKey={(r) => r.paymentId}
+      loading={isPending}
+      error={isError}
+      entityName="결제 내역"
+      tab="payments"
+      onResetFilters={(tab) => setSearchParams(new URLSearchParams({ tab }))}
+      onPageChange={(next) => patchParams({ page: String(next) }, false)}
+    />
   );
 }

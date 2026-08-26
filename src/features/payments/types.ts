@@ -66,13 +66,19 @@ export interface StorePayment {
 /* ------------------------------------------------------------- 통계 ---- */
 
 /** GET /admin/stats 의 data. */
+/**
+ * 자금 지표 (명세 5.9 GET /admin/stats).
+ *
+ * 금액·건수는 모두 **완료(PAID)된 건** 기준이다.
+ * 화면의 "미사용 잔액 = 충전액 − 결제액" 이 성립하려면 실제로 오간 돈만 세야 한다.
+ */
 export interface FundStats {
   totalCharged: number;
   totalPaid: number;
   chargeCount: number;
   paymentCount: number;
   refundCount: number;
-  /** groupBy=DAY 결과 */
+  /** `groupBy=DAY` 기간별 집계. 아직 화면에 차트는 없지만 명세상 응답에 포함된다. */
   daily: { date: string; charged: number; paid: number }[];
 }
 

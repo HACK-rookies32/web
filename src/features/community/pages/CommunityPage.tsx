@@ -40,8 +40,19 @@ export function CommunityPage() {
   const sort = searchParams.get('sort') ?? 'id,desc';
   const selectedId = searchParams.get('id') ? Number(searchParams.get('id')) : null;
   /*
-   * 명세 5.5 의 커뮤니티 API 4종은 모두 ADMIN_SUPER · ADMIN_COMMUNITY 전용이다.
-   * 조회·상세·삭제·밴의 요구 권한이 같으므로 플래그 하나로 묶는다.
+   * 명세 5.5 의 커뮤니티 API 별 요구 권한.
+   *
+   *   GET    /admin/community/posts        SUPER · GENERAL · COMMUNITY   ← 목록만 열려 있다
+   *   GET    /admin/community/posts/{id}   SUPER · COMMUNITY
+   *   DELETE /admin/community/posts/{id}   SUPER · COMMUNITY
+   *   POST   /admin/community/members/ban  SUPER · COMMUNITY
+   *
+   * 즉 GENERAL_ADMIN 은 목록을 볼 수만 있고 상세·삭제·밴은 못 한다.
+   *
+   * TODO(api): 명세 문서에는 DELETE 의 허용 역할에 아직 GENERAL_ADMIN 이 적혀 있다.
+   *            백엔드에 확인한 결과 "잘못 들어간 것" 이라고 해서 여기서는 뺐다.
+   *            문서가 고쳐지면 이 주석을 지운다. 문서만 보고 되돌리지 말 것.
+   *
    * ⚠️ 이 가드는 UX 용이며 실제 접근 통제는 서버가 담당한다.
    */
   const canModerate = hasRole(['SUPER_ADMIN', 'COMMUNITY_ADMIN']);
@@ -147,7 +158,7 @@ export function CommunityPage() {
     {
       key: 'actions',
       header: <span className="sr-only">관리</span>,
-      width: canModerate ? '168px' : '80px',
+      width: canModerate ? '168px' : '104px',
       align: 'right',
       render: (row) => (
         <RowActions>

@@ -32,7 +32,7 @@ export function AppLayout() {
   return (
     <div className={collapsed ? 'app-layout is-collapsed' : 'app-layout'}>
       <Sidebar collapsed={collapsed} />
-      <Topbar title={resolveTitle(pathname)} onToggleSidebar={() => setCollapsed((v) => !v)} unreadCount={3} />
+      <Topbar title={resolveTitle(pathname)} onToggleSidebar={() => setCollapsed((v) => !v)} />
 
       <main className="app-layout__main">
         <div className="app-layout__content">

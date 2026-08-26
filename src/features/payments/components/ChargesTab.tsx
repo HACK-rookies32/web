@@ -1,20 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SetURLSearchParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  Column,
-  EmptyState,
-  Icon,
-  ListToolbar,
-  Pagination,
-  SearchInput,
-  Select,
-  StackedCell,
-  StatusPill,
-  Table,
-} from '@/shared/ui';
+import { Column, Select, StackedCell, StatusPill } from '@/shared/ui';
+import { FundsTabLayout } from './FundsTabLayout';
 import { formatCurrency, formatDateTime, maskEmail, maskName } from '@/shared/lib/format';
 import { CHARGE_STATUS, type ChargeStatus } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
@@ -103,17 +91,12 @@ export function ChargesTab({
   ];
 
   return (
-    <div className="funds__tab">
-      <ListToolbar
-        search={
-          <SearchInput
-            value={keyword}
-            onSearch={handleSearch}
-            placeholder="회원명 또는 이메일 검색"
-            aria-label="충전 내역 검색"
-          />
-        }
-      >
+    <FundsTabLayout
+      searchPlaceholder="회원명 또는 이메일 검색"
+      searchLabel="충전 내역 검색"
+      keyword={keyword}
+      onSearch={handleSearch}
+      filter={
         <Select
           value={status}
           onChange={(e) => patchParams({ status: e.target.value === 'ALL' ? null : e.target.value })}
@@ -125,41 +108,17 @@ export function ChargesTab({
             </option>
           ))}
         </Select>
-      </ListToolbar>
-
-      <Card flush>
-        <Table
-          caption="충전 내역"
-          columns={columns}
-          rows={data?.content ?? []}
-          rowKey={(r) => r.chargeId}
-          loading={isPending}
-          error={isError ? '충전 내역을 불러오지 못했습니다.' : undefined}
-          emptyState={
-            <EmptyState
-              title="조회된 충전 내역이 없습니다"
-              description="검색어나 상태 필터를 바꿔보세요."
-              icon={<Icon name="search" />}
-              action={
-                <Button size="sm" onClick={() => setSearchParams(new URLSearchParams({ tab: 'charges' }))}>
-                  필터 초기화
-                </Button>
-              }
-            />
-          }
-          footer={
-            data && data.totalElements > 0 ? (
-              <Pagination
-                page={data.page}
-                totalPages={data.totalPages}
-                totalElements={data.totalElements}
-                size={data.size}
-                onChange={(next) => patchParams({ page: String(next) }, false)}
-              />
-            ) : undefined
-          }
-        />
-      </Card>
-    </div>
+      }
+      caption="충전 내역"
+      columns={columns}
+      data={data}
+      rowKey={(r) => r.chargeId}
+      loading={isPending}
+      error={isError}
+      entityName="충전 내역"
+      tab="charges"
+      onResetFilters={(tab) => setSearchParams(new URLSearchParams({ tab }))}
+      onPageChange={(next) => patchParams({ page: String(next) }, false)}
+    />
   );
 }

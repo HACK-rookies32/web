@@ -1,4 +1,26 @@
-import type { DashboardSummary } from '@/features/dashboard/types';
+import type { DashboardInquiry, DashboardSummary } from '@/features/dashboard/types';
+import { MOCK_INQUIRIES } from './inquiries';
+
+/**
+ * 최근 문의는 문의 목록에서 가져온다.
+ *
+ * 예전에는 여기에 문의를 따로 적어 뒀는데 문의 목록과 어긋나 있었다.
+ * (101 은 작성자가 `user123` vs `민수아빠`, 102 는 제목이 「환불 요청합니다」 vs
+ *  「충전한 금액이 지갑에 안 들어왔어요」 로 달랐다.)
+ * 대시보드에서 클릭하면 `/inquiries?id=` 로 이동하므로 같은 데이터를 봐야 한다.
+ */
+function recentInquiries(count: number): DashboardInquiry[] {
+  return [...MOCK_INQUIRIES]
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, count)
+    .map((inquiry) => ({
+      id: inquiry.id,
+      answered: inquiry.answered,
+      title: inquiry.title,
+      memberNickname: inquiry.memberNickname,
+      createdAt: inquiry.createdAt,
+    }));
+}
 
 /** 기준 시각으로부터 n분 전 ISO 문자열. */
 function minutesAgo(n: number): string {
@@ -63,6 +85,12 @@ export const MOCK_DASHBOARD: DashboardSummary = {
     { label: '일', value: 112, muted: true },
   ],
 
+  /*
+   * TODO: 최근 활동도 mocks/auditLogs 에서 뽑는 게 맞다. 다만 ActivityType 이
+   * 4종(MEMBER_SUSPEND · NOTICE_CREATE · HARMFUL_BLOCK · REPORT_DOWNLOAD)뿐이고
+   * 각각 직접 그린 아이콘이 붙어 있는데, 감사 로그 action 은 10종이고
+   * HARMFUL_BLOCK 에 대응하는 값이 없다. 아이콘 세트를 다시 정한 뒤에 옮긴다.
+   */
   activities: [
     {
       id: 1,
@@ -98,34 +126,5 @@ export const MOCK_DASHBOARD: DashboardSummary = {
     },
   ],
 
-  recentInquiries: [
-    {
-      id: 101,
-      answered: false,
-      title: '비밀번호 찾기가 안됩니다.',
-      memberNickname: 'user123',
-      createdAt: minutesAgo(35),
-    },
-    {
-      id: 102,
-      answered: false,
-      title: '환불 요청합니다. 확인 부탁드려요.',
-      memberNickname: 'kim_parent',
-      createdAt: minutesAgo(230),
-    },
-    {
-      id: 103,
-      answered: true,
-      title: '앱 연동 오류 문의',
-      memberNickname: 'lee_dad',
-      createdAt: minutesAgo(1500),
-    },
-    {
-      id: 104,
-      answered: true,
-      title: '자녀 스마트폰 시간 설정 관련',
-      memberNickname: 'park_mom',
-      createdAt: minutesAgo(1700),
-    },
-  ],
+  recentInquiries: recentInquiries(4),
 };
