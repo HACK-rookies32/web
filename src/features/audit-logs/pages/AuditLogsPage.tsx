@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import {
   Button,
@@ -10,6 +11,7 @@ import {
   ListToolbar,
   Pagination,
   Select,
+  StackedCell,
   StatusPill,
   Table,
   TextInput,
@@ -17,7 +19,7 @@ import {
 import { formatDateTime } from '@/shared/lib/format';
 import { useListParams } from '@/shared/hooks/useListParams';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
-import { AUDIT_ACTION_LABEL, type AuditAction } from '@/shared/lib/audit';
+import { AUDIT_ACTION_LABEL, type AuditAction, parseAuditTarget } from '@/shared/lib/audit';
 import { auditLogKeys, fetchAuditLogs } from '../api';
 import { AuditDatePicker } from '../components/AuditDatePicker';
 import type { AuditLogItem, AuditLogListParams } from '../types';
@@ -29,6 +31,8 @@ const MAX_AUDIT_DATE = '2100-12-31';
 function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
   if (action.includes('DELETE') || action === 'MEMBER_BAN') return 'danger';
   if (action === 'PAYMENT_REFUND' || action === 'WALLET_ADJUST') return 'warning';
+  // 권한 변경은 되돌리기 어려운 영향이 커서 수정 계열과 구분해 경고로 둔다.
+  if (action === 'ADMIN_ROLE_UPDATE') return 'warning';
   if (action.includes('UPDATE') || action === 'MEMBER_SUSPEND') return 'info';
   if (action.includes('CREATE')) return 'accent';
   return 'neutral';
@@ -69,21 +73,21 @@ export function AuditLogsPage() {
     {
       key: 'id',
       header: '로그 ID',
-      width: '112px',
+      width: '92px',
       numeric: true,
       render: (row) => <span className="audit-logs__id">#{row.logId}</span>,
     },
     {
       key: 'admin',
       header: '관리자',
-      width: '120px',
-      numeric: true,
-      render: (row) => <span>관리자 #{row.adminId}</span>,
+      width: '132px',
+      /* 계정명을 앞세우고 숫자 ID 는 보조로 내린다. */
+      render: (row) => <StackedCell primary={row.adminUsername} secondary={`#${row.adminId}`} />,
     },
     {
       key: 'action',
       header: '활동',
-      width: '190px',
+      width: '168px',
       render: (row) => (
         <div className="audit-logs__action">
           <StatusPill tone={actionTone(row.action)}>{AUDIT_ACTION_LABEL[row.action]}</StatusPill>
@@ -94,12 +98,43 @@ export function AuditLogsPage() {
     {
       key: 'target',
       header: '대상',
-      render: (row) => <code className="audit-logs__target">{row.target}</code>,
+      width: '184px',
+      /*
+       * target 은 "member:1001" 같은 문자열이다. 종류를 우리말로 풀고,
+       * 해당 관리 화면으로 바로 갈 수 있게 링크를 건다. 연결할 화면이
+       * 없는 종류(리포트 등)는 링크 없이 값만 보여준다.
+       */
+      render: (row) => {
+        const target = parseAuditTarget(row.target);
+        const body = (
+          <StackedCell
+            primary={target.id ? `${target.label} #${target.id}` : target.label}
+            secondary={row.target}
+          />
+        );
+        return target.href ? (
+          <Link className="audit-logs__target-link" to={target.href}>
+            {body}
+          </Link>
+        ) : (
+          body
+        );
+      },
+    },
+    {
+      key: 'description',
+      header: '내용',
+      render: (row) =>
+        row.description ? (
+          <span className="audit-logs__description">{row.description}</span>
+        ) : (
+          <span className="muted">-</span>
+        ),
     },
     {
       key: 'createdAt',
       header: '발생일시',
-      width: '190px',
+      width: '168px',
       numeric: true,
       render: (row) => <span className="muted">{formatDateTime(row.createdAt)}</span>,
     },

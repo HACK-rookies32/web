@@ -113,6 +113,14 @@ export async function updateNotice(vars: {
       updatedAt: new Date().toISOString(),
     };
     noticeStore = noticeStore.map((n, i) => (i === index ? next : n));
+
+    appendAuditLog({
+      adminUsername: vars.adminUsername,
+      action: 'NOTICE_UPDATE',
+      target: `notice:${vars.noticeId}`,
+      description: `공지 수정 — ${next.title}`,
+    });
+
     return mockResponse(next, 500);
   }
   return request<NoticeDetail>({

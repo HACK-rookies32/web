@@ -187,14 +187,14 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 | 공지 작성·수정·삭제, 전체 알림 발송 | 5.3 | `SUPER_ADMIN` |
 | 1:1 문의 조회·답변 등록/수정/삭제 | 5.4 | `SUPER_ADMIN`, `INQUIRY_ADMIN` |
 | 커뮤니티 게시글 **목록** | 5.5 | `SUPER_ADMIN`, `GENERAL_ADMIN`, `COMMUNITY_ADMIN` |
-| 커뮤니티 게시글 **상세·삭제**, 사용자 밴 | 5.5 | `SUPER_ADMIN`, `COMMUNITY_ADMIN` |
+| 커뮤니티 게시글 **상세·삭제**, 사용자 밴 | 5.5 | `SUPER_ADMIN`, `COMMUNITY_ADMIN` (아래 참고) |
 | 커뮤니티 신고 조회 | 5.5 | `SUPER_ADMIN` |
 | 유해 키워드 목록·추가·삭제 | 5.6 | `SUPER_ADMIN` |
 | 리포트 CSV (회원) | 5.7 | `SUPER_ADMIN` |
 | 리포트 CSV (문의) | 5.7 | `SUPER_ADMIN`, `INQUIRY_ADMIN` |
 | 감사 로그 조회 | 5.8 | `SUPER_ADMIN` |
 | 충전·결제·지갑·통계 조회 | 5.9 | `SUPER_ADMIN`, `GENERAL_ADMIN` |
-| 강제 환불, 지갑 잔액 조정 | 5.9 | `SUPER_ADMIN` |
+| 강제 환불·충전 취소, 지갑 잔액 조정 | 5.9 | `SUPER_ADMIN` |
 | 관리자 계정 목록·권한 변경 | 5.1 | `SUPER_ADMIN` |
 
 권한이 없는 메뉴·버튼은 화면에서 **숨깁니다** (`disabled` 가 아니라 렌더하지 않음).
@@ -204,13 +204,18 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 
 ### 명세에서 확인이 필요한 부분
 
-- **역할 이름이 두 가지로 섞여 있습니다.** 5.1·5.4·5.9 는 `SUPER_ADMIN` / `GENERAL_ADMIN` /
-  `INQUIRY_ADMIN` 을 쓰는데, 5.2·5.3·5.6·5.8 은 `ADMIN_SUPER` / `ADMIN_CS` / `ADMIN_COMMUNITY`
-  를 씁니다. 위 표는 `GET /admin/admins` 의 `role` 값(4종)을 정본으로 보고 옮긴 것이며,
-  `ADMIN_CS` 는 문맥상 회원 관리는 `GENERAL_ADMIN`, 문의 CSV 는 `INQUIRY_ADMIN` 으로 읽었습니다.
-  **백엔드 확인이 필요합니다.**
-- **커뮤니티 게시글 삭제 — 문서가 아직 안 고쳐졌습니다.** 명세의
-  `DELETE /admin/community/posts/{id}` 허용 역할에 `GENERAL_ADMIN` 이 적혀 있는데,
-  백엔드에 확인한 결과 **잘못 들어간 것**이라 코드에서는 제외했습니다
-  (`CommunityPage` 의 `canModerate`). `GENERAL_ADMIN` 은 목록 조회만 가능합니다.
-  **문서만 보고 되돌리지 마세요.** 문서가 고쳐지면 `CommunityPage` 의 `TODO(api)` 주석도 지웁니다.
+- **커뮤니티 상세 조회·사용자 밴 — 코드가 문서보다 좁습니다.** 명세의
+  `GET /admin/community/posts/{id}` 와 `POST /admin/community/members/ban` 에는
+  `GENERAL_ADMIN` 이 적혀 있지만 코드는 `SUPER_ADMIN` · `COMMUNITY_ADMIN` 만 허용합니다
+  (`CommunityPage` 의 `canModerate`). 같은 자리에 있던 `DELETE /admin/community/posts/{id}`
+  의 `GENERAL_ADMIN` 은 백엔드가 **잘못 들어간 것**이라고 확인해 문서에서 뺐는데,
+  나머지 둘도 같은 오기인지는 확인받지 못했습니다. **문서만 보고 넓히지 마세요.**
+
+### 감사 로그
+
+관리자 활동은 서버가 자동으로 기록합니다(명세 5.8, 별도 생성 API 없음). 프론트는 조회만 합니다.
+
+목 모드에서는 각 `api.ts` 가 `appendAuditLog` 로 같은 기록을 흉내 냅니다 — 서버 연동 후에는
+그 블록을 지웁니다. 다만 **캐시 무효화는 두 모드 모두 필요합니다.** 감사 대상 활동을 끝낸
+뮤테이션의 `onSuccess` 에서 `useAuditLogSync()` 를 반드시 호출하세요. 빠뜨리면 `staleTime`
+(30초) 안에 감사 로그 화면을 열었을 때 방금 한 작업이 빠진 채로 캐시가 그대로 나옵니다.

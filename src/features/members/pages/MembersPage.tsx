@@ -21,8 +21,8 @@ import {
 import { formatDate, formatNumber, formatRelative, maskEmail, maskName } from '@/shared/lib/format';
 import { MEMBER_STATUS, type MemberStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
-import { AUDIT_LOG_QUERY_KEY } from '@/shared/lib/audit';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
 import { deleteMember, fetchMember, fetchMembers, memberKeys, updateMember } from '../api';
 import type { MemberDetail, MemberListItem, MemberUpdateRequest } from '../types';
@@ -50,6 +50,7 @@ export function MembersPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { hasRole, session } = useAuth();
+  const syncAuditLog = useAuditLogSync();
   const canManage = hasRole(['SUPER_ADMIN']); // 수정·삭제는 SUPER_ADMIN 전용 (명세 5.2)
 
   const { searchParams, patchParams, resetParams, page } = useListParams();
@@ -76,10 +77,10 @@ export function MembersPage() {
 
   const updateMutation = useMutation({
     mutationFn: (vars: { memberId: number; body: MemberUpdateRequest }) =>
-      updateMember(vars.memberId, vars.body, session?.username),
+      updateMember({ ...vars, adminUsername: session?.username ?? 'unknown' }),
     onSuccess: (member) => {
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
-      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
+      syncAuditLog();
       setFormOpen(false);
       setEditing(null);
       toast.success('회원 정보를 수정했습니다', `${maskName(member.name)} 회원의 정보가 갱신되었습니다.`);
@@ -88,10 +89,11 @@ export function MembersPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (memberId: number) => deleteMember(memberId, session?.username),
+    mutationFn: (memberId: number) =>
+      deleteMember({ memberId, adminUsername: session?.username ?? 'unknown' }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
-      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
+      syncAuditLog();
       const name = deleteTarget ? maskName(deleteTarget.name) : '회원';
       setDeleteTarget(null);
       toast.success('회원을 삭제했습니다', `${name} 회원이 삭제되었으며 감사 로그에 기록되었습니다.`);

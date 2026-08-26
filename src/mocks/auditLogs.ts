@@ -11,6 +11,7 @@
  */
 
 import type { AuditAction } from '@/shared/lib/audit';
+import { MOCK_ADMINS } from './admins';
 
 export interface AuditLog {
   logId: number;
@@ -43,7 +44,7 @@ const seed: AuditLog[] = [
   {
     logId: 40002,
     adminId: 2,
-    adminUsername: 'cs_lee',
+    adminUsername: 'general_lee',
     action: 'MEMBER_SUSPEND',
     target: 'member:1003',
     description: '욕설 및 비방 신고 누적',
@@ -97,9 +98,16 @@ export function appendAuditLog(entry: {
   target: string;
   description: string;
 }): AuditLog {
+  /*
+   * 로그인 응답(명세 5.1)은 token · username · role 만 준다. 관리자 숫자 ID 는
+   * 클라이언트가 알 수 없으므로 목에서는 계정 목록에서 username 으로 찾는다.
+   * 서버 연동 후에는 서버가 토큰 주체로 직접 기록하므로 이 조회는 사라진다.
+   */
+  const actor = MOCK_ADMINS.find((admin) => admin.username === entry.adminUsername);
+
   const log: AuditLog = {
     logId: (nextLogId += 1),
-    adminId: 1,
+    adminId: actor?.id ?? 0,
     createdAt: new Date().toISOString(),
     ...entry,
   };

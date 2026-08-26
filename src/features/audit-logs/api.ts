@@ -7,7 +7,7 @@ import type { AuditLogItem, AuditLogListParams } from './types';
 
 export const auditLogKeys = {
   all: AUDIT_LOG_QUERY_KEY,
-  list: (params: AuditLogListParams) => ['audit-logs', params] as const,
+  list: (params: AuditLogListParams) => [...AUDIT_LOG_QUERY_KEY, params] as const,
 };
 
 function startOfDay(value: string): number {
@@ -26,12 +26,14 @@ export async function fetchAuditLogs(params: AuditLogListParams): Promise<Page<A
       .filter((log) => (params.action ? log.action === params.action : true))
       .filter((log) => (params.from ? new Date(log.createdAt).getTime() >= startOfDay(params.from) : true))
       .filter((log) => (params.to ? new Date(log.createdAt).getTime() <= endOfDay(params.to) : true))
-      .map<AuditLogItem>(({ logId, adminId, action, target, createdAt }) => ({
+      .map<AuditLogItem>(({ logId, adminId, adminUsername, action, target, description, createdAt }) => ({
         logId,
         adminId,
         action,
         target,
         createdAt,
+        description,
+        adminUsername,
       }));
 
     return mockResponse(paginate(filtered, params));

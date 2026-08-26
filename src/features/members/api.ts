@@ -1,10 +1,11 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
-import { appendAuditLog } from '@/mocks/auditLogs';
 import { toCsv } from '@/shared/lib/format';
 import type { Page } from '@/shared/lib/types';
+import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members';
 import { MOCK_WALLETS } from '@/mocks/payments';
+import { MEMBER_STATUS } from '@/shared/lib/status';
 import type { WalletSummary } from '@/shared/lib/wallet';
 import type {
   MemberDetail,
@@ -84,45 +85,81 @@ export async function fetchMemberInquiries(memberId: number): Promise<MemberInqu
   });
 }
 
-/** PATCH /admin/members/{id} — SUPER_ADMIN 전용 */
-export async function updateMember(
-  memberId: number,
-  body: MemberUpdateRequest,
-  adminUsername = 'unknown',
-): Promise<MemberDetail> {
+/**
+ * PATCH /admin/members/{id} — SUPER_ADMIN 전용
+ *
+ * 상태를 바꾸면 계정 정지(MEMBER_SUSPEND), 그 밖에는 회원 정보 수정(MEMBER_UPDATE)
+ * 으로 감사 로그가 남는다. 서버 연동 후에는 서버가 기록하므로 목 블록만 남긴다.
+ */
+export async function updateMember(vars: {
+  memberId: number;
+  body: MemberUpdateRequest;
+  adminUsername: string;
+}): Promise<MemberDetail> {
   if (USE_MOCK) {
-    const index = memberStore.findIndex((m) => m.memberId === memberId);
+    const index = memberStore.findIndex((m) => m.memberId === vars.memberId);
     if (index < 0) throw new Error('회원을 찾을 수 없습니다.');
 
-    const previous = memberStore[index];
-    const next = { ...previous, ...body, updatedAt: new Date().toISOString() };
+    const before = memberStore[index];
+    const next = { ...before, ...vars.body, updatedAt: new Date().toISOString() };
     memberStore = memberStore.map((m, i) => (i === index ? next : m));
-    const suspended = body.status === 'SUSPENDED' && previous.status !== 'SUSPENDED';
+
+    const statusChanged = vars.body.status !== undefined && vars.body.status !== before.status;
     appendAuditLog({
-      adminUsername,
-      action: suspended ? 'MEMBER_SUSPEND' : 'MEMBER_UPDATE',
-      target: `member:${memberId}`,
-      description: suspended ? `${previous.name} 계정 정지` : `${previous.name} 회원 정보 수정`,
+      adminUsername: vars.adminUsername,
+      action: statusChanged && vars.body.status === 'SUSPENDED' ? 'MEMBER_SUSPEND' : 'MEMBER_UPDATE',
+      target: `member:${vars.memberId}`,
+      description: statusChanged
+        ? `${before.name} 회원 상태 ${MEMBER_STATUS[before.status].label} → ${MEMBER_STATUS[vars.body.status!].label}`
+        : `${before.name} 회원 정보 수정 — ${describeChanges(before, vars.body)}`,
     });
+
     return mockResponse(next);
   }
-  return request<MemberDetail>({ url: `/admin/members/${memberId}`, method: 'PATCH', data: body });
+  return request<MemberDetail>({
+    url: `/admin/members/${vars.memberId}`,
+    method: 'PATCH',
+    data: vars.body,
+  });
+}
+
+/** 감사 로그 설명에 쓸 "무엇이 바뀌었는지". 값 자체는 개인정보라 항목명만 적는다. */
+const MEMBER_FIELD_LABEL: Record<keyof MemberUpdateRequest, string> = {
+  name: '이름',
+  nickname: '닉네임',
+  email: '이메일',
+  phoneNumber: '휴대폰',
+  address: '주소',
+  status: '상태',
+};
+
+function describeChanges(before: MemberDetail, body: MemberUpdateRequest): string {
+  const changed = (Object.keys(body) as (keyof MemberUpdateRequest)[]).filter(
+    (key) => body[key] !== undefined && body[key] !== before[key],
+  );
+  return changed.length > 0 ? changed.map((key) => MEMBER_FIELD_LABEL[key]).join(', ') : '변경 없음';
 }
 
 /** DELETE /admin/members/{id} — SUPER_ADMIN 전용 */
-export async function deleteMember(memberId: number, adminUsername = 'unknown'): Promise<void> {
+export async function deleteMember(vars: {
+  memberId: number;
+  adminUsername: string;
+}): Promise<void> {
   if (USE_MOCK) {
-    const target = memberStore.find((m) => m.memberId === memberId);
-    memberStore = memberStore.filter((m) => m.memberId !== memberId);
+    const target = memberStore.find((m) => m.memberId === vars.memberId);
+    if (!target) throw new Error('회원을 찾을 수 없습니다.');
+
+    memberStore = memberStore.filter((m) => m.memberId !== vars.memberId);
     appendAuditLog({
-      adminUsername,
+      adminUsername: vars.adminUsername,
       action: 'MEMBER_DELETE',
-      target: `member:${memberId}`,
-      description: `${target?.name ?? `회원 #${memberId}`} 삭제`,
+      target: `member:${vars.memberId}`,
+      description: `${target.name}(${target.username}) 회원 삭제`,
     });
+
     return mockResponse(undefined);
   }
-  return request<void>({ url: `/admin/members/${memberId}`, method: 'DELETE' });
+  return request<void>({ url: `/admin/members/${vars.memberId}`, method: 'DELETE' });
 }
 
 /**
@@ -130,9 +167,11 @@ export async function deleteMember(memberId: number, adminUsername = 'unknown'):
  * 실제: GET /admin/reports/members.csv (명세 5.7) → text/csv 다운로드
  * 목: 화면에 있는 데이터로 CSV 문자열을 만들어 돌려준다.
  */
-export async function fetchMemberReportCsv(
-  member: MemberDetail,
-): Promise<string> {
+export async function fetchMemberReportCsv(vars: {
+  member: MemberDetail;
+  adminUsername: string;
+}): Promise<string> {
+  const { member } = vars;
   if (USE_MOCK) {
     const devices = MOCK_DEVICES[member.memberId] ?? [];
     const inquiries = getMemberInquiries(member.memberId);
@@ -157,6 +196,13 @@ export async function fetchMemberReportCsv(
       ],
     );
 
+    appendAuditLog({
+      adminUsername: vars.adminUsername,
+      action: 'REPORT_DOWNLOAD',
+      target: `member:${member.memberId}`,
+      description: `${member.name} 회원 리포트 CSV 내려받기`,
+    });
+
     // 실제 리포트 생성처럼 보이도록 조금 더 기다린다.
     return mockResponse(csv, 900);
   }
@@ -166,17 +212,6 @@ export async function fetchMemberReportCsv(
     method: 'GET',
     params: { memberId: member.memberId },
     responseType: 'text',
-  });
-}
-
-/** 실제 파일 저장이 완료된 시점의 목 감사 로그. 실제 모드에서는 서버가 GET 요청을 기록한다. */
-export function recordMemberReportDownload(member: MemberDetail, adminUsername = 'unknown'): void {
-  if (!USE_MOCK) return;
-  appendAuditLog({
-    adminUsername,
-    action: 'REPORT_DOWNLOAD',
-    target: `member:${member.memberId}`,
-    description: `${member.name} 회원 리포트 다운로드`,
   });
 }
 

@@ -31,20 +31,11 @@
   gap: var(--space-1);
 }
 
-.audit-logs__action code,
-.audit-logs__target {
+.audit-logs__action code {
   color: var(--text-muted);
   font-family: var(--font-sans);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
-}
-
-.audit-logs__target {
-  display: inline-block;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  background: var(--surface-subtle);
-  color: var(--text);
 }
 
 @media (max-width: 1100px) {
@@ -61,4 +52,36 @@
   .audit-logs__filter-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* 대상 칸 — 관리 화면 딥링크. 표 안에서 밑줄이 따라다니지 않게 hover 에서만 표시한다. */
+.audit-logs__target-link {
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.audit-logs__target-link:hover .cell-stack__primary {
+  color: var(--accent-strong);
+  text-decoration: underline;
+}
+
+/*
+ * 6칸(로그 ID · 관리자 · 활동 · 대상 · 내용 · 발생일시)이 들어가는 표라서
+ * 좁은 화면에서는 "내용" 칸이 읽을 수 없을 만큼 눌린다. 최소 너비를 주어
+ * 그 아래에서는 .table-scroll 이 표 안에서만 가로로 넘기게 한다.
+ */
+.audit-logs .table {
+  min-width: 1040px;
+}
+
+/* 내용 칸 — 길어지면 두 줄까지만 보여주고 나머지는 말줄임한다. */
+.audit-logs__description {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  line-height: var(--lh-body);
 }

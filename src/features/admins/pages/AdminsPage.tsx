@@ -21,6 +21,7 @@ import { ROLE_LABEL, ROLE_OPTIONS } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { formatDateTime, maskEmail, maskPhone } from '@/shared/lib/format';
 import type { Role } from '@/shared/lib/types';
+import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
 import { adminKeys, fetchAdmins, updateAdminRole } from '../api';
 import type { AdminAccount, AdminRoleFilter } from '../types';
@@ -66,6 +67,7 @@ export function AdminsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
+  const syncAuditLog = useAuditLogSync();
   const { searchParams, patchParams, resetParams } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
   const role = (searchParams.get('role') as AdminRoleFilter | null) ?? 'ALL';
@@ -88,11 +90,16 @@ export function AdminsPage() {
 
   const roleMutation = useMutation({
     mutationFn: (vars: { id: number; role: Role }) =>
-      updateAdminRole({ id: vars.id, body: { role: vars.role } }),
+      updateAdminRole({
+        id: vars.id,
+        body: { role: vars.role },
+        adminUsername: session?.username ?? 'unknown',
+      }),
     onSuccess: (updated) => {
       queryClient.setQueryData<AdminAccount[]>(adminKeys.all, (current) =>
         (current ?? []).map((admin) => (admin.id === updated.id ? updated : admin)),
       );
+      syncAuditLog();
       setEditing(null);
       toast.success('관리자 권한을 변경했습니다', `${updated.username} · ${ROLE_LABEL[updated.role]}`);
     },

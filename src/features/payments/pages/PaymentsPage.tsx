@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SlideOver, Tabs, useToast } from '@/shared/ui';
-import { formatCurrency, formatNumber, josa, maskName } from '@/shared/lib/format';
+import { formatCurrency, formatDateTime, formatNumber, josa, maskName } from '@/shared/lib/format';
 import type { ChargeStatus, StorePaymentStatus, WalletSummary } from '@/shared/lib/wallet';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
-import { AUDIT_LOG_QUERY_KEY } from '@/shared/lib/audit';
-import { adjustWallet, fetchFundStats, fundKeys, refundStorePayment } from '../api';
-import type { StorePayment } from '../types';
+import { adjustWallet, fetchFundStats, fundKeys, refund } from '../api';
+import type { ChargeItem, StorePayment } from '../types';
 import { ChargesTab } from '../components/ChargesTab';
 import { StorePaymentsTab } from '../components/StorePaymentsTab';
 import { WalletsTab } from '../components/WalletsTab';
@@ -61,6 +61,7 @@ function FundsKpi({
 export function PaymentsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const syncAuditLog = useAuditLogSync();
   const { hasRole, session } = useAuth();
   const canManage = hasRole(['SUPER_ADMIN']);
 
@@ -74,6 +75,7 @@ export function PaymentsPage() {
 
   const [walletTarget, setWalletTarget] = useState<WalletSummary | null>(null);
   const [refundTarget, setRefundTarget] = useState<StorePayment | null>(null);
+  const [chargeRefundTarget, setChargeRefundTarget] = useState<ChargeItem | null>(null);
   const [adjustTarget, setAdjustTarget] = useState<WalletSummary | null>(null);
 
   const stats = useQuery({ queryKey: fundKeys.stats, queryFn: fetchFundStats });
@@ -90,19 +92,35 @@ export function PaymentsPage() {
   }
 
   const refundMutation = useMutation({
-    mutationFn: (vars: { paymentId: number; reason: string }) =>
-      refundStorePayment({ ...vars, adminUsername: session?.username ?? 'unknown' }),
+    mutationFn: (vars: { targetId: number; reason: string }) =>
+      refund({ ...vars, targetType: 'PAYMENT', adminUsername: session?.username ?? 'unknown' }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: fundKeys.all });
-      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
+      syncAuditLog();
       setRefundTarget(null);
       toast.success(
         '강제 환불이 처리되었습니다',
-        `${maskName(result.childName)} 자녀에게 ${formatCurrency(result.amount)}${josa(formatCurrency(result.amount), '이')} 원복되었으며 감사 로그에 기록되었습니다.`,
+        `${maskName(result.userName)} 자녀에게 ${formatCurrency(result.amount)}${josa(formatCurrency(result.amount), '이')} 원복되었으며 감사 로그에 기록되었습니다.`,
       );
     },
     onError: (e) =>
       toast.error('환불 처리에 실패했습니다', e instanceof Error ? e.message : undefined),
+  });
+
+  const chargeRefundMutation = useMutation({
+    mutationFn: (vars: { targetId: number; reason: string }) =>
+      refund({ ...vars, targetType: 'CHARGE', adminUsername: session?.username ?? 'unknown' }),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: fundKeys.all });
+      syncAuditLog();
+      setChargeRefundTarget(null);
+      toast.success(
+        '충전을 취소했습니다',
+        `${maskName(result.userName)} 회원의 지갑에서 ${formatCurrency(result.amount)}${josa(formatCurrency(result.amount), '이')} 차감되었으며 감사 로그에 기록되었습니다.`,
+      );
+    },
+    onError: (e) =>
+      toast.error('충전 취소에 실패했습니다', e instanceof Error ? e.message : undefined),
   });
 
   const adjustMutation = useMutation({
@@ -110,7 +128,7 @@ export function PaymentsPage() {
       adjustWallet({ ...vars, adminUsername: session?.username ?? 'unknown' }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: fundKeys.all });
-      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
+      syncAuditLog();
       setAdjustTarget(null);
       toast.success(
         '잔액을 조정했습니다',
@@ -166,8 +184,10 @@ export function PaymentsPage() {
             status={(searchParams.get('status') as ChargeStatus | 'ALL' | null) ?? 'ALL'}
             userId={memberId}
             page={page}
+            canManage={canManage}
             patchParams={patchParams}
             setSearchParams={setSearchParams}
+            onRefund={setChargeRefundTarget}
           />
         ) : null}
 
@@ -199,7 +219,8 @@ export function PaymentsPage() {
 
       {!canManage ? (
         <p className="funds__note">
-          강제 환불과 잔액 수동 조정은 슈퍼 관리자만 사용할 수 있습니다. 조회는 모두 가능합니다.
+          강제 환불 · 충전 취소 · 잔액 수동 조정은 슈퍼 관리자만 사용할 수 있습니다. 조회는 모두
+          가능합니다.
         </p>
       ) : null}
 
@@ -213,12 +234,53 @@ export function PaymentsPage() {
         {walletTarget ? <WalletDetailPanel userId={walletTarget.userId} /> : null}
       </SlideOver>
 
+      {/* 매장 결제 강제 환불 — 자녀 지갑으로 금액이 되돌아온다. */}
       <RefundModal
-        payment={refundTarget}
+        open={refundTarget !== null}
+        title="강제 환불을 처리할까요?"
+        description="자녀 지갑 잔액이 원복되며, 이 작업은 감사 로그에 자동 기록됩니다."
+        confirmLabel="강제 환불"
+        reasonPlaceholder="예: 오결제 민원 처리"
+        details={
+          refundTarget
+            ? [
+                { label: '자녀', value: maskName(refundTarget.childName) },
+                { label: '보호자', value: maskName(refundTarget.parentName) },
+                { label: '매장', value: refundTarget.merchantName },
+                { label: '결제 일시', value: formatDateTime(refundTarget.paidAt) },
+                { label: '환불 금액', value: formatCurrency(refundTarget.amount) },
+              ]
+            : []
+        }
         submitting={refundMutation.isPending}
         onClose={() => setRefundTarget(null)}
         onSubmit={(reason) =>
-          refundTarget && refundMutation.mutate({ paymentId: refundTarget.paymentId, reason })
+          refundTarget && refundMutation.mutate({ targetId: refundTarget.paymentId, reason })
+        }
+      />
+
+      {/* 충전 취소 — 카드로 돈이 돌아가므로 지갑에서 차감된다(위와 방향이 반대). */}
+      <RefundModal
+        open={chargeRefundTarget !== null}
+        title="충전을 취소할까요?"
+        description="충전액만큼 회원 지갑에서 차감됩니다. 잔액이 부족하면 취소할 수 없으며, 이 작업은 감사 로그에 자동 기록됩니다."
+        confirmLabel="충전 취소"
+        reasonPlaceholder="예: 잘못 충전 민원 처리"
+        details={
+          chargeRefundTarget
+            ? [
+                { label: '회원', value: maskName(chargeRefundTarget.userName) },
+                { label: '결제수단', value: chargeRefundTarget.method },
+                { label: '충전 일시', value: formatDateTime(chargeRefundTarget.createdAt) },
+                { label: '차감 금액', value: formatCurrency(chargeRefundTarget.amount) },
+              ]
+            : []
+        }
+        submitting={chargeRefundMutation.isPending}
+        onClose={() => setChargeRefundTarget(null)}
+        onSubmit={(reason) =>
+          chargeRefundTarget &&
+          chargeRefundMutation.mutate({ targetId: chargeRefundTarget.chargeId, reason })
         }
       />
 

@@ -520,25 +520,40 @@ function countPaid(items: { status: string }[]): number {
 /** 명세 5.9 의 `groupBy=DAY` 집계. 완료된 건만 요일별로 모은다. */
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 
-function dailyTotals(): FundStats['daily'] {
+function dailyTotals(charges: ChargeItem[], payments: StorePayment[]): FundStats['daily'] {
   const buckets = WEEKDAYS.map((date) => ({ date, charged: 0, paid: 0 }));
 
-  MOCK_CHARGES.filter((c) => c.status === 'PAID').forEach((charge) => {
-    buckets[new Date(charge.createdAt).getDay()].charged += charge.amount;
-  });
-  MOCK_STORE_PAYMENTS.filter((p) => p.status === 'PAID').forEach((payment) => {
-    buckets[new Date(payment.paidAt).getDay()].paid += payment.amount;
-  });
+  charges
+    .filter((c) => c.status === 'PAID')
+    .forEach((charge) => {
+      buckets[new Date(charge.createdAt).getDay()].charged += charge.amount;
+    });
+  payments
+    .filter((p) => p.status === 'PAID')
+    .forEach((payment) => {
+      buckets[new Date(payment.paidAt).getDay()].paid += payment.amount;
+    });
 
   // 월요일부터 보이도록 앞으로 당긴다.
   return [...buckets.slice(1), buckets[0]];
 }
 
-export const MOCK_FUND_STATS: FundStats = {
-  totalCharged: sumPaid(MOCK_CHARGES),
-  totalPaid: sumPaid(MOCK_STORE_PAYMENTS),
-  chargeCount: countPaid(MOCK_CHARGES),
-  paymentCount: countPaid(MOCK_STORE_PAYMENTS),
-  refundCount: MOCK_STORE_PAYMENTS.filter((payment) => payment.status === 'REFUNDED').length,
-  daily: dailyTotals(),
-};
+/**
+ * 현재 충전·결제 목록으로 지표를 계산한다.
+ *
+ * 고정 상수로 두면 화면에서 환불·충전 취소를 해도 위쪽 KPI 만 옛날 값으로 남아
+ * 바로 아래 표와 어긋난다. 그래서 api 층이 **지금 저장소**를 넘겨 매번 계산한다.
+ * 환불 건수는 매장 결제 환불 + 충전 취소를 함께 센다.
+ */
+export function computeFundStats(charges: ChargeItem[], payments: StorePayment[]): FundStats {
+  return {
+    totalCharged: sumPaid(charges),
+    totalPaid: sumPaid(payments),
+    chargeCount: countPaid(charges),
+    paymentCount: countPaid(payments),
+    refundCount:
+      payments.filter((payment) => payment.status === 'REFUNDED').length +
+      charges.filter((charge) => charge.status === 'CANCELED').length,
+    daily: dailyTotals(charges, payments),
+  };
+}

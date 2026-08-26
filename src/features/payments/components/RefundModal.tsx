@@ -1,34 +1,52 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { Button, DetailBox, DetailRow, FormField, Modal, TextInput } from '@/shared/ui';
-import { formatCurrency, formatDateTime, maskName } from '@/shared/lib/format';
-import type { StorePayment } from '../types';
 
 interface RefundModalProps {
-  payment: StorePayment | null;
+  open: boolean;
+  title: string;
+  /** 잔액이 어느 방향으로 움직이는지 반드시 적는다. 충전 취소와 매장 결제 환불은 방향이 반대다. */
+  description: string;
+  confirmLabel: string;
+  /** 무엇을 되돌리는지 확인할 수 있는 요약. */
+  details: { label: string; value: ReactNode }[];
+  reasonPlaceholder: string;
   submitting: boolean;
   onClose: () => void;
   onSubmit: (reason: string) => void;
 }
 
 /**
- * 강제 환불 확인 모달 (POST /admin/payments/{paymentId}/refund).
- * 사유가 요청 본문에 들어가고 감사 로그에 남으므로 필수로 받는다.
+ * 환불·취소 확인 모달.
+ *
+ * 매장 결제 강제 환불(POST /admin/payments/{paymentId}/refund)과
+ * 충전 취소 두 곳이 같은 절차를 쓴다 — 대상을 확인하고, 사유를 받고, 실행한다.
+ * 사유는 요청 본문에 들어가 감사 로그에 남으므로 항상 필수다.
  */
-export function RefundModal({ payment, submitting, onClose, onSubmit }: RefundModalProps) {
+export function RefundModal({
+  open,
+  title,
+  description,
+  confirmLabel,
+  details,
+  reasonPlaceholder,
+  submitting,
+  onClose,
+  onSubmit,
+}: RefundModalProps) {
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (payment) {
+    if (open) {
       setReason('');
       setError(null);
     }
-  }, [payment]);
+  }, [open]);
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!reason.trim()) {
-      setError('환불 사유를 입력해 주세요. 사유는 감사 로그에 기록됩니다.');
+      setError('사유를 입력해 주세요. 사유는 감사 로그에 기록됩니다.');
       return;
     }
     onSubmit(reason.trim());
@@ -36,41 +54,39 @@ export function RefundModal({ payment, submitting, onClose, onSubmit }: RefundMo
 
   return (
     <Modal
-      open={payment !== null}
+      open={open}
       onClose={onClose}
-      title="강제 환불을 처리할까요?"
-      description="자녀 지갑 잔액이 원복되며, 이 작업은 감사 로그에 자동 기록됩니다."
+      title={title}
+      description={description}
       footer={
         <>
           <Button onClick={onClose} disabled={submitting}>
             취소
           </Button>
           <Button variant="danger" loading={submitting} onClick={handleSubmit}>
-            강제 환불
+            {confirmLabel}
           </Button>
         </>
       }
     >
-      {payment ? (
+      {open ? (
         <form
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
         >
           <DetailBox>
-            <DetailRow label="자녀" value={maskName(payment.childName)} />
-            <DetailRow label="보호자" value={maskName(payment.parentName)} />
-            <DetailRow label="매장" value={payment.merchantName} />
-            <DetailRow label="결제 일시" value={formatDateTime(payment.paidAt)} />
-            <DetailRow label="환불 금액" value={formatCurrency(payment.amount)} />
+            {details.map((row) => (
+              <DetailRow key={row.label} label={row.label} value={row.value} />
+            ))}
           </DetailBox>
 
-          <FormField label="환불 사유" required error={error}>
+          <FormField label="사유" required error={error}>
             {(p) => (
               <TextInput
                 {...p}
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
-                placeholder="예: 오결제 민원 처리"
+                placeholder={reasonPlaceholder}
               />
             )}
           </FormField>
