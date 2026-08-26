@@ -104,8 +104,16 @@ export function App() {
                       <Route path="inquiries" element={<InquiriesPage />} />
                     </Route>
 
-                    {/* 커뮤니티 관리 — SUPER_ADMIN · COMMUNITY_ADMIN (명세 5.5) */}
-                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'COMMUNITY_ADMIN']} />}>
+                    {/*
+                      커뮤니티 관리 — 명세 5.5 는 API 마다 요구 권한이 다르다.
+                      목록·삭제는 GENERAL_ADMIN 도 허용이라 화면 진입은 3개 역할에 열어 두고,
+                      상세·밴은 CommunityPage 안에서 SUPER · COMMUNITY 로 좁힌다.
+                    */}
+                    <Route
+                      element={
+                        <ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN']} />
+                      }
+                    >
                       <Route path="community" element={<CommunityPage />} />
                     </Route>
 

@@ -210,6 +210,6 @@ git checkout dev && git pull && git checkout -b dev-<이름>
   `ADMIN_CS` 는 문맥상 회원 관리는 `GENERAL_ADMIN`, 문의 CSV 는 `INQUIRY_ADMIN` 으로 읽었습니다.
   **백엔드 확인이 필요합니다.**
 - **커뮤니티 권한이 명세 안에서 갈립니다.** 목록·삭제는 `GENERAL_ADMIN` 을 포함하는데
-  상세·밴은 포함하지 않습니다. "목록에서 삭제는 되지만 상세는 못 여는" 역할이 생깁니다.
-  현재 코드는 커뮤니티 전체를 `SUPER_ADMIN`·`COMMUNITY_ADMIN` 으로 막아 두어
-  **명세의 목록·삭제 권한과 어긋납니다.** 어느 쪽이 맞는지 확정 후 맞춰야 합니다.
+  상세·밴은 포함하지 않습니다. 그래서 `GENERAL_ADMIN` 은 **목록에서 삭제는 할 수 있지만
+  상세를 열어 내용을 확인할 수는 없습니다.** 코드는 명세를 그대로 옮겨 두었습니다
+  (`CommunityPage` 의 `canDeletePost` / `canViewDetail`). 의도한 조합인지 확인이 필요합니다.
