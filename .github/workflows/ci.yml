@@ -1,0 +1,33 @@
+name: CI
+
+# PR 에서는 검증만 한다. 이미지는 만들지 않는다.
+# 테스트 스크립트가 아직 없으므로 타입 검사 + 프로덕션 빌드가 검증 수단이다.
+# (npm run build 는 tsc -b 를 먼저 돌리므로 타입 에러가 여기서 걸린다)
+on:
+  pull_request:
+    branches: [main, dev]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: 의존성 설치
+        run: npm ci --no-audit --no-fund
+
+      # 배포 이미지와 같은 조건으로 빌드해 봐야 의미가 있다.
+      # 목 데이터로 빌드하면 실제 API 를 쓰는 코드 경로가 검증되지 않는다.
+      - name: 빌드 (운영과 동일한 플래그)
+        run: npm run build
+        env:
+          VITE_USE_MOCK: 'false'
+          VITE_API_BASE_URL: /api
