@@ -40,22 +40,10 @@
   line-height: var(--lh-label);
 }
 
-.harmful__toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.harmful__search {
-  width: min(420px, 100%);
-}
+/* 툴바는 공통 ListToolbar 로 옮겼다 (@/shared/ui). */
 
 .harmful__result-count,
 .harmful__muted {
-  color: var(--text-muted);
   font-size: var(--fs-label);
   line-height: var(--lh-label);
 }
@@ -75,18 +63,4 @@
   color: var(--danger);
 }
 
-.harmful__confirm {
-  color: var(--text-strong);
-  font-weight: 500;
-}
 
-@media (max-width: 720px) {
-  .harmful__toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .harmful__search {
-    width: 100%;
-  }
-}

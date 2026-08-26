@@ -10,6 +10,7 @@ export { Button, buttonClass } from './Button';
 export type { ButtonVariant, ButtonSize } from './Button';
 
 export { Card } from './Card';
+export { ConfirmModal } from './ConfirmModal';
 export { EmptyState } from './EmptyState';
 export { FormField, TextInput, TextArea, Select, Toggle } from './FormField';
 export { Icon } from './Icon';

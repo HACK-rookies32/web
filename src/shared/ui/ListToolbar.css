@@ -6,6 +6,12 @@
   flex-wrap: wrap;
 }
 
+/* 검색 없이 필터·액션만 있는 경우(커뮤니티 등) 오른쪽으로 붙인다.
+   화면마다 justify-content 를 다시 덮지 않아도 되게 여기서 처리한다. */
+.list-toolbar--no-search {
+  justify-content: flex-end;
+}
+
 .list-toolbar__search {
   flex: 1 1 320px;
   max-width: 420px;

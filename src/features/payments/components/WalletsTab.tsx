@@ -87,7 +87,7 @@ export function WalletsTab({
       key: 'related',
       header: '연결',
       render: (row) => (
-        <span className="funds__muted">{row.relatedNames.map(maskName).join(', ') || '-'}</span>
+        <span className="muted">{row.relatedNames.map(maskName).join(', ') || '-'}</span>
       ),
     },
     {
@@ -102,7 +102,7 @@ export function WalletsTab({
       key: 'updatedAt',
       header: '최근 변동',
       width: '112px',
-      render: (row) => <span className="funds__muted">{formatRelative(row.updatedAt)}</span>,
+      render: (row) => <span className="muted">{formatRelative(row.updatedAt)}</span>,
     },
     {
       key: 'actions',

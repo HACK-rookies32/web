@@ -1,14 +1,14 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Button,
   Card,
+  ConfirmModal,
   Column,
   EmptyState,
   Icon,
   ListToolbar,
-  Modal,
   Pagination,
   RowActions,
   SearchInput,
@@ -22,6 +22,7 @@ import { formatDate, formatNumber, formatRelative, maskEmail, maskName } from '@
 import { MEMBER_STATUS, type MemberStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useListParams } from '@/shared/hooks/useListParams';
 import { deleteMember, fetchMember, fetchMembers, memberKeys, updateMember } from '../api';
 import type { MemberDetail, MemberListItem, MemberUpdateRequest } from '../types';
 import { ChevronGlyph, PencilGlyph, PlusGlyph } from '../components/Glyphs';
@@ -50,10 +51,9 @@ export function MembersPage() {
   const { hasRole } = useAuth();
   const canManage = hasRole(['SUPER_ADMIN']); // 수정·삭제는 SUPER_ADMIN 전용 (명세 5.2)
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, patchParams, resetParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
   const status = (searchParams.get('status') as MemberStatus | 'ALL' | null) ?? 'ALL';
-  const page = Number(searchParams.get('page') ?? '0');
 
   const [expanded, setExpanded] = useState<number[]>([]);
   const [quickView, setQuickView] = useState<MemberListItem | null>(null);
@@ -70,22 +70,6 @@ export function MembersPage() {
     queryKey: memberKeys.list(params),
     queryFn: () => fetchMembers(params),
   });
-
-  /** 쿼리 파라미터를 부분 갱신한다. 필터가 바뀌면 페이지는 0으로 되돌린다. */
-  const patchParams = useCallback(
-    (patch: Record<string, string | null>, resetPage = true) => {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        Object.entries(patch).forEach(([k, v]) => {
-          if (v === null || v === '') next.delete(k);
-          else next.set(k, v);
-        });
-        if (resetPage) next.delete('page');
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
 
   const handleSearch = useCallback((value: string) => patchParams({ keyword: value }), [patchParams]);
 
@@ -167,7 +151,7 @@ export function MembersPage() {
             </span>
           </span>
         ) : (
-          <span className="members__muted">-</span>
+          <span className="muted">-</span>
         ),
     },
     {
@@ -176,7 +160,7 @@ export function MembersPage() {
       align: 'center',
       numeric: true,
       width: '88px',
-      render: (row) => (row.deviceCount > 0 ? `${row.deviceCount}대` : <span className="members__muted">-</span>),
+      render: (row) => (row.deviceCount > 0 ? `${row.deviceCount}대` : <span className="muted">-</span>),
     },
     {
       key: 'status',
@@ -197,7 +181,7 @@ export function MembersPage() {
       key: 'lastLoginAt',
       header: '최근 접속',
       width: '104px',
-      render: (row) => <span className="members__muted">{formatRelative(row.lastLoginAt)}</span>,
+      render: (row) => <span className="muted">{formatRelative(row.lastLoginAt)}</span>,
     },
     {
       key: 'actions',
@@ -304,7 +288,7 @@ export function MembersPage() {
               icon={<Icon name="search" />}
               action={
                 keyword || status !== 'ALL' ? (
-                  <Button size="sm" onClick={() => setSearchParams(new URLSearchParams())}>
+                  <Button size="sm" onClick={resetParams}>
                     필터 초기화
                   </Button>
                 ) : undefined
@@ -350,26 +334,13 @@ export function MembersPage() {
         }}
       />
 
-      <Modal
+      <ConfirmModal
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
-        size="sm"
         title="회원을 삭제할까요?"
         description="삭제한 회원은 되돌릴 수 없으며, 이 작업은 감사 로그에 기록됩니다."
-        footer={
-          <>
-            <Button onClick={() => setDeleteTarget(null)} disabled={deleteMutation.isPending}>
-              취소
-            </Button>
-            <Button
-              variant="danger"
-              loading={deleteMutation.isPending}
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.memberId)}
-            >
-              삭제
-            </Button>
-          </>
-        }
+        pending={deleteMutation.isPending}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.memberId)}
       >
         {deleteTarget ? (
           <p className="members__confirm">
@@ -377,7 +348,7 @@ export function MembersPage() {
             연결된 자녀 {formatNumber(deleteTarget.children.length)}명의 정보가 함께 삭제됩니다.
           </p>
         ) : null}
-      </Modal>
+      </ConfirmModal>
     </div>
   );
 }

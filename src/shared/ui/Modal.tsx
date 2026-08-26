@@ -19,9 +19,30 @@ interface ModalProps {
  * ESC / 배경 클릭으로 닫히고, 열릴 때 첫 포커스 가능한 요소로 포커스를 옮긴다.
  * 열려 있는 동안 배경 스크롤을 막는다.
  */
+/** 포커스를 줄 수 있는 요소 */
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/** 열릴 때 포커스를 받을 요소 — 닫기(×) 버튼은 제외한다. */
+const FIRST_FIELD =
+  'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])';
+
 export function Modal({ open, onClose, title, description, footer, size = 'md', children }: ModalProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+
+  /*
+   * onClose 를 ref 로 들고 간다.
+   *
+   * 호출부가 onClose={() => setOpen(false)} 처럼 인라인 화살표를 넘기면 렌더마다
+   * 함수 정체성이 바뀐다. 이걸 아래 effect 의 의존성에 그대로 두면, 모달 안에서
+   * 글자를 한 자 칠 때마다 effect 가 정리·재실행되면서 포커스를 빼앗아 간다.
+   * (실제로 유해사이트 키워드 추가에서 한 글자마다 포커스가 × 버튼으로 튀었다)
+   */
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!open) return;
@@ -34,16 +55,14 @@ export function Modal({ open, onClose, title, description, footer, size = 'md', 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
       // 간단한 포커스 트랩 — 모달 밖으로 탭이 새지 않게 한다.
       if (e.key !== 'Tab' || !panelRef.current) return;
 
-      const focusables = panelRef.current.querySelectorAll<HTMLElement>(
-        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-      );
+      const focusables = panelRef.current.querySelectorAll<HTMLElement>(FOCUSABLE);
       if (focusables.length === 0) return;
 
       const first = focusables[0];
@@ -60,13 +79,25 @@ export function Modal({ open, onClose, title, description, footer, size = 'md', 
 
     document.addEventListener('keydown', onKeyDown);
 
-    // 첫 포커스 가능한 요소로 이동
+    /*
+     * 본문의 첫 입력 요소로 포커스를 옮긴다.
+     * 패널 전체에서 찾으면 헤더의 닫기(×) 버튼이 DOM 상 가장 앞이라 늘 거기로 갔다.
+     * 폼 모달은 첫 입력칸에, 확인용 모달은 본문 버튼 → 없으면 푸터 버튼 순으로 간다.
+     */
     const timer = window.setTimeout(() => {
-      panelRef.current
-        ?.querySelector<HTMLElement>(
-          'input:not([disabled]), textarea:not([disabled]), select:not([disabled]), button:not([disabled])',
-        )
-        ?.focus();
+      const panel = panelRef.current;
+      if (!panel) return;
+      /*
+       * 쉼표로 나열한 선택자에 `.modal__body ` 를 앞에 붙이면 첫 항목에만 적용되고
+       * 나머지는 패널 전체에서 잡힌다. 그래서 영역 요소를 먼저 찾아 그 안에서 검색한다.
+       */
+      const body = panel.querySelector<HTMLElement>('.modal__body');
+      const modalFooter = panel.querySelector<HTMLElement>('.modal__footer');
+      const target =
+        body?.querySelector<HTMLElement>(FIRST_FIELD) ??
+        modalFooter?.querySelector<HTMLElement>(FIRST_FIELD) ??
+        panel.querySelector<HTMLElement>(FIRST_FIELD);
+      target?.focus();
     }, 0);
 
     return () => {
@@ -75,7 +106,8 @@ export function Modal({ open, onClose, title, description, footer, size = 'md', 
       window.clearTimeout(timer);
       restoreFocusRef.current?.focus();
     };
-  }, [open, onClose]);
+    // onClose 는 위 ref 로 참조한다. 여기 넣으면 렌더마다 재실행돼 포커스를 빼앗는다.
+  }, [open]);
 
   if (!open) return null;
 

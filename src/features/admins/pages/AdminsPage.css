@@ -4,10 +4,6 @@
   gap: var(--space-4);
 }
 
-.admins__muted {
-  color: var(--text-muted);
-}
-
 .admins__role-form {
   display: flex;
   flex-direction: column;

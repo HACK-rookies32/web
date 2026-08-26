@@ -75,10 +75,6 @@
   color: var(--accent-strong);
 }
 
-.funds__muted {
-  color: var(--text-muted);
-}
-
 .funds__refund-btn {
   color: var(--danger);
   white-space: nowrap;

@@ -151,3 +151,60 @@ export function downloadCsv(filename: string, csv: string): void {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+/* ------------------------------------------------------------- 조사 ---- */
+
+/** 숫자를 한글로 읽었을 때 마지막 글자에 받침이 있는지. */
+const DIGIT_HAS_FINAL: Record<string, boolean> = {
+  '0': true, //  영 (ㅇ)
+  '1': true, //  일 (ㄹ)
+  '2': false, // 이
+  '3': true, //  삼 (ㅁ)
+  '4': false, // 사
+  '5': false, // 오
+  '6': true, //  육 (ㄱ)
+  '7': true, //  칠 (ㄹ)
+  '8': true, //  팔 (ㄹ)
+  '9': false, // 구
+};
+
+/**
+ * 마지막 글자에 받침이 있는지 판별한다.
+ * 한글 음절은 유니코드에서 (초성×21+중성)×28+종성 으로 배열되므로
+ * 코드포인트를 28로 나눈 나머지가 0이 아니면 받침이 있다.
+ * 한글이 아니면 끝의 숫자를 보고, 그것도 없으면 받침이 없는 것으로 본다.
+ */
+function hasFinalConsonant(word: string): boolean {
+  const last = word.trim().replace(/[)\]}”"'’\s.]+$/u, '').slice(-1);
+  if (!last) return false;
+
+  const code = last.charCodeAt(0);
+  if (code >= 0xac00 && code <= 0xd7a3) return (code - 0xac00) % 28 !== 0;
+  if (last >= '0' && last <= '9') return DIGIT_HAS_FINAL[last];
+  return false;
+}
+
+/**
+ * 앞말의 받침에 맞는 조사를 고른다.
+ *
+ *   josa('스포츠토토', '이')  // '가'
+ *   josa('온라인 도박', '이') // '이'
+ *
+ * 한글 키워드를 허용하면서 "{키워드}이 차단되었습니다" 처럼 조사를 고정해 두면
+ * 받침 없는 단어에서 어색해진다. 화면 문구를 만들 때 이 함수를 쓴다.
+ */
+export function josa(word: string, form: '이' | '을' | '은' | '와' | '으로'): string {
+  const withFinal = hasFinalConsonant(word);
+  switch (form) {
+    case '이':
+      return withFinal ? '이' : '가';
+    case '을':
+      return withFinal ? '을' : '를';
+    case '은':
+      return withFinal ? '은' : '는';
+    case '와':
+      return withFinal ? '과' : '와';
+    case '으로':
+      return withFinal ? '으로' : '로';
+  }
+}

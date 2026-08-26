@@ -81,7 +81,6 @@
 }
 
 .dashboard__muted {
-  color: var(--text-muted);
   font-size: var(--fs-caption);
   line-height: var(--lh-caption);
 }

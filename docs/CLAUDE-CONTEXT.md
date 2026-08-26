@@ -2,7 +2,7 @@
 
 > 이 문서를 다른 Claude 프로젝트의 **지침(Custom Instructions)** 에 그대로 붙여넣으면 된다.
 > 저장소 루트의 `README.md` 와 함께 읽으면 전체 맥락이 잡힌다.
-> 최종 갱신: 2026-08-25
+> 최종 갱신: 2026-08-26
 
 ---
 
@@ -56,6 +56,7 @@ SK쉴더스 루키즈 최종 프로젝트(팀 **H.A.C.K**)의 **자녀보호앱 
 - **feature 끼리 직접 import 금지.** 공유가 필요하면 `src/shared/` 를 경유한다. (예: 지갑 타입은 회원 관리와 자금·결제가 함께 써서 `shared/lib/wallet.ts` 에 있다)
 - **개인정보는 반드시 `shared/lib/format.ts` 의 마스킹 유틸을 거쳐 표시한다.** 화면에서 직접 문자열을 자르지 않는다. (`maskName` `maskEmail` `maskPhone` `maskAddress` `maskCard` `maskIp`)
 - 목록 파라미터(검색어·필터·페이지)는 **URL 쿼리로 관리**한다. 새로고침·링크 공유·뒤로 가기가 모두 동작해야 한다.
+  → `shared/hooks/useListParams` 를 쓴다. 손으로 `setSearchParams` 를 다루지 말 것 (예전에 화면마다 복사되며 빈 값 규칙이 4가지로 갈렸다).
 - 서버 상태는 TanStack Query. 쿼리 키는 feature 의 `api.ts` 에 `xxxKeys` 객체로 모아 둔다.
 - 페이지는 라우트 단위 lazy 로드.
 - 명세에 없는 API를 쓸 때는 `// TODO(api):` 주석으로 무엇이 없는지 남긴다.
@@ -106,9 +107,10 @@ src/
 ├─ app/            # 라우터, 프로바이더, 전역 셸(Sidebar/Topbar), RouteErrorBoundary
 ├─ shared/
 │  ├─ api/         # client.ts(axios+봉투 언랩+JWT), mock.ts(지연·페이징 유틸)
-│  ├─ ui/          # 공통 컴포넌트 15종 (배럴: @/shared/ui)
+│  ├─ ui/          # 공통 컴포넌트 16종 (배럴: @/shared/ui)
 │  ├─ auth/        # AuthContext, ProtectedRoute, useAuth, useRole
-│  ├─ lib/         # types, constants(nav·roles), format(마스킹·CSV), status, wallet
+│  ├─ hooks/       # useListParams (목록 URL 쿼리)
+│  ├─ lib/         # types, constants, format(마스킹·CSV·josa), status, wallet, audit
 │  └─ styles/      # tokens.css
 ├─ assets/         # Figma 아이콘 SVG · 로고
 ├─ mocks/          # 도메인별 목 데이터 (feature 간 공유 목은 여기 둔다)
@@ -116,11 +118,12 @@ src/
                    # 한 feature = pages/ + components/ + api.ts + types.ts
 ```
 
-**공통 UI 15종** (`@/shared/ui`): `Button`(+`buttonClass`) `Card` `PageHeader` `ListToolbar` `Table` `Pagination` `Modal` `SlideOver` `StatusPill` `Toast` `FormField`(+`TextInput` `TextArea` `Select` `Toggle`) `Tabs` `SearchInput` `EmptyState` `Spinner` `Icon`
+**공통 UI 16종** (`@/shared/ui`): `Button`(+`buttonClass`) `Card` `PageHeader` `ListToolbar` `ConfirmModal` `Table` `Pagination` `Modal` `SlideOver` `StatusPill` `Toast` `FormField`(+`TextInput` `TextArea` `Select` `Toggle`) `Tabs` `SearchInput` `EmptyState` `Spinner` `Icon`
 
 - `Table` 은 컬럼 설정형 제네릭이고 **로딩·에러·빈 상태를 표 내부에서 처리**한다. 행 확장, 행 클릭, hover 시 노출되는 액션 칸을 지원한다.
 - `ListToolbar` 는 목록 화면 상단(검색 + 필터·액션)이다. **툴바 CSS 를 화면마다 새로 쓰지 않는다** — 검색 폭·select 폭·gap 을 전부 처리한다. `<ListToolbar search={<SearchInput/>}>필터·버튼</ListToolbar>`
 - `buttonClass()` 는 버튼 클래스 문자열만 만든다. 라우터 `<Link>` 처럼 `<button>` 이 아닌 요소에 버튼 모양을 입힐 때 쓴다. 버튼 CSS 를 손으로 다시 그리지 말 것.
+- `Modal` · `SlideOver` 는 열릴 때 **본문의 첫 입력 요소**로 포커스를 옮긴다(확인 모달이면 푸터의 취소 버튼). `onClose` 는 내부에서 ref 로 참조하므로 **인라인 화살표를 넘겨도 안전하다** — 예전에는 이것 때문에 글자를 칠 때마다 포커스가 닫기 버튼으로 튀었다.
 - 새 화면을 만들 때 **공통 컴포넌트를 먼저 찾아 쓴다.** 비슷한 것을 새로 만들지 않는다.
 - 개발 서버의 **`/ui-kit`** 경로에 스타일 가이드 페이지가 있다. 공통 컴포넌트를 고친 뒤 여기서 회귀를 눈으로 확인한다.
 
@@ -166,7 +169,7 @@ src/
 
 ## 5. 현재 진행 상태
 
-### 완료된 화면 6개
+### 완료된 화면 (전 화면 구현됨)
 
 | 화면 | 경로 | 비고 |
 | --- | --- | --- |
@@ -178,14 +181,14 @@ src/
 | 공지 관리 | `/notices` | CRUD + 전체 알림 발송(2단계 확인) |
 | 1:1 문의 | `/inquiries` | 답변 등록·수정·삭제, `?id=` 딥링크 |
 
-### 남은 화면 4개 (`PlaceholderPage` 로 라우팅만 연결됨)
+### 나머지 화면 4개 (2026-08-26 구현 완료)
 
 | 화면 | 경로 | 연동할 API |
 | --- | --- | --- |
-| 커뮤니티 관리 | `/community` | `GET /admin/community/posts`, `GET /admin/community/posts/{id}`, `DELETE /admin/community/posts/{id}`, `POST /admin/community/members/ban`, `GET /admin/community/reports` |
-| 유해사이트 관리 | `/harmful-keywords` | `GET · POST /admin/harmful-keywords`, `DELETE /admin/harmful-keywords/{id}` |
-| 감사 로그 | `/audit-logs` | `GET /admin/audit-logs` — **조회 전용(C/R만)**, 수정·삭제 버튼을 두지 않는다 |
-| 관리자 계정 관리 | `/admins` | `GET /admin/admins`(배열 반환), `PATCH /admin/admins/{id}` |
+| 커뮤니티 관리 | `/community` | 목록·상세·삭제·밴 완료. **신고 관리(`GET /admin/community/reports`)는 미구현** — `reportCount` 만 표시한다 |
+| 유해사이트 관리 | `/harmful-keywords` | 목록·검색(URL 쿼리)·추가·제외. 키워드 문자 종류 제한 없음(한글·공백 허용), 50자 제한만 |
+| 감사 로그 | `/audit-logs` | 관리자ID·활동·기간 필터 + 페이징. **조회 전용** — 수정·삭제 버튼 없음 |
+| 관리자 계정 관리 | `/admins` | 목록(배열 응답)·검색·권한 필터·권한 변경. **자기 계정은 변경 불가**(자기 강등 잠금) |
 
 > **감사 로그는 이미 데이터가 쌓이고 있다.** `src/mocks/auditLogs.ts` 에 목 저장소가 있고, 강제 환불·잔액 조정·공지 작성/삭제·회원 삭제/정지 시 항목이 추가된다. 감사 로그 화면을 만들면 바로 눈에 보인다. 서버 연동 후에는 서버가 자동 기록하므로 **프론트의 `appendAuditLog` 호출은 제거해야 한다.**
 

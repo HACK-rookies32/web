@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -20,6 +19,7 @@ import {
 import { formatDateTime, formatNumber, maskName } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
+import { useListParams } from '@/shared/hooks/useListParams';
 import {
   createAnswer,
   deleteAnswer,
@@ -47,10 +47,9 @@ export function InquiriesPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, patchParams, resetParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
   const answered = (searchParams.get('answered') as 'ALL' | 'OPEN' | 'ANSWERED' | null) ?? 'ALL';
-  const page = Number(searchParams.get('page') ?? '0');
   const selectedId = searchParams.get('id') ? Number(searchParams.get('id')) : null;
 
   const params = useMemo(
@@ -62,21 +61,6 @@ export function InquiriesPage() {
     queryKey: inquiryKeys.list(params),
     queryFn: () => fetchInquiries(params),
   });
-
-  const patchParams = useCallback(
-    (patch: Record<string, string | null>, resetPage = true) => {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        Object.entries(patch).forEach(([k, v]) => {
-          if (v === null || v === '') next.delete(k);
-          else next.set(k, v);
-        });
-        if (resetPage) next.delete('page');
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
 
   const handleSearch = useCallback((value: string) => patchParams({ keyword: value }), [patchParams]);
 
@@ -194,7 +178,7 @@ export function InquiriesPage() {
               description="검색어나 상태 필터를 바꿔보세요."
               icon={<Icon name="nav-inquiries" />}
               action={
-                <Button size="sm" onClick={() => setSearchParams(new URLSearchParams())}>
+                <Button size="sm" onClick={resetParams}>
                   필터 초기화
                 </Button>
               }

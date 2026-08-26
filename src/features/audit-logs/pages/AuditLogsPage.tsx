@@ -1,6 +1,5 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -15,7 +14,8 @@ import {
   Table,
   TextInput,
 } from '@/shared/ui';
-import { formatDateTime, formatNumber } from '@/shared/lib/format';
+import { formatDateTime } from '@/shared/lib/format';
+import { useListParams } from '@/shared/hooks/useListParams';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { AUDIT_ACTION_LABEL, type AuditAction } from '@/shared/lib/audit';
 import { auditLogKeys, fetchAuditLogs } from '../api';
@@ -31,12 +31,11 @@ function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutr
 }
 
 export function AuditLogsPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const adminIdValue = searchParams.get('adminId') ?? '';
-  const actionValue = searchParams.get('action') ?? '';
-  const from = searchParams.get('from') ?? '';
-  const to = searchParams.get('to') ?? '';
-  const page = Number(searchParams.get('page') ?? '0');
+  const { patchParams, resetParams, getParam, page } = useListParams();
+  const adminIdValue = getParam('adminId');
+  const actionValue = getParam('action');
+  const from = getParam('from');
+  const to = getParam('to');
 
   const params = useMemo<AuditLogListParams>(
     () => ({
@@ -54,21 +53,6 @@ export function AuditLogsPage() {
     queryKey: auditLogKeys.list(params),
     queryFn: () => fetchAuditLogs(params),
   });
-
-  const patchParams = useCallback(
-    (patch: Record<string, string | null>, resetPage = true) => {
-      setSearchParams((previous) => {
-        const next = new URLSearchParams(previous);
-        Object.entries(patch).forEach(([key, value]) => {
-          if (!value) next.delete(key);
-          else next.set(key, value);
-        });
-        if (resetPage) next.delete('page');
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
 
   const hasFilters = Boolean(adminIdValue || actionValue || from || to);
   const invalidPeriod = Boolean(from && to && from > to);
@@ -109,7 +93,7 @@ export function AuditLogsPage() {
       header: '발생일시',
       width: '190px',
       numeric: true,
-      render: (row) => <span className="audit-logs__muted">{formatDateTime(row.createdAt)}</span>,
+      render: (row) => <span className="muted">{formatDateTime(row.createdAt)}</span>,
     },
   ];
 
@@ -118,7 +102,7 @@ export function AuditLogsPage() {
       <PageHeader
         title="감사 로그"
         description="관리자 활동 기록을 조회합니다. 감사 로그는 서버에서 자동 생성되며 수정하거나 삭제할 수 없습니다."
-        badge={<StatusPill tone="accent" shape="pill">총 {formatNumber(query.data?.totalElements ?? 0)}건</StatusPill>}
+        count={query.data?.totalElements ?? 0}
       />
 
       <Card className="audit-logs__filters" title="조회 조건" description="관리자, 활동 유형, 발생 기간으로 기록을 좁혀볼 수 있습니다.">
@@ -161,7 +145,7 @@ export function AuditLogsPage() {
           </FormField>
 
           <div className="audit-logs__filter-action">
-            <Button disabled={!hasFilters} onClick={() => setSearchParams(new URLSearchParams())}>필터 초기화</Button>
+            <Button disabled={!hasFilters} onClick={resetParams}>필터 초기화</Button>
           </div>
         </div>
       </Card>
@@ -179,7 +163,7 @@ export function AuditLogsPage() {
               title={invalidPeriod ? '조회 기간을 확인해 주세요' : '감사 로그가 없습니다'}
               description={invalidPeriod ? '시작일은 종료일보다 늦을 수 없습니다.' : '현재 조건에 해당하는 활동 기록이 없습니다.'}
               icon={<Icon name="nav-audit" />}
-              action={hasFilters ? <Button size="sm" onClick={() => setSearchParams(new URLSearchParams())}>필터 초기화</Button> : undefined}
+              action={hasFilters ? <Button size="sm" onClick={resetParams}>필터 초기화</Button> : undefined}
             />
           }
           footer={

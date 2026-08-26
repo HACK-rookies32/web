@@ -20,8 +20,16 @@ interface ListToolbarProps {
  * 개별 화면에서 폭·배경을 다시 지정할 필요가 없다.
  */
 export function ListToolbar({ search, children, className }: ListToolbarProps) {
+  const classes = [
+    'list-toolbar',
+    search ? '' : 'list-toolbar--no-search',
+    className ?? '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className={['list-toolbar', className ?? ''].filter(Boolean).join(' ')}>
+    <div className={classes}>
       {search ? <div className="list-toolbar__search">{search}</div> : null}
       {children ? <div className="list-toolbar__actions">{children}</div> : null}
     </div>

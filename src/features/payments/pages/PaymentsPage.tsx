@@ -1,10 +1,10 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import { SlideOver, Tabs, useToast } from '@/shared/ui';
-import { formatCurrency, formatNumber, maskName } from '@/shared/lib/format';
+import { formatCurrency, formatNumber, josa, maskName } from '@/shared/lib/format';
 import type { ChargeStatus, StorePaymentStatus, WalletSummary } from '@/shared/lib/wallet';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useListParams } from '@/shared/hooks/useListParams';
 import { adjustWallet, fetchFundStats, fundKeys, refundStorePayment } from '../api';
 import type { StorePayment } from '../types';
 import { ChargesTab } from '../components/ChargesTab';
@@ -63,12 +63,11 @@ export function PaymentsPage() {
   const { hasRole, session } = useAuth();
   const canManage = hasRole(['SUPER_ADMIN']);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, setSearchParams, patchParams, page } = useListParams();
   const tabParam = searchParams.get('tab') as TabKey | null;
   const tab: TabKey = tabParam && TAB_KEYS.includes(tabParam) ? tabParam : 'charges';
 
   const keyword = searchParams.get('keyword') ?? '';
-  const page = Number(searchParams.get('page') ?? '0');
   const memberIdParam = searchParams.get('memberId');
   const memberId = memberIdParam ? Number(memberIdParam) : undefined;
 
@@ -77,21 +76,6 @@ export function PaymentsPage() {
   const [adjustTarget, setAdjustTarget] = useState<WalletSummary | null>(null);
 
   const stats = useQuery({ queryKey: fundKeys.stats, queryFn: fetchFundStats });
-
-  const patchParams = useCallback(
-    (patch: Record<string, string | null>, resetPage = true) => {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        Object.entries(patch).forEach(([k, v]) => {
-          if (v === null || v === '') next.delete(k);
-          else next.set(k, v);
-        });
-        if (resetPage) next.delete('page');
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
 
   /** 탭을 바꾸면 탭마다 의미가 다른 필터는 비운다. */
   function changeTab(next: TabKey) {
@@ -112,7 +96,7 @@ export function PaymentsPage() {
       setRefundTarget(null);
       toast.success(
         '강제 환불이 처리되었습니다',
-        `${maskName(result.childName)} 자녀에게 ${formatCurrency(result.amount)}이 원복되었으며 감사 로그에 기록되었습니다.`,
+        `${maskName(result.childName)} 자녀에게 ${formatCurrency(result.amount)}${josa(formatCurrency(result.amount), '이')} 원복되었으며 감사 로그에 기록되었습니다.`,
       );
     },
     onError: (e) =>
@@ -127,7 +111,7 @@ export function PaymentsPage() {
       setAdjustTarget(null);
       toast.success(
         '잔액을 조정했습니다',
-        `${maskName(result.userName)} 지갑 잔액이 ${formatCurrency(result.balance)}이 되었으며 감사 로그에 기록되었습니다.`,
+        `${maskName(result.userName)} 지갑 잔액이 ${formatCurrency(result.balance)}${josa(formatCurrency(result.balance), '이')} 되었으며 감사 로그에 기록되었습니다.`,
       );
     },
     onError: (e) =>

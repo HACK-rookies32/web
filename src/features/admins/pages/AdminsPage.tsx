@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -21,8 +20,9 @@ import {
 } from '@/shared/ui';
 import { ROLE_LABEL, ROLE_OPTIONS } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
-import { formatDateTime, formatNumber, maskEmail, maskPhone } from '@/shared/lib/format';
+import { formatDateTime, maskEmail, maskPhone } from '@/shared/lib/format';
 import type { Role } from '@/shared/lib/types';
+import { useListParams } from '@/shared/hooks/useListParams';
 import { adminKeys, fetchAdmins, updateAdminRole } from '../api';
 import type { AdminAccount, AdminRoleFilter } from '../types';
 import './AdminsPage.css';
@@ -38,27 +38,13 @@ export function AdminsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { session } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, patchParams, resetParams } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
   const role = (searchParams.get('role') as AdminRoleFilter | null) ?? 'ALL';
   const [editing, setEditing] = useState<AdminAccount | null>(null);
   const [nextRole, setNextRole] = useState<Role>('GENERAL_ADMIN');
 
   const query = useQuery({ queryKey: adminKeys.all, queryFn: fetchAdmins });
-
-  const patchParams = useCallback(
-    (patch: Record<string, string | null>) => {
-      setSearchParams((previous) => {
-        const next = new URLSearchParams(previous);
-        Object.entries(patch).forEach(([key, value]) => {
-          if (!value || value === 'ALL') next.delete(key);
-          else next.set(key, value);
-        });
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
 
   const closeRoleModal = useCallback(() => setEditing(null), []);
 
@@ -114,7 +100,7 @@ export function AdminsPage() {
       header: '생성일시',
       width: '168px',
       numeric: true,
-      render: (row) => <span className="admins__muted">{formatDateTime(row.createdAt)}</span>,
+      render: (row) => <span className="muted">{formatDateTime(row.createdAt)}</span>,
     },
     {
       key: 'actions',
@@ -124,7 +110,7 @@ export function AdminsPage() {
       render: (row) => (
         <RowActions>
           {row.username === session?.username ? (
-            <span className="admins__muted">현재 계정</span>
+            <span className="muted">현재 계정</span>
           ) : (
             <Button variant="ghost" size="sm" onClick={() => openRoleModal(row)}>권한 변경</Button>
           )}
@@ -138,7 +124,8 @@ export function AdminsPage() {
       <PageHeader
         title="관리자 계정 관리"
         description="관리자 계정 목록을 조회하고 담당 업무에 맞는 권한을 설정합니다."
-        badge={<StatusPill tone="accent" shape="pill">총 {formatNumber(query.data?.length ?? 0)}명</StatusPill>}
+        count={query.data?.length ?? 0}
+        countUnit="명"
       />
 
       <ListToolbar
@@ -151,7 +138,7 @@ export function AdminsPage() {
           />
         }
       >
-        <Select aria-label="관리자 권한 필터" value={role} onChange={(event) => patchParams({ role: event.target.value })}>
+        <Select aria-label="관리자 권한 필터" value={role} onChange={(event) => patchParams({ role: event.target.value === 'ALL' ? null : event.target.value })}>
           <option value="ALL">권한: 전체</option>
           {ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
         </Select>
@@ -170,7 +157,7 @@ export function AdminsPage() {
               title="조회된 관리자 계정이 없습니다"
               description="검색어나 권한 필터를 바꿔보세요."
               icon={<Icon name="nav-admins" />}
-              action={<Button size="sm" onClick={() => setSearchParams(new URLSearchParams())}>필터 초기화</Button>}
+              action={<Button size="sm" onClick={resetParams}>필터 초기화</Button>}
             />
           }
         />

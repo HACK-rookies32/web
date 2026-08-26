@@ -44,7 +44,7 @@ export function DashboardPage() {
       header: '등록일',
       width: '88px',
       align: 'right',
-      render: (row) => <span className="dashboard__muted">{formatRelative(row.createdAt)}</span>,
+      render: (row) => <span className="muted dashboard__muted">{formatRelative(row.createdAt)}</span>,
     },
   ];
 

@@ -1,12 +1,13 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
+  ConfirmModal,
   type Column,
   EmptyState,
   FormField,
+  ListToolbar,
   Modal,
   PageHeader,
   RowActions,
@@ -16,7 +17,8 @@ import {
   TextInput,
   useToast,
 } from '@/shared/ui';
-import { formatDateTime } from '@/shared/lib/format';
+import { formatDateTime, josa } from '@/shared/lib/format';
+import { useListParams } from '@/shared/hooks/useListParams';
 import {
   createHarmfulKeyword,
   deleteHarmfulKeyword,
@@ -29,9 +31,9 @@ import './HarmfulKeywordsPage.css';
 export function HarmfulKeywordsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { patchParams, getParam } = useListParams();
   const [keyword, setKeyword] = useState('');
-  const search = searchParams.get('keyword') ?? '';
+  const search = getParam('keyword');
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<HarmfulKeyword | null>(null);
   const [fieldError, setFieldError] = useState('');
@@ -56,7 +58,10 @@ export function HarmfulKeywordsPage() {
       setAddOpen(false);
       setKeyword('');
       setFieldError('');
-      toast.success('차단 키워드를 추가했습니다', `“${created.keyword}”이 차단 목록에 반영되었습니다.`);
+      toast.success(
+        '차단 키워드를 추가했습니다',
+        `“${created.keyword}”${josa(created.keyword, '이')} 차단 목록에 반영되었습니다.`,
+      );
     },
     onError: (error) => {
       setFieldError(error instanceof Error ? error.message : '키워드를 추가하지 못했습니다.');
@@ -74,16 +79,8 @@ export function HarmfulKeywordsPage() {
   });
 
   const handleSearch = useCallback(
-    (value: string) => {
-      setSearchParams((previous) => {
-        const next = new URLSearchParams(previous);
-        const normalized = value.trim();
-        if (normalized) next.set('keyword', normalized);
-        else next.delete('keyword');
-        return next;
-      });
-    },
-    [setSearchParams],
+    (value: string) => patchParams({ keyword: value.trim() }),
+    [patchParams],
   );
 
   function openAddModal() {
@@ -99,10 +96,12 @@ export function HarmfulKeywordsPage() {
       setFieldError('차단할 키워드를 입력해 주세요.');
       return;
     }
-    if (!/^[A-Za-z]+$/.test(normalized)) {
-      setFieldError('영어 한 단어만 입력할 수 있습니다.');
-      return;
-    }
+    /*
+     * 문자 종류는 제한하지 않는다.
+     * 목록에 "온라인 도박" 처럼 한글·공백이 들어간 키워드가 이미 있고,
+     * 아래 힌트도 "불법 베팅" 을 예로 든다. 영어 한 단어만 받으면 둘 다 어긋난다.
+     * 길이만 검사하고, 너무 짧거나 일반적인 단어는 화면 상단 안내로 유도한다.
+     */
     if (normalized.length > 50) {
       setFieldError('키워드는 50자 이내로 입력해 주세요.');
       return;
@@ -125,7 +124,7 @@ export function HarmfulKeywordsPage() {
       key: 'createdAt',
       header: '등록일시',
       width: '220px',
-      render: (row) => <span className="harmful__muted tabular">{formatDateTime(row.createdAt)}</span>,
+      render: (row) => <span className="muted harmful__muted tabular">{formatDateTime(row.createdAt)}</span>,
     },
     {
       key: 'actions',
@@ -149,7 +148,8 @@ export function HarmfulKeywordsPage() {
       <PageHeader
         title="유해사이트 관리"
         description="유해 사이트 접근을 감지하는 차단 키워드를 등록하고 관리합니다."
-        badge={<StatusPill tone="accent" shape="pill">총 {totalCount}개</StatusPill>}
+        count={totalCount}
+        countUnit="개"
         actions={<Button variant="primary" onClick={openAddModal}>키워드 추가</Button>}
       />
 
@@ -163,17 +163,20 @@ export function HarmfulKeywordsPage() {
         </div>
       </Card>
 
-      <Card flush>
-        <div className="harmful__toolbar">
+      <ListToolbar
+        search={
           <SearchInput
             value={search}
             onSearch={handleSearch}
             placeholder="차단 키워드 검색"
-            className="harmful__search"
             aria-label="차단 키워드 검색"
           />
-          <span className="harmful__result-count">검색 결과 {visibleKeywords.length}개</span>
-        </div>
+        }
+      >
+        <span className="muted harmful__result-count">검색 결과 {visibleKeywords.length}개</span>
+      </ListToolbar>
+
+      <Card flush>
         <Table
           columns={columns}
           rows={visibleKeywords}
@@ -223,27 +226,17 @@ export function HarmfulKeywordsPage() {
         </form>
       </Modal>
 
-      <Modal
+      <ConfirmModal
         open={deleteTarget !== null}
-        onClose={() => !deleteMutation.isPending && setDeleteTarget(null)}
+        onClose={() => setDeleteTarget(null)}
         title="차단 키워드 제외"
         description="제외한 키워드는 더 이상 유해 사이트 감지에 사용되지 않습니다."
-        size="sm"
-        footer={
-          <>
-            <Button onClick={() => setDeleteTarget(null)} disabled={deleteMutation.isPending}>취소</Button>
-            <Button
-              variant="danger"
-              loading={deleteMutation.isPending}
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-            >
-              제외
-            </Button>
-          </>
-        }
+        confirmLabel="제외"
+        pending={deleteMutation.isPending}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
       >
-        <p className="harmful__confirm">“{deleteTarget?.keyword}” 키워드를 차단 목록에서 제외할까요?</p>
-      </Modal>
+        {`“${deleteTarget?.keyword}” 키워드를 차단 목록에서 제외할까요?`}
+      </ConfirmModal>
     </div>
   );
 }
