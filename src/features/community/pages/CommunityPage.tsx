@@ -9,7 +9,6 @@ import {
   FormField,
   ListToolbar,
   Modal,
-  PageHeader,
   Pagination,
   RowActions,
   Select,
@@ -165,13 +164,7 @@ export function CommunityPage() {
 
   return (
     <div className="community">
-      <PageHeader
-        title="커뮤니티 관리"
-        description="게시글과 댓글을 검토하고 신고된 콘텐츠를 관리합니다."
-        count={query.data?.totalElements ?? 0}
-      />
-
-      <ListToolbar>
+      <ListToolbar summary={`총 ${formatNumber(query.data?.totalElements ?? 0)}건`}>
         <Select
           aria-label="게시글 정렬"
           value={sort}

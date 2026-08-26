@@ -8,7 +8,7 @@
 
 /* 검색 없이 필터·액션만 있는 경우(커뮤니티 등) 오른쪽으로 붙인다.
    화면마다 justify-content 를 다시 덮지 않아도 되게 여기서 처리한다. */
-.list-toolbar--no-search {
+.list-toolbar--no-leading {
   justify-content: flex-end;
 }
 
@@ -16,6 +16,11 @@
   flex: 1 1 320px;
   max-width: 420px;
   min-width: 0;
+}
+
+.list-toolbar__summary {
+  color: var(--text-muted);
+  font-size: var(--fs-body);
 }
 
 .list-toolbar__actions {

@@ -9,7 +9,6 @@ import {
   FormField,
   ListToolbar,
   Modal,
-  PageHeader,
   RowActions,
   SearchInput,
   StatusPill,
@@ -141,18 +140,8 @@ export function HarmfulKeywordsPage() {
     },
   ];
 
-  const totalCount = query.data?.length ?? 0;
-
   return (
     <div className="harmful">
-      <PageHeader
-        title="유해사이트 관리"
-        description="유해 사이트 접근을 감지하는 차단 키워드를 등록하고 관리합니다."
-        count={totalCount}
-        countUnit="개"
-        actions={<Button variant="primary" onClick={openAddModal}>키워드 추가</Button>}
-      />
-
       <Card className="harmful__guide">
         <div className="harmful__guide-content">
           <span className="harmful__guide-mark" aria-hidden="true">!</span>
@@ -174,6 +163,7 @@ export function HarmfulKeywordsPage() {
         }
       >
         <span className="muted harmful__result-count">검색 결과 {visibleKeywords.length}개</span>
+        <Button variant="primary" onClick={openAddModal}>키워드 추가</Button>
       </ListToolbar>
 
       <Card flush>

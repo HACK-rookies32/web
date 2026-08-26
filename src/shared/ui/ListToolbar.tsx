@@ -4,6 +4,8 @@ import './ListToolbar.css';
 interface ListToolbarProps {
   /** 왼쪽 검색 입력. 보통 `<SearchInput />` 을 넣는다. */
   search?: ReactNode;
+  /** 검색이 없는 목록에서 왼쪽에 표시할 건수·요약 정보. */
+  summary?: ReactNode;
   /** 오른쪽 필터·액션. `Select` · `Button` 등을 순서대로 넣는다. */
   children?: ReactNode;
   className?: string;
@@ -19,10 +21,10 @@ interface ListToolbarProps {
  * 오른쪽 `<select>` 는 내용 폭에 맞추되 너무 좁아지지 않도록 CSS 에서 함께 처리한다.
  * 개별 화면에서 폭·배경을 다시 지정할 필요가 없다.
  */
-export function ListToolbar({ search, children, className }: ListToolbarProps) {
+export function ListToolbar({ search, summary, children, className }: ListToolbarProps) {
   const classes = [
     'list-toolbar',
-    search ? '' : 'list-toolbar--no-search',
+    search || summary ? '' : 'list-toolbar--no-leading',
     className ?? '',
   ]
     .filter(Boolean)
@@ -31,6 +33,7 @@ export function ListToolbar({ search, children, className }: ListToolbarProps) {
   return (
     <div className={classes}>
       {search ? <div className="list-toolbar__search">{search}</div> : null}
+      {!search && summary ? <div className="list-toolbar__summary">{summary}</div> : null}
       {children ? <div className="list-toolbar__actions">{children}</div> : null}
     </div>
   );

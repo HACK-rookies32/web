@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import { Card, Column, EmptyState, LoadingBlock, PageHeader, StatusPill, Table } from '@/shared/ui';
+import { Card, Column, EmptyState, LoadingBlock, StatusPill, Table } from '@/shared/ui';
 import { formatRelative } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
 import { dashboardKeys, fetchDashboardSummary } from '../api';
@@ -62,11 +62,6 @@ export function DashboardPage() {
 
   return (
     <div className="dashboard">
-      <PageHeader
-        title="대시보드"
-        description="케어가드 서비스의 주요 운영 현황을 한눈에 확인합니다."
-      />
-
       <section className="dashboard__kpis" aria-label="주요 지표">
         {data.kpis.map((stat) => (
           <KpiCard key={stat.key} stat={stat} />

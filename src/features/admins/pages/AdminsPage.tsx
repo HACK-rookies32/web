@@ -9,7 +9,6 @@ import {
   Icon,
   ListToolbar,
   Modal,
-  PageHeader,
   RowActions,
   SearchInput,
   Select,
@@ -121,13 +120,6 @@ export function AdminsPage() {
 
   return (
     <div className="admins">
-      <PageHeader
-        title="관리자 계정 관리"
-        description="관리자 계정 목록을 조회하고 담당 업무에 맞는 권한을 설정합니다."
-        count={query.data?.length ?? 0}
-        countUnit="명"
-      />
-
       <ListToolbar
         search={
           <SearchInput
@@ -138,6 +130,7 @@ export function AdminsPage() {
           />
         }
       >
+        <span className="muted">총 {query.data?.length ?? 0}명</span>
         <Select aria-label="관리자 권한 필터" value={role} onChange={(event) => patchParams({ role: event.target.value === 'ALL' ? null : event.target.value })}>
           <option value="ALL">권한: 전체</option>
           {ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}

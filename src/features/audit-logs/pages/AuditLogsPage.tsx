@@ -7,7 +7,7 @@ import {
   EmptyState,
   FormField,
   Icon,
-  PageHeader,
+  ListToolbar,
   Pagination,
   Select,
   StatusPill,
@@ -99,12 +99,6 @@ export function AuditLogsPage() {
 
   return (
     <div className="audit-logs">
-      <PageHeader
-        title="감사 로그"
-        description="관리자 활동 기록을 조회합니다. 감사 로그는 서버에서 자동 생성되며 수정하거나 삭제할 수 없습니다."
-        count={query.data?.totalElements ?? 0}
-      />
-
       <Card className="audit-logs__filters" title="조회 조건" description="관리자, 활동 유형, 발생 기간으로 기록을 좁혀볼 수 있습니다.">
         <div className="audit-logs__filter-grid">
           <FormField label="관리자 ID">
@@ -149,6 +143,8 @@ export function AuditLogsPage() {
           </div>
         </div>
       </Card>
+
+      <ListToolbar summary={`총 ${query.data?.totalElements ?? 0}건`} />
 
       <Card flush>
         <Table
