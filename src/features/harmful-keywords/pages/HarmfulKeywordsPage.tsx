@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -28,8 +29,9 @@ import './HarmfulKeywordsPage.css';
 export function HarmfulKeywordsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [keyword, setKeyword] = useState('');
-  const [search, setSearch] = useState('');
+  const search = searchParams.get('keyword') ?? '';
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<HarmfulKeyword | null>(null);
   const [fieldError, setFieldError] = useState('');
@@ -71,7 +73,18 @@ export function HarmfulKeywordsPage() {
     onError: () => toast.error('삭제에 실패했습니다', '잠시 후 다시 시도해 주세요.'),
   });
 
-  const handleSearch = useCallback((value: string) => setSearch(value), []);
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearchParams((previous) => {
+        const next = new URLSearchParams(previous);
+        const normalized = value.trim();
+        if (normalized) next.set('keyword', normalized);
+        else next.delete('keyword');
+        return next;
+      });
+    },
+    [setSearchParams],
+  );
 
   function openAddModal() {
     setKeyword('');
@@ -84,6 +97,10 @@ export function HarmfulKeywordsPage() {
     const normalized = keyword.trim();
     if (!normalized) {
       setFieldError('차단할 키워드를 입력해 주세요.');
+      return;
+    }
+    if (!/^[A-Za-z]+$/.test(normalized)) {
+      setFieldError('영어 한 단어만 입력할 수 있습니다.');
       return;
     }
     if (normalized.length > 50) {

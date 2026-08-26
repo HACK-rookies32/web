@@ -16,16 +16,11 @@ import {
   TextInput,
 } from '@/shared/ui';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
+import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
+import { AUDIT_ACTION_LABEL, type AuditAction } from '@/shared/lib/audit';
 import { auditLogKeys, fetchAuditLogs } from '../api';
-import {
-  AUDIT_ACTION_LABEL,
-  type AuditAction,
-  type AuditLogItem,
-  type AuditLogListParams,
-} from '../types';
+import type { AuditLogItem, AuditLogListParams } from '../types';
 import './AuditLogsPage.css';
-
-const PAGE_SIZE = 20;
 
 function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
   if (action.includes('DELETE') || action === 'MEMBER_BAN') return 'danger';
@@ -50,7 +45,7 @@ export function AuditLogsPage() {
       from: from || undefined,
       to: to || undefined,
       page,
-      size: PAGE_SIZE,
+      size: DEFAULT_PAGE_SIZE,
     }),
     [adminIdValue, actionValue, from, to, page],
   );

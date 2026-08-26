@@ -10,7 +10,7 @@
  * feature 끼리 직접 import 할 수 없으므로 여러 화면이 공유하는 목은 mocks 에 둔다.
  */
 
-import type { AuditAction } from '@/features/audit-logs/types';
+import type { AuditAction } from '@/shared/lib/audit';
 
 export interface AuditLog {
   logId: number;

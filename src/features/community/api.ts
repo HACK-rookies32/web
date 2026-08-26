@@ -83,7 +83,9 @@ export async function deleteCommunityPost(vars: {
   return request<void>({ url: `/admin/community/posts/${vars.postId}`, method: 'DELETE' });
 }
 
-/** POST /admin/community/members/{memberId}/ban */
+// TODO(api): 현재 명세는 POST /admin/community/members/ban 이지만 대상 회원 식별자가 없다.
+// 백엔드와 {memberId} Path Parameter 사용 여부가 확정되면 명세와 구현을 함께 맞춘다.
+/** 임시 연동 경로: POST /admin/community/members/{memberId}/ban */
 export async function banCommunityMember(vars: {
   memberId: number;
   body: MemberBanRequest;

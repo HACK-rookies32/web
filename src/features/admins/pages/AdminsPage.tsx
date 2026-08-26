@@ -20,7 +20,8 @@ import {
   useToast,
 } from '@/shared/ui';
 import { ROLE_LABEL, ROLE_OPTIONS } from '@/shared/lib/constants';
-import { formatDateTime, formatNumber, maskPhone } from '@/shared/lib/format';
+import { useAuth } from '@/shared/auth/AuthContext';
+import { formatDateTime, formatNumber, maskEmail, maskPhone } from '@/shared/lib/format';
 import type { Role } from '@/shared/lib/types';
 import { adminKeys, fetchAdmins, updateAdminRole } from '../api';
 import type { AdminAccount, AdminRoleFilter } from '../types';
@@ -36,6 +37,7 @@ function roleTone(role: Role): 'accent' | 'info' | 'success' | 'warning' {
 export function AdminsPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const { session } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const keyword = searchParams.get('keyword') ?? '';
   const role = (searchParams.get('role') as AdminRoleFilter | null) ?? 'ALL';
@@ -99,7 +101,7 @@ export function AdminsPage() {
       key: 'contact',
       header: '연락처',
       width: '240px',
-      render: (row) => <StackedCell primary={row.email} secondary={maskPhone(row.phoneNumber)} />,
+      render: (row) => <StackedCell primary={maskEmail(row.email)} secondary={maskPhone(row.phoneNumber)} />,
     },
     {
       key: 'role',
@@ -121,7 +123,11 @@ export function AdminsPage() {
       align: 'right',
       render: (row) => (
         <RowActions>
-          <Button variant="ghost" size="sm" onClick={() => openRoleModal(row)}>권한 변경</Button>
+          {row.username === session?.username ? (
+            <span className="admins__muted">현재 계정</span>
+          ) : (
+            <Button variant="ghost" size="sm" onClick={() => openRoleModal(row)}>권한 변경</Button>
+          )}
         </RowActions>
       ),
     },
