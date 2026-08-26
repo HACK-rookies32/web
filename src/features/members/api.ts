@@ -2,7 +2,7 @@ import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
 import { toCsv } from '@/shared/lib/format';
 import type { Page } from '@/shared/lib/types';
-import { MOCK_DEVICES, MOCK_MEMBERS, MOCK_MEMBER_INQUIRIES } from '@/mocks/members';
+import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members';
 import { MOCK_WALLETS } from '@/mocks/payments';
 import type { WalletSummary } from '@/shared/lib/wallet';
 import type {
@@ -75,7 +75,7 @@ export async function fetchMemberWallet(memberId: number): Promise<WalletSummary
  *            지금은 목에서 회원별로 나눠 두었고, 연동 시 쿼리 파라미터가 필요하다.
  */
 export async function fetchMemberInquiries(memberId: number): Promise<MemberInquiry[]> {
-  if (USE_MOCK) return mockResponse(MOCK_MEMBER_INQUIRIES[memberId] ?? []);
+  if (USE_MOCK) return mockResponse(getMemberInquiries(memberId));
   return request<MemberInquiry[]>({
     url: '/admin/inquiries',
     method: 'GET',
@@ -116,7 +116,7 @@ export async function deleteMember(memberId: number): Promise<void> {
 export async function fetchMemberReportCsv(member: MemberDetail): Promise<string> {
   if (USE_MOCK) {
     const devices = MOCK_DEVICES[member.memberId] ?? [];
-    const inquiries = MOCK_MEMBER_INQUIRIES[member.memberId] ?? [];
+    const inquiries = getMemberInquiries(member.memberId);
     const wallet = MOCK_WALLETS.find((w) => w.userId === member.memberId);
 
     const csv = toCsv(
@@ -149,6 +149,7 @@ export async function fetchMemberReportCsv(member: MemberDetail): Promise<string
     responseType: 'text',
   });
 }
+
 
 /** 목 데이터를 초기 상태로 되돌린다 (개발 편의용). */
 export function resetMemberStore(): void {

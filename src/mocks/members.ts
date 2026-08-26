@@ -3,6 +3,7 @@ import type {
   MemberDevice,
   MemberInquiry,
 } from '@/features/members/types';
+import { MOCK_INQUIRIES } from './inquiries';
 
 /** n일 전 ISO 문자열. */
 function daysAgo(n: number, hour = 10): string {
@@ -343,47 +344,24 @@ export const MOCK_DEVICES: Record<number, MemberDevice[]> = {
   ],
 };
 
-/** 회원별 1:1 문의 기록. */
-export const MOCK_MEMBER_INQUIRIES: Record<number, MemberInquiry[]> = {
-  1001: [
-    {
-      id: 101,
-      answered: false,
-      title: '비밀번호 찾기가 안됩니다.',
-      createdAt: minutesAgo(35),
-      answeredAt: null,
-    },
-    {
-      id: 205,
-      answered: true,
-      title: '자녀 위치가 갱신되지 않아요',
-      createdAt: daysAgo(14),
-      answeredAt: daysAgo(13),
-    },
-    {
-      id: 312,
-      answered: true,
-      title: '기기 등록 개수 제한이 있나요?',
-      createdAt: daysAgo(60),
-      answeredAt: daysAgo(59),
-    },
-  ],
-  1002: [
-    {
-      id: 102,
-      answered: false,
-      title: '환불 요청합니다. 확인 부탁드려요.',
-      createdAt: minutesAgo(230),
-      answeredAt: null,
-    },
-  ],
-  1003: [
-    {
-      id: 288,
-      answered: true,
-      title: '계정 정지 사유를 알고 싶습니다',
-      createdAt: daysAgo(8),
-      answeredAt: daysAgo(7),
-    },
-  ],
-};
+/**
+ * 회원별 1:1 문의 기록.
+ *
+ * 예전에는 여기에 문의를 따로 적어 뒀는데 문의 목록(MOCK_INQUIRIES)과 id·제목이
+ * 어긋나 있었다. 회원 상세의 문의 탭은 `/inquiries?id={id}` 로 이동하는데
+ * 205·312·288 은 문의 목록에 없는 id 라 슬라이드오버가 열려도 문의를 찾지 못했다.
+ * (102 는 양쪽에 있었지만 제목이 서로 달랐다.)
+ *
+ * 이제 문의 목록에서 memberId 로 뽑아 쓴다. 한 곳만 고치면 양쪽이 같이 움직인다.
+ */
+export function getMemberInquiries(memberId: number): MemberInquiry[] {
+  return MOCK_INQUIRIES.filter((inquiry) => inquiry.memberId === memberId)
+    .map((inquiry) => ({
+      id: inquiry.id,
+      answered: inquiry.answered,
+      title: inquiry.title,
+      createdAt: inquiry.createdAt,
+      answeredAt: inquiry.answer?.createdAt ?? null,
+    }))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}

@@ -52,7 +52,19 @@ export function Topbar({ title, onToggleSidebar, unreadCount = 0 }: TopbarProps)
           aria-label="전체 검색"
         />
 
-        <button type="button" className="topbar__icon-btn topbar__bell" aria-label={`알림 ${unreadCount}건`}>
+        {/*
+          TODO(api): 관리자용 알림 조회 API 가 명세에 없다.
+          예전에는 읽지 않은 알림 수를 3 으로 박아 두고 빨간 점을 띄웠는데,
+          누를 수도 없고 실제 알림도 아니라 오해만 샀다.
+          API 가 생기기 전까지는 비활성 상태로 두고 개수를 표시하지 않는다.
+        */}
+        <button
+          type="button"
+          className="topbar__icon-btn topbar__bell"
+          disabled
+          title="알림 기능은 준비 중입니다"
+          aria-label="알림 (준비 중)"
+        >
           <Icon name="bell" />
           {unreadCount > 0 ? <span className="topbar__dot" aria-hidden="true" /> : null}
         </button>

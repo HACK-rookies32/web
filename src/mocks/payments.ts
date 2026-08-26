@@ -499,19 +499,46 @@ export const MOCK_WALLETS: WalletSummary[] = [
 
 /* ------------------------------------------------------------- 통계 ---- */
 
+/**
+ * 자금 지표.
+ *
+ * 예전에는 합계를 손으로 적어 뒀는데 원장과 맞지 않았다.
+ * (`totalCharged: 335,000` 은 전체 합 365,000 도, 완료분 합 295,000 도 아니었고
+ *  `totalPaid` 만 취소·환불까지 포함한 전체 합이라 기준도 서로 달랐다.)
+ *
+ * 이제 충전·결제 목에서 직접 합산한다. 기준은 **완료(PAID)된 건만** 이다.
+ * 화면의 "미사용 잔액 = 충전액 − 결제액" 이 성립하려면 실제로 오간 돈만 세야 한다.
+ */
+function sumPaid(items: { amount: number; status: string }[]): number {
+  return items.filter((item) => item.status === 'PAID').reduce((acc, item) => acc + item.amount, 0);
+}
+
+function countPaid(items: { status: string }[]): number {
+  return items.filter((item) => item.status === 'PAID').length;
+}
+
+/** 명세 5.9 의 `groupBy=DAY` 집계. 완료된 건만 요일별로 모은다. */
+const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
+
+function dailyTotals(): FundStats['daily'] {
+  const buckets = WEEKDAYS.map((date) => ({ date, charged: 0, paid: 0 }));
+
+  MOCK_CHARGES.filter((c) => c.status === 'PAID').forEach((charge) => {
+    buckets[new Date(charge.createdAt).getDay()].charged += charge.amount;
+  });
+  MOCK_STORE_PAYMENTS.filter((p) => p.status === 'PAID').forEach((payment) => {
+    buckets[new Date(payment.paidAt).getDay()].paid += payment.amount;
+  });
+
+  // 월요일부터 보이도록 앞으로 당긴다.
+  return [...buckets.slice(1), buckets[0]];
+}
+
 export const MOCK_FUND_STATS: FundStats = {
-  totalCharged: 335_000,
-  totalPaid: 62_500,
-  chargeCount: 11,
-  paymentCount: 12,
-  refundCount: 2,
-  daily: [
-    { date: '월', charged: 40000, paid: 9600 },
-    { date: '화', charged: 20000, paid: 6200 },
-    { date: '수', charged: 100000, paid: 2000 },
-    { date: '목', charged: 30000, paid: 11400 },
-    { date: '금', charged: 15000, paid: 12000 },
-    { date: '토', charged: 50000, paid: 12300 },
-    { date: '일', charged: 80000, paid: 9000 },
-  ],
+  totalCharged: sumPaid(MOCK_CHARGES),
+  totalPaid: sumPaid(MOCK_STORE_PAYMENTS),
+  chargeCount: countPaid(MOCK_CHARGES),
+  paymentCount: countPaid(MOCK_STORE_PAYMENTS),
+  refundCount: MOCK_STORE_PAYMENTS.filter((payment) => payment.status === 'REFUNDED').length,
+  daily: dailyTotals(),
 };
