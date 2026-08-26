@@ -1,4 +1,4 @@
-import { useRef, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import './AuditDatePicker.css';
 
 interface AuditDatePickerProps {
@@ -21,6 +21,22 @@ export function AuditDatePicker({
   onChange,
 }: AuditDatePickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [draft, setDraft] = useState(value);
+
+  useEffect(() => {
+    setDraft(value);
+  }, [value]);
+
+  function isValidDate(next: string): boolean {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(next)) return false;
+    const [year, month, day] = next.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.getFullYear() === year
+      && date.getMonth() === month - 1
+      && date.getDate() === day
+      && next >= min
+      && next <= max;
+  }
 
   function openPicker() {
     const input = inputRef.current;
@@ -38,28 +54,67 @@ export function AuditDatePicker({
     input.click();
   }
 
-  function handleChange(event: ChangeEvent<HTMLInputElement>) {
-    onChange(event.target.value);
+  function handlePickerChange(event: ChangeEvent<HTMLInputElement>) {
+    const next = event.target.value;
+    setDraft(next);
+    onChange(next);
+  }
+
+  function handleTextChange(event: ChangeEvent<HTMLInputElement>) {
+    const next = event.target.value;
+    setDraft(next);
+    if (!next) {
+      onChange('');
+    } else if (isValidDate(next)) {
+      onChange(next);
+    }
+  }
+
+  function clearDate() {
+    setDraft('');
+    onChange('');
   }
 
   return (
-    <div className="audit-date-picker">
-      <button
+    <div className="control audit-date-picker" aria-invalid={invalid || undefined}>
+      <input
         id={id}
-        className="control audit-date-picker__trigger"
-        type="button"
+        className="audit-date-picker__text"
+        type="text"
+        inputMode="numeric"
+        value={draft}
+        placeholder="YYYY-MM-DD"
         aria-describedby={describedBy}
         aria-invalid={invalid || undefined}
-        aria-haspopup="dialog"
+        maxLength={10}
+        onChange={handleTextChange}
+        onBlur={() => {
+          if (draft && !isValidDate(draft)) setDraft(value);
+        }}
+      />
+
+      {draft ? (
+        <button
+          className="audit-date-picker__button"
+          type="button"
+          aria-label="선택한 날짜 지우기"
+          onClick={clearDate}
+        >
+          <span aria-hidden="true">×</span>
+        </button>
+      ) : null}
+
+      <button
+        className="audit-date-picker__button"
+        type="button"
+        aria-label="달력에서 날짜 선택"
         onClick={openPicker}
       >
-        <span className={value ? undefined : 'audit-date-picker__placeholder'}>
-          {value || '날짜 선택'}
-        </span>
         <svg className="audit-date-picker__icon" viewBox="0 0 24 24" aria-hidden="true">
           <path d="M7 2v3M17 2v3M3.5 9h17M5.5 4h13a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
         </svg>
       </button>
+
       <input
         ref={inputRef}
         className="audit-date-picker__native"
@@ -69,7 +124,7 @@ export function AuditDatePicker({
         max={max}
         tabIndex={-1}
         aria-hidden="true"
-        onChange={handleChange}
+        onChange={handlePickerChange}
       />
     </div>
   );

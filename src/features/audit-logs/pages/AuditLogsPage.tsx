@@ -26,7 +26,16 @@ import type { AuditLogItem, AuditLogListParams } from '../types';
 import './AuditLogsPage.css';
 
 const MIN_AUDIT_DATE = '2000-01-01';
-const MAX_AUDIT_DATE = '2100-12-31';
+
+function getTodayDate(): string {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+const MAX_AUDIT_DATE = getTodayDate();
 
 function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
   if (action.includes('DELETE') || action === 'MEMBER_BAN') return 'danger';
@@ -177,7 +186,7 @@ export function AuditLogsPage() {
                 invalid={props['aria-invalid']}
                 value={from}
                 min={MIN_AUDIT_DATE}
-                max={to || MAX_AUDIT_DATE}
+                max={to && to < MAX_AUDIT_DATE ? to : MAX_AUDIT_DATE}
                 onChange={(value) => patchParams({ from: value || null })}
               />
             )}

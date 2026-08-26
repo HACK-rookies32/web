@@ -27,7 +27,7 @@ import { adminKeys, fetchAdmins, updateAdminRole } from '../api';
 import type { AdminAccount, AdminRoleFilter } from '../types';
 import './AdminsPage.css';
 
-const MIN_PHONE_SEARCH_DIGITS = 4;
+const PHONE_SUFFIX_SEARCH_DIGITS = 4;
 
 function matchesAdminKeyword(admin: AdminAccount, keyword: string): boolean {
   const needle = keyword.trim().toLocaleLowerCase();
@@ -45,15 +45,17 @@ function matchesAdminKeyword(admin: AdminAccount, keyword: string): boolean {
   const email = admin.email.toLocaleLowerCase();
   const emailMatches = needle.includes('@')
     ? email.includes(needle)
-    : /^[a-z]+$/i.test(needle) && needle.length >= 3
+    : /^[a-z0-9._%+-]+$/i.test(needle) && needle.length >= 3
       ? email.split('@')[0].includes(needle)
       : false;
   if (emailMatches) return true;
 
-  // 전화번호는 하이픈을 무시하되 숫자 한두 글자로 개인정보가 과다 노출되지 않게 한다.
+  // 화면에서 마스킹한 가운데 번호를 검색 결과로 역추론할 수 없도록 공개된 뒤 4자리만 검색한다.
   const phoneDigits = needle.replace(/\D/g, '');
-  const isPhoneSearch = /^[\d\s-]+$/.test(needle) && phoneDigits.length >= MIN_PHONE_SEARCH_DIGITS;
-  return isPhoneSearch && admin.phoneNumber.replace(/\D/g, '').includes(phoneDigits);
+  const isPhoneSearch = /^[\d\s-]+$/.test(needle)
+    && phoneDigits.length === PHONE_SUFFIX_SEARCH_DIGITS;
+  const phoneSuffix = admin.phoneNumber.replace(/\D/g, '').slice(-PHONE_SUFFIX_SEARCH_DIGITS);
+  return isPhoneSearch && phoneSuffix === phoneDigits;
 }
 
 function roleTone(role: Role): 'accent' | 'info' | 'success' | 'warning' {
@@ -160,7 +162,7 @@ export function AdminsPage() {
           <SearchInput
             value={keyword}
             onSearch={(value) => patchParams({ keyword: value })}
-            placeholder="아이디 · 이름 · 이메일 · 전화번호(숫자 4자리 이상)"
+            placeholder="아이디 · 이름 · 이메일 · 전화번호 뒤 4자리"
             aria-label="관리자 검색"
           />
         }
