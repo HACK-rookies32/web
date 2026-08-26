@@ -186,8 +186,8 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 | 공지 목록·상세 | 5.3 | 인증만 되면 가능 (역할 제한 없음) |
 | 공지 작성·수정·삭제, 전체 알림 발송 | 5.3 | `SUPER_ADMIN` |
 | 1:1 문의 조회·답변 등록/수정/삭제 | 5.4 | `SUPER_ADMIN`, `INQUIRY_ADMIN` |
-| 커뮤니티 게시글 **목록·삭제** | 5.5 | `SUPER_ADMIN`, `GENERAL_ADMIN`, `COMMUNITY_ADMIN` |
-| 커뮤니티 게시글 **상세**, 사용자 밴 | 5.5 | `SUPER_ADMIN`, `COMMUNITY_ADMIN` |
+| 커뮤니티 게시글 **목록** | 5.5 | `SUPER_ADMIN`, `GENERAL_ADMIN`, `COMMUNITY_ADMIN` |
+| 커뮤니티 게시글 **상세·삭제**, 사용자 밴 | 5.5 | `SUPER_ADMIN`, `COMMUNITY_ADMIN` |
 | 커뮤니티 신고 조회 | 5.5 | `SUPER_ADMIN` |
 | 유해 키워드 목록·추가·삭제 | 5.6 | `SUPER_ADMIN` |
 | 리포트 CSV (회원) | 5.7 | `SUPER_ADMIN` |
@@ -209,7 +209,8 @@ git checkout dev && git pull && git checkout -b dev-<이름>
   를 씁니다. 위 표는 `GET /admin/admins` 의 `role` 값(4종)을 정본으로 보고 옮긴 것이며,
   `ADMIN_CS` 는 문맥상 회원 관리는 `GENERAL_ADMIN`, 문의 CSV 는 `INQUIRY_ADMIN` 으로 읽었습니다.
   **백엔드 확인이 필요합니다.**
-- **커뮤니티 권한이 명세 안에서 갈립니다.** 목록·삭제는 `GENERAL_ADMIN` 을 포함하는데
-  상세·밴은 포함하지 않습니다. 그래서 `GENERAL_ADMIN` 은 **목록에서 삭제는 할 수 있지만
-  상세를 열어 내용을 확인할 수는 없습니다.** 코드는 명세를 그대로 옮겨 두었습니다
-  (`CommunityPage` 의 `canDeletePost` / `canViewDetail`). 의도한 조합인지 확인이 필요합니다.
+- **커뮤니티 게시글 삭제 — 문서가 아직 안 고쳐졌습니다.** 명세의
+  `DELETE /admin/community/posts/{id}` 허용 역할에 `GENERAL_ADMIN` 이 적혀 있는데,
+  백엔드에 확인한 결과 **잘못 들어간 것**이라 코드에서는 제외했습니다
+  (`CommunityPage` 의 `canModerate`). `GENERAL_ADMIN` 은 목록 조회만 가능합니다.
+  **문서만 보고 되돌리지 마세요.** 문서가 고쳐지면 `CommunityPage` 의 `TODO(api)` 주석도 지웁니다.

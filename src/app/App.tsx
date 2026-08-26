@@ -105,9 +105,9 @@ export function App() {
                     </Route>
 
                     {/*
-                      커뮤니티 관리 — 명세 5.5 는 API 마다 요구 권한이 다르다.
-                      목록·삭제는 GENERAL_ADMIN 도 허용이라 화면 진입은 3개 역할에 열어 두고,
-                      상세·밴은 CommunityPage 안에서 SUPER · COMMUNITY 로 좁힌다.
+                      커뮤니티 관리 — 명세 5.5 의 목록 조회(GET /admin/community/posts)만
+                      GENERAL_ADMIN 에 열려 있다. 화면 진입은 3개 역할에 열어 두고,
+                      상세·삭제·밴은 CommunityPage 안에서 SUPER · COMMUNITY 로 좁힌다.
                     */}
                     <Route
                       element={

@@ -41,22 +41,22 @@ export function CommunityPage() {
   const sort = searchParams.get('sort') ?? 'id,desc';
   const selectedId = searchParams.get('id') ? Number(searchParams.get('id')) : null;
   /*
-   * 명세 5.5 는 커뮤니티 API 마다 요구 권한이 다르다. 한 플래그로 묶으면 어긋난다.
+   * 명세 5.5 의 커뮤니티 API 별 요구 권한.
    *
-   *   GET    /admin/community/posts        SUPER · GENERAL · COMMUNITY
-   *   DELETE /admin/community/posts/{id}   SUPER · GENERAL · COMMUNITY
+   *   GET    /admin/community/posts        SUPER · GENERAL · COMMUNITY   ← 목록만 열려 있다
    *   GET    /admin/community/posts/{id}   SUPER · COMMUNITY
+   *   DELETE /admin/community/posts/{id}   SUPER · COMMUNITY
    *   POST   /admin/community/members/ban  SUPER · COMMUNITY
    *
-   * 그래서 GENERAL_ADMIN 은 목록을 보고 삭제까지 할 수 있지만 상세를 열거나
-   * 밴을 할 수는 없다. 명세를 그대로 옮긴 것이고, 이 조합이 의도한 것인지는
-   * 백엔드 확인 대기 중이다(README "명세에서 확인이 필요한 부분" 참고).
+   * 즉 GENERAL_ADMIN 은 목록을 볼 수만 있고 상세·삭제·밴은 못 한다.
+   *
+   * TODO(api): 명세 문서에는 DELETE 의 허용 역할에 아직 GENERAL_ADMIN 이 적혀 있다.
+   *            백엔드에 확인한 결과 "잘못 들어간 것" 이라고 해서 여기서는 뺐다.
+   *            문서가 고쳐지면 이 주석을 지운다. 문서만 보고 되돌리지 말 것.
    *
    * ⚠️ 이 가드는 UX 용이며 실제 접근 통제는 서버가 담당한다.
    */
-  const canDeletePost = hasRole(['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN']);
-  const canViewDetail = hasRole(['SUPER_ADMIN', 'COMMUNITY_ADMIN']);
-  const canBan = canViewDetail;
+  const canModerate = hasRole(['SUPER_ADMIN', 'COMMUNITY_ADMIN']);
   const adminUsername = session?.username ?? 'unknown';
 
   const [deleteTarget, setDeleteTarget] = useState<CommunityPostListItem | null>(null);
@@ -159,15 +159,15 @@ export function CommunityPage() {
     {
       key: 'actions',
       header: <span className="sr-only">관리</span>,
-      width: canBan ? '168px' : '104px',
+      width: canModerate ? '168px' : '104px',
       align: 'right',
       render: (row) => (
         <RowActions>
-          {canBan ? (
-            <Button variant="ghost" size="sm" onClick={() => openBan(row)}>밴</Button>
-          ) : null}
-          {canDeletePost ? (
-            <Button variant="ghost" size="sm" className="community__danger" onClick={() => setDeleteTarget(row)}>삭제</Button>
+          {canModerate ? (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => openBan(row)}>밴</Button>
+              <Button variant="ghost" size="sm" className="community__danger" onClick={() => setDeleteTarget(row)}>삭제</Button>
+            </>
           ) : null}
         </RowActions>
       ),
@@ -201,7 +201,7 @@ export function CommunityPage() {
           rowKey={(row) => row.id}
           loading={query.isPending}
           error={query.isError ? '게시글 목록을 불러오지 못했습니다.' : undefined}
-          onRowClick={canViewDetail ? (row) => patchParams({ id: String(row.id) }, false) : undefined}
+          onRowClick={canModerate ? (row) => patchParams({ id: String(row.id) }, false) : undefined}
           emptyState={<EmptyState title="게시글이 없습니다" description="조회된 커뮤니티 게시글이 없습니다." />}
           footer={
             query.data && query.data.totalElements > 0 ? (
@@ -218,15 +218,15 @@ export function CommunityPage() {
       </Card>
 
       <SlideOver
-        open={selectedId !== null && canViewDetail}
+        open={selectedId !== null && canModerate}
         onClose={() => patchParams({ id: null }, false)}
         title="게시글 상세"
         width={500}
       >
-        {selectedId !== null && canViewDetail ? (
+        {selectedId !== null && canModerate ? (
           <CommunityDetailPanel
             postId={selectedId}
-            canModerateMember={canBan}
+            canModerateMember={canModerate}
             deleting={deleteMutation.isPending}
             onDelete={setDeleteTarget}
             onBan={openBan}
