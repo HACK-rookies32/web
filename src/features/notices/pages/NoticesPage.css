@@ -33,10 +33,6 @@
   line-height: var(--lh-badge);
 }
 
-.notices__muted {
-  color: var(--text-muted);
-}
-
 .notices__danger:hover {
   color: var(--danger);
 }

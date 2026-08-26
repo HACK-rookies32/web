@@ -44,7 +44,6 @@
 
 .harmful__result-count,
 .harmful__muted {
-  color: var(--text-muted);
   font-size: var(--fs-label);
   line-height: var(--lh-label);
 }
@@ -64,8 +63,4 @@
   color: var(--danger);
 }
 
-.harmful__confirm {
-  color: var(--text-strong);
-  font-weight: 500;
-}
 

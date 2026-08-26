@@ -111,3 +111,9 @@
     transform: translateY(8px) scale(0.98);
   }
 }
+
+/* ConfirmModal 의 확인 문구 — 삭제 대상이 또렷하게 보이도록 강조한다. */
+.confirm-modal__text {
+  color: var(--text-strong);
+  font-weight: 500;
+}

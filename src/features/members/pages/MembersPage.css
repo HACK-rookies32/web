@@ -49,10 +49,6 @@
   white-space: nowrap;
 }
 
-.members__muted {
-  color: var(--text-muted);
-}
-
 .members__danger:hover {
   color: var(--danger);
 }

@@ -155,7 +155,7 @@ export function MemberDetailPage() {
       header: '최근 접속',
       align: 'right',
       width: '120px',
-      render: (d) => <span className="detail__muted">{formatRelative(d.lastSeenAt)}</span>,
+      render: (d) => <span className="muted">{formatRelative(d.lastSeenAt)}</span>,
     },
   ];
 
@@ -183,7 +183,7 @@ export function MemberDetailPage() {
       width: '140px',
       align: 'right',
       render: (i) =>
-        i.answeredAt ? formatDate(i.answeredAt) : <span className="detail__muted">-</span>,
+        i.answeredAt ? formatDate(i.answeredAt) : <span className="muted">-</span>,
     },
   ];
 

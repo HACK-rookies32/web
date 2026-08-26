@@ -90,7 +90,7 @@ export function StorePaymentsTab({
       align: 'right',
       numeric: true,
       width: '120px',
-      render: (row) => <span className="funds__muted">{formatCurrency(row.balanceAfter)}</span>,
+      render: (row) => <span className="muted">{formatCurrency(row.balanceAfter)}</span>,
     },
     {
       key: 'status',

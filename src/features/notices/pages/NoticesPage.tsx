@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
+  ConfirmModal,
   Column,
   EmptyState,
   Icon,
@@ -20,6 +20,7 @@ import {
 import { formatDateTime, formatRelative } from '@/shared/lib/format';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useListParams } from '@/shared/hooks/useListParams';
 import {
   broadcastNotification,
   createNotice,
@@ -52,10 +53,9 @@ export function NoticesPage() {
   const canManage = hasRole(['SUPER_ADMIN']);
   const adminUsername = session?.username ?? 'unknown';
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { searchParams, patchParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
   const exposeMobile = (searchParams.get('expose') as 'ALL' | 'EXPOSED' | 'HIDDEN' | null) ?? 'ALL';
-  const page = Number(searchParams.get('page') ?? '0');
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<NoticeDetail | null>(null);
@@ -72,21 +72,6 @@ export function NoticesPage() {
     queryKey: noticeKeys.list(params),
     queryFn: () => fetchNotices(params),
   });
-
-  const patchParams = useCallback(
-    (patch: Record<string, string | null>, resetPage = true) => {
-      setSearchParams((prev) => {
-        const next = new URLSearchParams(prev);
-        Object.entries(patch).forEach(([k, v]) => {
-          if (v === null || v === '') next.delete(k);
-          else next.set(k, v);
-        });
-        if (resetPage) next.delete('page');
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
 
   const handleSearch = useCallback((value: string) => patchParams({ keyword: value }), [patchParams]);
 
@@ -178,7 +163,7 @@ export function NoticesPage() {
       key: 'updatedAt',
       header: '최근 수정',
       width: '104px',
-      render: (row) => <span className="notices__muted">{formatRelative(row.updatedAt)}</span>,
+      render: (row) => <span className="muted">{formatRelative(row.updatedAt)}</span>,
     },
     {
       key: 'actions',
@@ -387,29 +372,16 @@ export function NoticesPage() {
         onSubmit={(body) => broadcastMutation.mutate(body)}
       />
 
-      <Modal
+      <ConfirmModal
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
-        size="sm"
         title="공지를 삭제할까요?"
         description="삭제한 공지는 되돌릴 수 없으며, 이 작업은 감사 로그에 기록됩니다."
-        footer={
-          <>
-            <Button onClick={() => setDeleteTarget(null)} disabled={deleteMutation.isPending}>
-              취소
-            </Button>
-            <Button
-              variant="danger"
-              loading={deleteMutation.isPending}
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
-            >
-              삭제
-            </Button>
-          </>
-        }
+        pending={deleteMutation.isPending}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget)}
       >
         {deleteTarget ? <p className="notices__confirm">{deleteTarget.title}</p> : null}
-      </Modal>
+      </ConfirmModal>
     </div>
   );
 }

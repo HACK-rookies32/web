@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router-dom';
 import {
   Button,
   Card,
+  ConfirmModal,
   type Column,
   EmptyState,
   FormField,
@@ -20,6 +20,7 @@ import {
   useToast,
 } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { useListParams } from '@/shared/hooks/useListParams';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import {
@@ -36,8 +37,7 @@ export function CommunityPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { hasRole, session } = useAuth();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const page = Number(searchParams.get('page') ?? '0');
+  const { searchParams, patchParams, page } = useListParams();
   const sort = searchParams.get('sort') ?? 'id,desc';
   const selectedId = searchParams.get('id') ? Number(searchParams.get('id')) : null;
   /*
@@ -60,21 +60,6 @@ export function CommunityPage() {
     queryFn: () => fetchCommunityPosts(params),
   });
 
-  const patchParams = useCallback(
-    (patch: Record<string, string | null>, resetPage = false) => {
-      setSearchParams((previous) => {
-        const next = new URLSearchParams(previous);
-        Object.entries(patch).forEach(([key, value]) => {
-          if (value === null) next.delete(key);
-          else next.set(key, value);
-        });
-        if (resetPage) next.delete('page');
-        return next;
-      });
-    },
-    [setSearchParams],
-  );
-
   const closeDeleteModal = useCallback(() => setDeleteTarget(null), []);
 
   const closeBanModal = useCallback(() => {
@@ -87,7 +72,7 @@ export function CommunityPage() {
     mutationFn: (postId: number) => deleteCommunityPost({ postId, adminUsername }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
-      patchParams({ id: null });
+      patchParams({ id: null }, false);
       setDeleteTarget(null);
       toast.success('게시글을 삭제했습니다', '삭제 활동은 감사 로그에 기록됩니다.');
     },
@@ -139,7 +124,7 @@ export function CommunityPage() {
       key: 'member',
       header: '작성자',
       width: '120px',
-      render: (row) => <span className="community__muted">회원 #{row.memberId}</span>,
+      render: (row) => <span className="muted community__muted">회원 #{row.memberId}</span>,
     },
     {
       key: 'reports',
@@ -158,7 +143,7 @@ export function CommunityPage() {
       header: '작성일시',
       width: '168px',
       numeric: true,
-      render: (row) => <span className="community__muted">{formatDateTime(row.createdAt)}</span>,
+      render: (row) => <span className="muted community__muted">{formatDateTime(row.createdAt)}</span>,
     },
     {
       key: 'actions',
@@ -183,7 +168,7 @@ export function CommunityPage() {
       <PageHeader
         title="커뮤니티 관리"
         description="게시글과 댓글을 검토하고 신고된 콘텐츠를 관리합니다."
-        badge={<StatusPill tone="accent" shape="pill">총 {formatNumber(query.data?.totalElements ?? 0)}건</StatusPill>}
+        count={query.data?.totalElements ?? 0}
       />
 
       <ListToolbar>
@@ -205,7 +190,7 @@ export function CommunityPage() {
           rowKey={(row) => row.id}
           loading={query.isPending}
           error={query.isError ? '게시글 목록을 불러오지 못했습니다.' : undefined}
-          onRowClick={canModerate ? (row) => patchParams({ id: String(row.id) }) : undefined}
+          onRowClick={canModerate ? (row) => patchParams({ id: String(row.id) }, false) : undefined}
           emptyState={<EmptyState title="게시글이 없습니다" description="조회된 커뮤니티 게시글이 없습니다." />}
           footer={
             query.data && query.data.totalElements > 0 ? (
@@ -214,7 +199,7 @@ export function CommunityPage() {
                 size={query.data.size}
                 totalElements={query.data.totalElements}
                 totalPages={query.data.totalPages}
-                onChange={(next) => patchParams({ page: String(next) })}
+                onChange={(next) => patchParams({ page: String(next) }, false)}
               />
             ) : undefined
           }
@@ -223,7 +208,7 @@ export function CommunityPage() {
 
       <SlideOver
         open={selectedId !== null && canModerate}
-        onClose={() => patchParams({ id: null })}
+        onClose={() => patchParams({ id: null }, false)}
         title="게시글 상세"
         width={500}
       >
@@ -238,21 +223,16 @@ export function CommunityPage() {
         ) : null}
       </SlideOver>
 
-      <Modal
+      <ConfirmModal
         open={deleteTarget !== null}
         onClose={closeDeleteModal}
         title="게시글 삭제"
         description="삭제된 게시글과 댓글은 관리자 화면에서 복구할 수 없습니다."
-        size="sm"
-        footer={
-          <>
-            <Button onClick={closeDeleteModal} disabled={deleteMutation.isPending}>취소</Button>
-            <Button variant="danger" loading={deleteMutation.isPending} onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}>삭제</Button>
-          </>
-        }
+        pending={deleteMutation.isPending}
+        onConfirm={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
       >
-        <p className="community__confirm">“{deleteTarget?.title}” 게시글을 삭제할까요?</p>
-      </Modal>
+        {`“${deleteTarget?.title}” 게시글을 삭제할까요?`}
+      </ConfirmModal>
 
       <Modal
         open={banTarget !== null}

@@ -269,6 +269,11 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
   font-feature-settings: 'tnum';
 }
 
+/* 보조 텍스트 — 색만 낮춘다. 크기까지 바꿀 때는 화면 클래스를 함께 붙인다. */
+.muted {
+  color: var(--text-muted);
+}
+
 /* 스크린리더 전용 텍스트 */
 .sr-only {
   position: absolute;

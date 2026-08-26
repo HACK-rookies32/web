@@ -95,9 +95,9 @@ export function ChargesTab({
       header: '비고',
       render: (row) =>
         row.cancelReason ? (
-          <span className="funds__muted">{row.cancelReason}</span>
+          <span className="muted">{row.cancelReason}</span>
         ) : (
-          <span className="funds__muted">-</span>
+          <span className="muted">-</span>
         ),
     },
   ];

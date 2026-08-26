@@ -52,10 +52,6 @@
   color: var(--text-strong);
 }
 
-.detail__muted {
-  color: var(--text-muted);
-}
-
 .detail__confirm {
   font-size: var(--fs-body);
   line-height: var(--lh-body);

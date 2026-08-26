@@ -26,7 +26,6 @@
 
 .community__post-cell span,
 .community__muted {
-  color: var(--text-muted);
   font-size: var(--fs-label);
   line-height: var(--lh-label);
 }
@@ -35,10 +34,6 @@
   color: var(--danger);
 }
 
-.community__confirm {
-  color: var(--text-strong);
-  font-weight: 500;
-}
 
 .community__ban-form {
   display: flex;
