@@ -187,7 +187,7 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 | 공지 작성·수정·삭제, 전체 알림 발송 | 5.3 | `SUPER_ADMIN` |
 | 1:1 문의 조회·답변 등록/수정/삭제 | 5.4 | `SUPER_ADMIN`, `INQUIRY_ADMIN` |
 | 커뮤니티 게시글 **목록** | 5.5 | `SUPER_ADMIN`, `GENERAL_ADMIN`, `COMMUNITY_ADMIN` |
-| 커뮤니티 게시글 **상세·삭제**, 사용자 밴 | 5.5 | `SUPER_ADMIN`, `COMMUNITY_ADMIN` |
+| 커뮤니티 게시글 **상세·삭제**, 사용자 밴 | 5.5 | `SUPER_ADMIN`, `COMMUNITY_ADMIN` (아래 참고) |
 | 커뮤니티 신고 조회 | 5.5 | `SUPER_ADMIN` |
 | 유해 키워드 목록·추가·삭제 | 5.6 | `SUPER_ADMIN` |
 | 리포트 CSV (회원) | 5.7 | `SUPER_ADMIN` |
@@ -204,18 +204,12 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 
 ### 명세에서 확인이 필요한 부분
 
-- **`CS_ADMIN` 은 코드에 없는 역할입니다.** 역할 이름 형식은 `@_ADMIN` 으로 통일하기로 해서
-  명세의 `ADMIN_SUPER` → `SUPER_ADMIN`, `ADMIN_COMMUNITY` → `COMMUNITY_ADMIN`,
-  `ADMIN_CS` → `CS_ADMIN` 으로 문서를 고쳤습니다. 앞의 둘은 코드의 역할과 그대로 맞지만
-  `CS_ADMIN` 은 `GET /admin/admins` 의 `role` 값 4종(`SUPER_ADMIN` / `GENERAL_ADMIN` /
-  `COMMUNITY_ADMIN` / `INQUIRY_ADMIN`)에 없습니다. 붙어 있는 자리는 회원 조회 계열
-  (5.2)과 문의 CSV(5.7)라 문맥상 각각 `GENERAL_ADMIN` · `INQUIRY_ADMIN` 으로 읽었고,
-  위 표도 그렇게 옮겼습니다. **어느 쪽인지 백엔드 확인이 필요합니다.**
-- **커뮤니티 게시글 삭제 — 문서가 아직 안 고쳐졌습니다.** 명세의
-  `DELETE /admin/community/posts/{id}` 허용 역할에 `GENERAL_ADMIN` 이 적혀 있는데,
-  백엔드에 확인한 결과 **잘못 들어간 것**이라 코드에서는 제외했습니다
-  (`CommunityPage` 의 `canModerate`). `GENERAL_ADMIN` 은 목록 조회만 가능합니다.
-  **문서만 보고 되돌리지 마세요.** 문서가 고쳐지면 `CommunityPage` 의 `TODO(api)` 주석도 지웁니다.
+- **커뮤니티 상세 조회·사용자 밴 — 코드가 문서보다 좁습니다.** 명세의
+  `GET /admin/community/posts/{id}` 와 `POST /admin/community/members/ban` 에는
+  `GENERAL_ADMIN` 이 적혀 있지만 코드는 `SUPER_ADMIN` · `COMMUNITY_ADMIN` 만 허용합니다
+  (`CommunityPage` 의 `canModerate`). 같은 자리에 있던 `DELETE /admin/community/posts/{id}`
+  의 `GENERAL_ADMIN` 은 백엔드가 **잘못 들어간 것**이라고 확인해 문서에서 뺐는데,
+  나머지 둘도 같은 오기인지는 확인받지 못했습니다. **문서만 보고 넓히지 마세요.**
 
 ### 감사 로그
 

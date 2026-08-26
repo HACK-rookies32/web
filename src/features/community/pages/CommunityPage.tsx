@@ -45,15 +45,16 @@ export function CommunityPage() {
    * 명세 5.5 의 커뮤니티 API 별 요구 권한.
    *
    *   GET    /admin/community/posts        SUPER · GENERAL · COMMUNITY   ← 목록만 열려 있다
-   *   GET    /admin/community/posts/{id}   SUPER · COMMUNITY
+   *   GET    /admin/community/posts/{id}   SUPER · GENERAL · COMMUNITY   ← 문서 기준
    *   DELETE /admin/community/posts/{id}   SUPER · COMMUNITY
-   *   POST   /admin/community/members/ban  SUPER · COMMUNITY
+   *   POST   /admin/community/members/ban  SUPER · GENERAL · COMMUNITY   ← 문서 기준
    *
-   * 즉 GENERAL_ADMIN 은 목록을 볼 수만 있고 상세·삭제·밴은 못 한다.
+   * 여기서는 GENERAL_ADMIN 에게 목록만 열어 둔다. 상세·삭제·밴은 막는다.
    *
-   * TODO(api): 명세 문서에는 DELETE 의 허용 역할에 아직 GENERAL_ADMIN 이 적혀 있다.
-   *            백엔드에 확인한 결과 "잘못 들어간 것" 이라고 해서 여기서는 뺐다.
-   *            문서가 고쳐지면 이 주석을 지운다. 문서만 보고 되돌리지 말 것.
+   * TODO(api): 상세 조회와 밴은 문서에 아직 GENERAL_ADMIN 이 적혀 있어 코드가 문서보다
+   *            좁다. 삭제의 GENERAL_ADMIN 은 백엔드가 "잘못 들어간 것" 이라고 확인해
+   *            문서에서 뺐는데, 나머지 둘도 같은 오기인지는 확인받지 못했다.
+   *            **문서만 보고 넓히지 말 것.** 확인되면 이 주석과 함께 정리한다.
    *
    * ⚠️ 이 가드는 UX 용이며 실제 접근 통제는 서버가 담당한다.
    */
