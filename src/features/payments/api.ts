@@ -251,8 +251,3 @@ export async function adjustWallet(vars: {
   });
 }
 
-/** 목 데이터를 초기 상태로 되돌린다 (개발 편의용). */
-export function resetFundStore(): void {
-  paymentStore = [...MOCK_STORE_PAYMENTS];
-  walletStore = MOCK_WALLETS.map((w) => ({ ...w }));
-}

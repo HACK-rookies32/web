@@ -1,21 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SetURLSearchParams } from 'react-router-dom';
-import {
-  Button,
-  Card,
-  Column,
-  EmptyState,
-  Icon,
-  ListToolbar,
-  Pagination,
-  RowActions,
-  SearchInput,
-  Select,
-  StackedCell,
-  StatusPill,
-  Table,
-} from '@/shared/ui';
+import { Button, Column, Icon, RowActions, Select, StackedCell, StatusPill } from '@/shared/ui';
+import { FundsTabLayout } from './FundsTabLayout';
 import { formatCurrency, formatRelative, maskEmail, maskName } from '@/shared/lib/format';
 import type { WalletSummary } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
@@ -137,17 +124,12 @@ export function WalletsTab({
   ];
 
   return (
-    <div className="funds__tab">
-      <ListToolbar
-        search={
-          <SearchInput
-            value={keyword}
-            onSearch={handleSearch}
-            placeholder="회원명 또는 이메일 검색"
-            aria-label="지갑 검색"
-          />
-        }
-      >
+    <FundsTabLayout
+      searchPlaceholder="회원명 또는 이메일 검색"
+      searchLabel="지갑 검색"
+      keyword={keyword}
+      onSearch={handleSearch}
+      filter={
         <Select
           value={role}
           onChange={(e) => patchParams({ role: e.target.value === 'ALL' ? null : e.target.value })}
@@ -159,42 +141,18 @@ export function WalletsTab({
             </option>
           ))}
         </Select>
-      </ListToolbar>
-
-      <Card flush>
-        <Table
-          caption="회원 지갑 목록"
-          columns={columns}
-          rows={data?.content ?? []}
-          rowKey={(r) => r.walletId}
-          loading={isPending}
-          error={isError ? '지갑 목록을 불러오지 못했습니다.' : undefined}
-          onRowClick={(row) => onOpen(row)}
-          emptyState={
-            <EmptyState
-              title="조회된 지갑이 없습니다"
-              description="검색어나 구분 필터를 바꿔보세요."
-              icon={<Icon name="search" />}
-              action={
-                <Button size="sm" onClick={() => setSearchParams(new URLSearchParams({ tab: 'wallets' }))}>
-                  필터 초기화
-                </Button>
-              }
-            />
-          }
-          footer={
-            data && data.totalElements > 0 ? (
-              <Pagination
-                page={data.page}
-                totalPages={data.totalPages}
-                totalElements={data.totalElements}
-                size={data.size}
-                onChange={(next) => patchParams({ page: String(next) }, false)}
-              />
-            ) : undefined
-          }
-        />
-      </Card>
-    </div>
+      }
+      caption="회원 지갑 목록"
+      columns={columns}
+      data={data}
+      rowKey={(r) => r.walletId}
+      loading={isPending}
+      error={isError}
+      entityName="지갑"
+      tab="wallets"
+      onRowClick={onOpen}
+      onResetFilters={(tab) => setSearchParams(new URLSearchParams({ tab }))}
+      onPageChange={(next) => patchParams({ page: String(next) }, false)}
+    />
   );
 }

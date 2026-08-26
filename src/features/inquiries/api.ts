@@ -133,7 +133,3 @@ export async function deleteAnswer(id: number): Promise<void> {
   return request<void>({ url: `/admin/inquiries/${id}/answer`, method: 'DELETE' });
 }
 
-/** 목 데이터를 초기 상태로 되돌린다 (개발 편의용). */
-export function resetInquiryStore(): void {
-  inquiryStore = MOCK_INQUIRIES.map((i) => ({ ...i }));
-}

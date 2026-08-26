@@ -150,8 +150,3 @@ export async function fetchMemberReportCsv(member: MemberDetail): Promise<string
   });
 }
 
-
-/** 목 데이터를 초기 상태로 되돌린다 (개발 편의용). */
-export function resetMemberStore(): void {
-  memberStore = [...MOCK_MEMBERS];
-}
