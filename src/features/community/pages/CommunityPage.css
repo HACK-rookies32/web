@@ -1,0 +1,51 @@
+.community {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.community .list-toolbar {
+  justify-content: flex-end;
+}
+
+.community__post-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.community__post-cell strong,
+.community__post-cell span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.community__post-cell strong {
+  color: var(--text-strong);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.community__post-cell span,
+.community__muted {
+  color: var(--text-muted);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.community__danger:hover {
+  color: var(--danger);
+}
+
+.community__confirm {
+  color: var(--text-strong);
+  font-weight: 500;
+}
+
+.community__ban-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}

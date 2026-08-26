@@ -34,6 +34,9 @@ const HarmfulKeywordsPage = lazy(() =>
     default: m.HarmfulKeywordsPage,
   })),
 );
+const CommunityPage = lazy(() =>
+  import('@/features/community/pages/CommunityPage').then((m) => ({ default: m.CommunityPage })),
+);
 const UiKitPage = lazy(() => import('./UiKitPage').then((m) => ({ default: m.UiKitPage })));
 
 /**
@@ -114,21 +117,9 @@ export function App() {
                     <Route path="inquiries" element={<InquiriesPage />} />
                   </Route>
 
-                  {/* 커뮤니티 관리 — SUPER_ADMIN · COMMUNITY_ADMIN */}
-                  <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'COMMUNITY_ADMIN']} />}>
-                    <Route
-                      path="community"
-                      element={
-                        <PlaceholderPage
-                          title="커뮤니티 관리"
-                          endpoints={[
-                            'GET /admin/community/posts — 백엔드 요청 완료',
-                            'DELETE /admin/community/posts/{id}',
-                            'POST /admin/community/members/{id}/ban',
-                          ]}
-                        />
-                      }
-                    />
+                  {/* 커뮤니티 관리 — 목록·삭제는 세 관리자 역할, 상세·밴은 화면 내부에서 제한 */}
+                  <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN']} />}>
+                    <Route path="community" element={<CommunityPage />} />
                   </Route>
 
                   {/* 공통 UI 스타일 가이드 */}
