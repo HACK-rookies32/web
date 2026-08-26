@@ -2,10 +2,11 @@ import { USE_MOCK, request } from '@/shared/api/client';
 import { mockResponse, paginate } from '@/shared/api/mock';
 import { getAuditLogs } from '@/mocks/auditLogs';
 import type { Page } from '@/shared/lib/types';
+import { AUDIT_LOG_QUERY_KEY } from '@/shared/lib/audit';
 import type { AuditLogItem, AuditLogListParams } from './types';
 
 export const auditLogKeys = {
-  all: ['audit-logs'] as const,
+  all: AUDIT_LOG_QUERY_KEY,
   list: (params: AuditLogListParams) => ['audit-logs', params] as const,
 };
 

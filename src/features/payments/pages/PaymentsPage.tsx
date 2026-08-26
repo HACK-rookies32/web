@@ -5,6 +5,7 @@ import { formatCurrency, formatNumber, josa, maskName } from '@/shared/lib/forma
 import type { ChargeStatus, StorePaymentStatus, WalletSummary } from '@/shared/lib/wallet';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useListParams } from '@/shared/hooks/useListParams';
+import { AUDIT_LOG_QUERY_KEY } from '@/shared/lib/audit';
 import { adjustWallet, fetchFundStats, fundKeys, refundStorePayment } from '../api';
 import type { StorePayment } from '../types';
 import { ChargesTab } from '../components/ChargesTab';
@@ -93,6 +94,7 @@ export function PaymentsPage() {
       refundStorePayment({ ...vars, adminUsername: session?.username ?? 'unknown' }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: fundKeys.all });
+      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
       setRefundTarget(null);
       toast.success(
         '강제 환불이 처리되었습니다',
@@ -108,6 +110,7 @@ export function PaymentsPage() {
       adjustWallet({ ...vars, adminUsername: session?.username ?? 'unknown' }),
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: fundKeys.all });
+      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
       setAdjustTarget(null);
       toast.success(
         '잔액을 조정했습니다',

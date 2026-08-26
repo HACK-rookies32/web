@@ -1,5 +1,6 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
+import { appendAuditLog } from '@/mocks/auditLogs';
 import { toCsv } from '@/shared/lib/format';
 import type { Page } from '@/shared/lib/types';
 import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members';
@@ -87,22 +88,38 @@ export async function fetchMemberInquiries(memberId: number): Promise<MemberInqu
 export async function updateMember(
   memberId: number,
   body: MemberUpdateRequest,
+  adminUsername = 'unknown',
 ): Promise<MemberDetail> {
   if (USE_MOCK) {
     const index = memberStore.findIndex((m) => m.memberId === memberId);
     if (index < 0) throw new Error('회원을 찾을 수 없습니다.');
 
-    const next = { ...memberStore[index], ...body, updatedAt: new Date().toISOString() };
+    const previous = memberStore[index];
+    const next = { ...previous, ...body, updatedAt: new Date().toISOString() };
     memberStore = memberStore.map((m, i) => (i === index ? next : m));
+    const suspended = body.status === 'SUSPENDED' && previous.status !== 'SUSPENDED';
+    appendAuditLog({
+      adminUsername,
+      action: suspended ? 'MEMBER_SUSPEND' : 'MEMBER_UPDATE',
+      target: `member:${memberId}`,
+      description: suspended ? `${previous.name} 계정 정지` : `${previous.name} 회원 정보 수정`,
+    });
     return mockResponse(next);
   }
   return request<MemberDetail>({ url: `/admin/members/${memberId}`, method: 'PATCH', data: body });
 }
 
 /** DELETE /admin/members/{id} — SUPER_ADMIN 전용 */
-export async function deleteMember(memberId: number): Promise<void> {
+export async function deleteMember(memberId: number, adminUsername = 'unknown'): Promise<void> {
   if (USE_MOCK) {
+    const target = memberStore.find((m) => m.memberId === memberId);
     memberStore = memberStore.filter((m) => m.memberId !== memberId);
+    appendAuditLog({
+      adminUsername,
+      action: 'MEMBER_DELETE',
+      target: `member:${memberId}`,
+      description: `${target?.name ?? `회원 #${memberId}`} 삭제`,
+    });
     return mockResponse(undefined);
   }
   return request<void>({ url: `/admin/members/${memberId}`, method: 'DELETE' });
@@ -113,7 +130,9 @@ export async function deleteMember(memberId: number): Promise<void> {
  * 실제: GET /admin/reports/members.csv (명세 5.7) → text/csv 다운로드
  * 목: 화면에 있는 데이터로 CSV 문자열을 만들어 돌려준다.
  */
-export async function fetchMemberReportCsv(member: MemberDetail): Promise<string> {
+export async function fetchMemberReportCsv(
+  member: MemberDetail,
+): Promise<string> {
   if (USE_MOCK) {
     const devices = MOCK_DEVICES[member.memberId] ?? [];
     const inquiries = getMemberInquiries(member.memberId);
@@ -147,6 +166,17 @@ export async function fetchMemberReportCsv(member: MemberDetail): Promise<string
     method: 'GET',
     params: { memberId: member.memberId },
     responseType: 'text',
+  });
+}
+
+/** 실제 파일 저장이 완료된 시점의 목 감사 로그. 실제 모드에서는 서버가 GET 요청을 기록한다. */
+export function recordMemberReportDownload(member: MemberDetail, adminUsername = 'unknown'): void {
+  if (!USE_MOCK) return;
+  appendAuditLog({
+    adminUsername,
+    action: 'REPORT_DOWNLOAD',
+    target: `member:${member.memberId}`,
+    description: `${member.name} 회원 리포트 다운로드`,
   });
 }
 

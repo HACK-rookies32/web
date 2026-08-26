@@ -23,9 +23,9 @@ export const MOCK_ADMINS: AdminUser[] = [
   },
   {
     id: 3,
-    username: 'community_park',
+    username: 'minho_park',
     nickname: '커뮤니티 박민호',
-    email: 'community.park@example.com',
+    email: 'minho.park@example.com',
     phoneNumber: '010-3333-4444',
     role: 'COMMUNITY_ADMIN',
     createdAt: '2026-08-08T13:20:00',

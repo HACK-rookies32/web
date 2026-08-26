@@ -11,6 +11,9 @@ export type AuditAction =
   | 'MEMBER_BAN'
   | 'REPORT_DOWNLOAD';
 
+/** 여러 feature가 감사 로그 조회 캐시를 함께 갱신할 때 사용하는 공통 Query key. */
+export const AUDIT_LOG_QUERY_KEY = ['audit-logs'] as const;
+
 export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   MEMBER_UPDATE: '회원 정보 수정',
   MEMBER_DELETE: '회원 삭제',

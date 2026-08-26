@@ -61,7 +61,7 @@ const seed: AuditLog[] = [
   {
     logId: 40004,
     adminId: 3,
-    adminUsername: 'community_park',
+    adminUsername: 'minho_park',
     action: 'POST_DELETE',
     target: 'post:5521',
     description: '광고성 게시글 삭제',

@@ -19,8 +19,12 @@ import { useListParams } from '@/shared/hooks/useListParams';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { AUDIT_ACTION_LABEL, type AuditAction } from '@/shared/lib/audit';
 import { auditLogKeys, fetchAuditLogs } from '../api';
+import { AuditDatePicker } from '../components/AuditDatePicker';
 import type { AuditLogItem, AuditLogListParams } from '../types';
 import './AuditLogsPage.css';
+
+const MIN_AUDIT_DATE = '2000-01-01';
+const MAX_AUDIT_DATE = '2100-12-31';
 
 function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
   if (action.includes('DELETE') || action === 'MEMBER_BAN') return 'danger';
@@ -56,6 +60,10 @@ export function AuditLogsPage() {
 
   const hasFilters = Boolean(adminIdValue || actionValue || from || to);
   const invalidPeriod = Boolean(from && to && from > to);
+
+  function resetFilters() {
+    resetParams();
+  }
 
   const columns: Column<AuditLogItem>[] = [
     {
@@ -128,18 +136,34 @@ export function AuditLogsPage() {
 
           <FormField label="시작일" error={invalidPeriod ? '종료일보다 늦을 수 없습니다.' : undefined}>
             {(props) => (
-              <TextInput {...props} type="date" value={from} max={to || undefined} onChange={(event) => patchParams({ from: event.target.value })} />
+              <AuditDatePicker
+                id={props.id}
+                describedBy={props['aria-describedby']}
+                invalid={props['aria-invalid']}
+                value={from}
+                min={MIN_AUDIT_DATE}
+                max={to || MAX_AUDIT_DATE}
+                onChange={(value) => patchParams({ from: value || null })}
+              />
             )}
           </FormField>
 
           <FormField label="종료일">
             {(props) => (
-              <TextInput {...props} type="date" value={to} min={from || undefined} onChange={(event) => patchParams({ to: event.target.value })} />
+              <AuditDatePicker
+                id={props.id}
+                describedBy={props['aria-describedby']}
+                invalid={props['aria-invalid']}
+                value={to}
+                min={from || MIN_AUDIT_DATE}
+                max={MAX_AUDIT_DATE}
+                onChange={(value) => patchParams({ to: value || null })}
+              />
             )}
           </FormField>
 
           <div className="audit-logs__filter-action">
-            <Button disabled={!hasFilters} onClick={resetParams}>필터 초기화</Button>
+            <Button disabled={!hasFilters} onClick={resetFilters}>필터 초기화</Button>
           </div>
         </div>
       </Card>
@@ -159,7 +183,7 @@ export function AuditLogsPage() {
               title={invalidPeriod ? '조회 기간을 확인해 주세요' : '감사 로그가 없습니다'}
               description={invalidPeriod ? '시작일은 종료일보다 늦을 수 없습니다.' : '현재 조건에 해당하는 활동 기록이 없습니다.'}
               icon={<Icon name="nav-audit" />}
-              action={hasFilters ? <Button size="sm" onClick={resetParams}>필터 초기화</Button> : undefined}
+              action={hasFilters ? <Button size="sm" onClick={resetFilters}>필터 초기화</Button> : undefined}
             />
           }
           footer={

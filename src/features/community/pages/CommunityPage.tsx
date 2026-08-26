@@ -22,6 +22,7 @@ import { useAuth } from '@/shared/auth/AuthContext';
 import { useListParams } from '@/shared/hooks/useListParams';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
+import { AUDIT_LOG_QUERY_KEY } from '@/shared/lib/audit';
 import {
   banCommunityMember,
   communityKeys,
@@ -82,6 +83,7 @@ export function CommunityPage() {
     mutationFn: (postId: number) => deleteCommunityPost({ postId, adminUsername }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: communityKeys.all });
+      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
       patchParams({ id: null }, false);
       setDeleteTarget(null);
       toast.success('게시글을 삭제했습니다', '삭제 활동은 감사 로그에 기록됩니다.');
@@ -93,6 +95,7 @@ export function CommunityPage() {
     mutationFn: (vars: { memberId: number; body: MemberBanRequest }) =>
       banCommunityMember({ ...vars, adminUsername }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
       const released = durationDays === 0;
       closeBanModal();
       toast.success(released ? '사용자 밴을 해제했습니다' : '사용자 밴을 적용했습니다');

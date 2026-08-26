@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button, Modal, Spinner, useToast } from '@/shared/ui';
 import { downloadCsv, formatDate, maskName } from '@/shared/lib/format';
-import { fetchMemberReportCsv } from '../api';
+import { fetchMemberReportCsv, recordMemberReportDownload } from '../api';
+import { useAuth } from '@/shared/auth/AuthContext';
+import { AUDIT_LOG_QUERY_KEY } from '@/shared/lib/audit';
 import type { MemberDetail } from '../types';
 import { DownloadGlyph } from './Glyphs';
 import './CsvReportModal.css';
@@ -22,6 +25,8 @@ type Phase = 'idle' | 'generating' | 'done' | 'error';
  */
 export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
   const toast = useToast();
+  const queryClient = useQueryClient();
+  const { session } = useAuth();
   const [phase, setPhase] = useState<Phase>('idle');
   const [csv, setCsv] = useState<string | null>(null);
 
@@ -49,6 +54,8 @@ export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
   function download() {
     if (!csv) return;
     downloadCsv(filename, csv);
+    recordMemberReportDownload(member, session?.username);
+    void queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
     onClose();
     toast.success(
       'CSV 리포트를 내려받았습니다',

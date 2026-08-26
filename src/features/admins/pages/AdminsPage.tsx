@@ -26,6 +26,35 @@ import { adminKeys, fetchAdmins, updateAdminRole } from '../api';
 import type { AdminAccount, AdminRoleFilter } from '../types';
 import './AdminsPage.css';
 
+const MIN_PHONE_SEARCH_DIGITS = 4;
+
+function matchesAdminKeyword(admin: AdminAccount, keyword: string): boolean {
+  const needle = keyword.trim().toLocaleLowerCase();
+  if (!needle) return true;
+
+  // 아이디와 닉네임은 짧은 검색어도 의미가 있으므로 항상 부분 일치를 허용한다.
+  if (
+    admin.username.toLocaleLowerCase().includes(needle)
+    || admin.nickname.toLocaleLowerCase().includes(needle)
+  ) {
+    return true;
+  }
+
+  // 도메인의 공통 문자열(example.com) 때문에 전 계정이 노출되지 않도록 제한한다.
+  const email = admin.email.toLocaleLowerCase();
+  const emailMatches = needle.includes('@')
+    ? email.includes(needle)
+    : /^[a-z]+$/i.test(needle) && needle.length >= 3
+      ? email.split('@')[0].includes(needle)
+      : false;
+  if (emailMatches) return true;
+
+  // 전화번호는 하이픈을 무시하되 숫자 한두 글자로 개인정보가 과다 노출되지 않게 한다.
+  const phoneDigits = needle.replace(/\D/g, '');
+  const isPhoneSearch = /^[\d\s-]+$/.test(needle) && phoneDigits.length >= MIN_PHONE_SEARCH_DIGITS;
+  return isPhoneSearch && admin.phoneNumber.replace(/\D/g, '').includes(phoneDigits);
+}
+
 function roleTone(role: Role): 'accent' | 'info' | 'success' | 'warning' {
   if (role === 'SUPER_ADMIN') return 'accent';
   if (role === 'GENERAL_ADMIN') return 'info';
@@ -53,8 +82,7 @@ export function AdminsPage() {
       .filter((admin) => (role === 'ALL' ? true : admin.role === role))
       .filter((admin) => {
         if (!needle) return true;
-        return [admin.username, admin.nickname, admin.email, admin.phoneNumber]
-          .some((value) => value.toLocaleLowerCase().includes(needle));
+        return matchesAdminKeyword(admin, needle);
       });
   }, [query.data, keyword, role]);
 
@@ -125,7 +153,7 @@ export function AdminsPage() {
           <SearchInput
             value={keyword}
             onSearch={(value) => patchParams({ keyword: value })}
-            placeholder="아이디 · 이름 · 이메일 · 전화번호 검색"
+            placeholder="아이디 · 이름 · 이메일 · 전화번호(숫자 4자리 이상)"
             aria-label="관리자 검색"
           />
         }

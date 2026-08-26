@@ -19,6 +19,7 @@ import {
 } from '@/shared/ui';
 import { formatDateTime, formatRelative } from '@/shared/lib/format';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
+import { AUDIT_LOG_QUERY_KEY } from '@/shared/lib/audit';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useListParams } from '@/shared/hooks/useListParams';
 import {
@@ -82,6 +83,7 @@ export function NoticesPage() {
         : createNotice({ body: vars.body, adminUsername }),
     onSuccess: (notice, vars) => {
       queryClient.invalidateQueries({ queryKey: noticeKeys.all });
+      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
       setFormOpen(false);
       setEditing(null);
       toast.success(
@@ -97,6 +99,7 @@ export function NoticesPage() {
       deleteNotice({ noticeId: target.noticeId, title: target.title, adminUsername }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: noticeKeys.all });
+      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
       setDeleteTarget(null);
       toast.success('공지를 삭제했습니다', '이 작업은 감사 로그에 기록되었습니다.');
     },
@@ -107,6 +110,7 @@ export function NoticesPage() {
     mutationFn: (body: Parameters<typeof broadcastNotification>[0]['body']) =>
       broadcastNotification({ body, adminUsername }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: AUDIT_LOG_QUERY_KEY });
       setBroadcastOpen(false);
       toast.success('전체 알림을 발송했습니다', '모든 회원에게 푸시 전송이 접수되었습니다.');
     },
