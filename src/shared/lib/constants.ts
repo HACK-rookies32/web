@@ -62,7 +62,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/community',
     label: '커뮤니티 관리',
     icon: 'community',
-    roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN'],
+    roles: ['SUPER_ADMIN', 'COMMUNITY_ADMIN'],
   },
   { to: '/harmful-keywords', label: '유해사이트 관리', icon: 'harmful', roles: ['SUPER_ADMIN'] },
   { to: '/audit-logs', label: '감사 로그', icon: 'audit', roles: ['SUPER_ADMIN'] },
