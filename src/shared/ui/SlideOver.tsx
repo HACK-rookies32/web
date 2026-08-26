@@ -24,13 +24,23 @@ export function SlideOver({ open, onClose, title, subtitle, footer, width = 400,
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
 
+  /*
+   * Modal 과 같은 이유로 onClose 를 ref 로 들고 간다.
+   * 인라인 화살표를 넘기면 렌더마다 정체성이 바뀌어, 패널 안에서 글자를 칠 때마다
+   * effect 가 재실행되며 포커스를 빼앗는다.
+   */
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!open) return;
 
     restoreFocusRef.current = document.activeElement as HTMLElement | null;
 
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') onCloseRef.current();
     }
     document.addEventListener('keydown', onKeyDown);
 
@@ -43,7 +53,8 @@ export function SlideOver({ open, onClose, title, subtitle, footer, width = 400,
       window.clearTimeout(timer);
       restoreFocusRef.current?.focus();
     };
-  }, [open, onClose]);
+    // onClose 는 ref 로 참조한다. 의존성에 넣으면 렌더마다 포커스가 튄다.
+  }, [open]);
 
   if (!open) return null;
 

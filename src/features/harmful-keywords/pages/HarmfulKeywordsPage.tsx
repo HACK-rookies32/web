@@ -7,6 +7,7 @@ import {
   type Column,
   EmptyState,
   FormField,
+  ListToolbar,
   Modal,
   PageHeader,
   RowActions,
@@ -163,17 +164,20 @@ export function HarmfulKeywordsPage() {
         </div>
       </Card>
 
-      <Card flush>
-        <div className="harmful__toolbar">
+      <ListToolbar
+        search={
           <SearchInput
             value={search}
             onSearch={handleSearch}
             placeholder="차단 키워드 검색"
-            className="harmful__search"
             aria-label="차단 키워드 검색"
           />
-          <span className="harmful__result-count">검색 결과 {visibleKeywords.length}개</span>
-        </div>
+        }
+      >
+        <span className="harmful__result-count">검색 결과 {visibleKeywords.length}개</span>
+      </ListToolbar>
+
+      <Card flush>
         <Table
           columns={columns}
           rows={visibleKeywords}

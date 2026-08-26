@@ -4,10 +4,6 @@
   gap: var(--space-4);
 }
 
-.community .list-toolbar {
-  justify-content: flex-end;
-}
-
 .community__post-cell {
   display: flex;
   flex-direction: column;

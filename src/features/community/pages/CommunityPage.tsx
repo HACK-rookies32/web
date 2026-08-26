@@ -21,6 +21,7 @@ import {
 } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
+import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import {
   banCommunityMember,
   communityKeys,
@@ -31,8 +32,6 @@ import type { CommunityPostDetail, CommunityPostListItem, MemberBanRequest } fro
 import { CommunityDetailPanel } from '../components/CommunityDetailPanel';
 import './CommunityPage.css';
 
-const PAGE_SIZE = 10;
-
 export function CommunityPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -41,8 +40,12 @@ export function CommunityPage() {
   const page = Number(searchParams.get('page') ?? '0');
   const sort = searchParams.get('sort') ?? 'id,desc';
   const selectedId = searchParams.get('id') ? Number(searchParams.get('id')) : null;
-  const canViewDetail = hasRole(['SUPER_ADMIN', 'COMMUNITY_ADMIN']);
-  const canBan = hasRole(['SUPER_ADMIN', 'COMMUNITY_ADMIN']);
+  /*
+   * 명세 5.5 의 커뮤니티 API 4종은 모두 ADMIN_SUPER · ADMIN_COMMUNITY 전용이다.
+   * 조회·상세·삭제·밴의 요구 권한이 같으므로 플래그 하나로 묶는다.
+   * ⚠️ 이 가드는 UX 용이며 실제 접근 통제는 서버가 담당한다.
+   */
+  const canModerate = hasRole(['SUPER_ADMIN', 'COMMUNITY_ADMIN']);
   const adminUsername = session?.username ?? 'unknown';
 
   const [deleteTarget, setDeleteTarget] = useState<CommunityPostListItem | null>(null);
@@ -51,7 +54,7 @@ export function CommunityPage() {
   const [durationDays, setDurationDays] = useState(7);
   const [banError, setBanError] = useState('');
 
-  const params = useMemo(() => ({ page, size: PAGE_SIZE, sort }), [page, sort]);
+  const params = useMemo(() => ({ page, size: DEFAULT_PAGE_SIZE, sort }), [page, sort]);
   const query = useQuery({
     queryKey: communityKeys.list(params),
     queryFn: () => fetchCommunityPosts(params),
@@ -72,10 +75,7 @@ export function CommunityPage() {
     [setSearchParams],
   );
 
-  const closeDeleteModal = useCallback(() => {
-    if (!deleteTarget) return;
-    setDeleteTarget(null);
-  }, [deleteTarget]);
+  const closeDeleteModal = useCallback(() => setDeleteTarget(null), []);
 
   const closeBanModal = useCallback(() => {
     setBanTarget(null);
@@ -163,12 +163,16 @@ export function CommunityPage() {
     {
       key: 'actions',
       header: <span className="sr-only">관리</span>,
-      width: canBan ? '168px' : '80px',
+      width: canModerate ? '168px' : '80px',
       align: 'right',
       render: (row) => (
         <RowActions>
-          {canBan ? <Button variant="ghost" size="sm" onClick={() => openBan(row)}>밴</Button> : null}
-          <Button variant="ghost" size="sm" className="community__danger" onClick={() => setDeleteTarget(row)}>삭제</Button>
+          {canModerate ? (
+            <>
+              <Button variant="ghost" size="sm" onClick={() => openBan(row)}>밴</Button>
+              <Button variant="ghost" size="sm" className="community__danger" onClick={() => setDeleteTarget(row)}>삭제</Button>
+            </>
+          ) : null}
         </RowActions>
       ),
     },
@@ -201,7 +205,7 @@ export function CommunityPage() {
           rowKey={(row) => row.id}
           loading={query.isPending}
           error={query.isError ? '게시글 목록을 불러오지 못했습니다.' : undefined}
-          onRowClick={canViewDetail ? (row) => patchParams({ id: String(row.id) }) : undefined}
+          onRowClick={canModerate ? (row) => patchParams({ id: String(row.id) }) : undefined}
           emptyState={<EmptyState title="게시글이 없습니다" description="조회된 커뮤니티 게시글이 없습니다." />}
           footer={
             query.data && query.data.totalElements > 0 ? (
@@ -218,15 +222,15 @@ export function CommunityPage() {
       </Card>
 
       <SlideOver
-        open={selectedId !== null && canViewDetail}
+        open={selectedId !== null && canModerate}
         onClose={() => patchParams({ id: null })}
         title="게시글 상세"
         width={500}
       >
-        {selectedId !== null && canViewDetail ? (
+        {selectedId !== null && canModerate ? (
           <CommunityDetailPanel
             postId={selectedId}
-            canModerateMember={canBan}
+            canModerateMember={canModerate}
             deleting={deleteMutation.isPending}
             onDelete={setDeleteTarget}
             onBan={openBan}
