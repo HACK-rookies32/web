@@ -52,9 +52,10 @@ src/
 ├─ app/            # 라우터, 프로바이더, 전역 셸
 ├─ shared/
 │  ├─ api/         # client.ts(axios+봉투 언랩+JWT), mock.ts
-│  ├─ ui/          # 공통 컴포넌트 (Button, Table, Modal, ...)
+│  ├─ ui/          # 공통 컴포넌트 (Button, Table, Modal, ListToolbar, ConfirmModal, ...)
 │  ├─ auth/        # AuthContext, ProtectedRoute, useAuth, useRole
-│  ├─ lib/         # types, 포맷터(date/currency/mask), 상수(nav, roles)
+│  ├─ hooks/       # useListParams (목록 URL 쿼리)
+│  ├─ lib/         # types, 포맷터(date/currency/mask/josa), 상수(nav, roles), audit
 │  └─ styles/      # tokens.css (디자인 변수 + 전역)
 ├─ assets/         # Figma 에서 내보낸 아이콘 · 로고
 ├─ mocks/          # 도메인별 목 데이터
@@ -151,6 +152,11 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 - 컴포넌트 `PascalCase`, 훅 `useXxx`, 폴더 `kebab-case`
 - 서버 상태는 TanStack Query. 쿼리 키는 `["members", params]`, `["member", id]` 형태
 - 목록 페이징은 `page`(0-base) / `size` / `totalPages` — API 명세 3.5 규약과 동일
+- 목록의 검색어·필터·페이지는 **URL 쿼리**로 관리합니다. `setSearchParams` 를 직접 다루지 말고
+  `shared/hooks/useListParams` 를 쓰세요 (화면마다 복사되며 빈 값 처리 규칙이 갈렸던 적이 있습니다)
+- 개인정보는 반드시 `shared/lib/format.ts` 의 마스킹 유틸(`maskName` `maskEmail` `maskPhone` …)을
+  거쳐 표시합니다. 화면에서 직접 문자열을 자르지 않습니다
+- 명세에 없는 API 를 쓰거나 명세와 다르게 호출할 때는 `// TODO(api):` 주석으로 남깁니다
 
 ### 화면 완료 기준 (DoD)
 
@@ -166,15 +172,44 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 
 ## 권한
 
-| 역할 | 접근 범위 |
-| --- | --- |
-| `SUPER_ADMIN` | 전체 |
-| `GENERAL_ADMIN` | 회원·결제 조회, 1:1 문의 |
-| `COMMUNITY_ADMIN` | 커뮤니티 관리 |
-| `INQUIRY_ADMIN` | 1:1 문의 |
+역할은 `GET /admin/admins` 응답의 `role` 값 4가지입니다 (명세 5.1).
 
-`SUPER_ADMIN` 전용: 관리자 계정 관리, 회원 삭제, 환불, 카드 마스킹 해제, 감사 로그, 공지 CUD.
-권한이 없는 메뉴·버튼은 화면에서 숨깁니다.
+`SUPER_ADMIN` · `GENERAL_ADMIN` · `COMMUNITY_ADMIN` · `INQUIRY_ADMIN`
+
+아래는 **API 명세 5장의 엔드포인트별 요구 권한을 그대로 옮긴 것**입니다.
+역할표를 먼저 정하고 화면을 맞추는 게 아니라, 엔드포인트가 기준입니다.
+
+| 기능 | 명세 | 허용 역할 |
+| --- | --- | --- |
+| 회원 목록·상세·기기 조회 | 5.2 | `SUPER_ADMIN`, `GENERAL_ADMIN` |
+| 회원 수정·삭제 | 5.2 | `SUPER_ADMIN` |
+| 공지 목록·상세 | 5.3 | 인증만 되면 가능 (역할 제한 없음) |
+| 공지 작성·수정·삭제, 전체 알림 발송 | 5.3 | `SUPER_ADMIN` |
+| 1:1 문의 조회·답변 등록/수정/삭제 | 5.4 | `SUPER_ADMIN`, `INQUIRY_ADMIN` |
+| 커뮤니티 게시글 **목록·삭제** | 5.5 | `SUPER_ADMIN`, `GENERAL_ADMIN`, `COMMUNITY_ADMIN` |
+| 커뮤니티 게시글 **상세**, 사용자 밴 | 5.5 | `SUPER_ADMIN`, `COMMUNITY_ADMIN` |
+| 커뮤니티 신고 조회 | 5.5 | `SUPER_ADMIN` |
+| 유해 키워드 목록·추가·삭제 | 5.6 | `SUPER_ADMIN` |
+| 리포트 CSV (회원) | 5.7 | `SUPER_ADMIN` |
+| 리포트 CSV (문의) | 5.7 | `SUPER_ADMIN`, `INQUIRY_ADMIN` |
+| 감사 로그 조회 | 5.8 | `SUPER_ADMIN` |
+| 충전·결제·지갑·통계 조회 | 5.9 | `SUPER_ADMIN`, `GENERAL_ADMIN` |
+| 강제 환불, 지갑 잔액 조정 | 5.9 | `SUPER_ADMIN` |
+| 관리자 계정 목록·권한 변경 | 5.1 | `SUPER_ADMIN` |
+
+권한이 없는 메뉴·버튼은 화면에서 **숨깁니다** (`disabled` 가 아니라 렌더하지 않음).
 
 > ⚠️ **프론트엔드의 권한 검사는 UX 용입니다.** 실제 접근 통제는 서버(Spring Security)가 담당합니다.
 > 프론트 가드를 믿고 서버 권한 검사를 생략하면 안 됩니다.
+
+### 명세에서 확인이 필요한 부분
+
+- **역할 이름이 두 가지로 섞여 있습니다.** 5.1·5.4·5.9 는 `SUPER_ADMIN` / `GENERAL_ADMIN` /
+  `INQUIRY_ADMIN` 을 쓰는데, 5.2·5.3·5.6·5.8 은 `ADMIN_SUPER` / `ADMIN_CS` / `ADMIN_COMMUNITY`
+  를 씁니다. 위 표는 `GET /admin/admins` 의 `role` 값(4종)을 정본으로 보고 옮긴 것이며,
+  `ADMIN_CS` 는 문맥상 회원 관리는 `GENERAL_ADMIN`, 문의 CSV 는 `INQUIRY_ADMIN` 으로 읽었습니다.
+  **백엔드 확인이 필요합니다.**
+- **커뮤니티 권한이 명세 안에서 갈립니다.** 목록·삭제는 `GENERAL_ADMIN` 을 포함하는데
+  상세·밴은 포함하지 않습니다. "목록에서 삭제는 되지만 상세는 못 여는" 역할이 생깁니다.
+  현재 코드는 커뮤니티 전체를 `SUPER_ADMIN`·`COMMUNITY_ADMIN` 으로 막아 두어
+  **명세의 목록·삭제 권한과 어긋납니다.** 어느 쪽이 맞는지 확정 후 맞춰야 합니다.
