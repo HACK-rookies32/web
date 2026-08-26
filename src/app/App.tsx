@@ -37,6 +37,9 @@ const HarmfulKeywordsPage = lazy(() =>
 const CommunityPage = lazy(() =>
   import('@/features/community/pages/CommunityPage').then((m) => ({ default: m.CommunityPage })),
 );
+const AuditLogsPage = lazy(() =>
+  import('@/features/audit-logs/pages/AuditLogsPage').then((m) => ({ default: m.AuditLogsPage })),
+);
 const UiKitPage = lazy(() => import('./UiKitPage').then((m) => ({ default: m.UiKitPage })));
 
 /**
@@ -84,18 +87,7 @@ export function App() {
                   <Route element={<ProtectedRoute roles={['SUPER_ADMIN']} />}>
                     <Route path="notices" element={<NoticesPage />} />
                     <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
-                    <Route
-                      path="audit-logs"
-                      element={
-                        <PlaceholderPage
-                          title="감사 로그"
-                          endpoints={[
-                            'GET /admin/audit-logs?adminId&action&from&to&page&size',
-                            '※ 생성·조회(C/R)만 허용. 수정·삭제 없음',
-                          ]}
-                        />
-                      }
-                    />
+                    <Route path="audit-logs" element={<AuditLogsPage />} />
                     <Route
                       path="admins"
                       element={
