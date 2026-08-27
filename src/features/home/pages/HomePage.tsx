@@ -1,24 +1,65 @@
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { Card, Icon } from '@/shared/ui';
-import { NAV_ICON, NAV_ITEMS, ROLE_LABEL } from '@/shared/lib/constants';
+import { Card, EmptyState, Icon, Spinner, StatusPill } from '@/shared/ui';
+import { ROLE_LABEL } from '@/shared/lib/constants';
+import { formatRelative } from '@/shared/lib/format';
+import { inquiryStatus } from '@/shared/lib/status';
+import { AUDIT_ACTION_LABEL, parseAuditTarget } from '@/shared/lib/audit';
 import { useAuth } from '@/shared/auth/AuthContext';
+import type { Role } from '@/shared/lib/types';
+import { fetchNotices, noticeKeys } from '@/features/notices/api';
+import { auditLogKeys, fetchAuditLogs } from '@/features/audit-logs/api';
+import { communityKeys, fetchCommunityPosts } from '@/features/community/api';
+import { fetchInquiries, inquiryKeys } from '@/features/inquiries/api';
 import './HomePage.css';
+
+/** 각 칸에 몇 건까지 보여줄지. 홈은 훑어보는 화면이라 짧게 끊는다. */
+const PREVIEW_SIZE = 5;
 
 /**
  * 홈 화면.
  *
- * 집계 위젯(KPI·가입 추이·최근 활동)을 두던 대시보드였으나, 이를 받쳐 줄
- * 집계 API 가 명세 5장에 없고 대시보드 기능도 쓰지 않기로 확정되어(8/27)
- * 조회 없이 동작하는 이동 화면으로 바꿨다. 서버를 부르지 않는다.
+ * 관리자가 자주 확인하는 네 가지를 한 화면에 모아 최근 몇 건만 보여주고,
+ * 각 칸에서 해당 관리 화면으로 바로 넘어갈 수 있게 한다.
  *
- * 보여 주는 메뉴는 로그인한 계정의 권한으로 걸러진 것이라, 사이드바에
- * 보이는 것과 항상 같다.
+ *   좌상 공지        우상 감사 로그
+ *   좌하 커뮤니티     우하 1:1 문의
+ *
+ * 권한이 없는 칸은 아예 렌더하지 않는다. 사이드바와 같은 기준이다.
  */
 export function HomePage() {
   const { session, hasRole } = useAuth();
 
-  /* 홈 자신은 카드로 만들지 않는다. */
-  const menus = NAV_ITEMS.filter((item) => item.to !== '/' && hasRole(item.roles));
+  const canNotice = hasRole(['SUPER_ADMIN']);
+  const canAudit = hasRole(['SUPER_ADMIN']);
+  const canCommunity = hasRole(['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN']);
+  const canInquiry = hasRole(['SUPER_ADMIN', 'INQUIRY_ADMIN']);
+
+  const listParams = { page: 0, size: PREVIEW_SIZE };
+
+  const notices = useQuery({
+    queryKey: noticeKeys.list(listParams),
+    queryFn: () => fetchNotices(listParams),
+    enabled: canNotice,
+  });
+
+  const audits = useQuery({
+    queryKey: auditLogKeys.list(listParams),
+    queryFn: () => fetchAuditLogs(listParams),
+    enabled: canAudit,
+  });
+
+  const posts = useQuery({
+    queryKey: communityKeys.list(listParams),
+    queryFn: () => fetchCommunityPosts(listParams),
+    enabled: canCommunity,
+  });
+
+  const inquiries = useQuery({
+    queryKey: inquiryKeys.list(listParams),
+    queryFn: () => fetchInquiries(listParams),
+    enabled: canInquiry,
+  });
 
   return (
     <div className="home">
@@ -27,24 +68,142 @@ export function HomePage() {
           <strong>{session?.displayName ?? session?.username ?? '관리자'}</strong>님, 안녕하세요.
         </p>
         <p className="home__role">
-          {session ? ROLE_LABEL[session.role] : '관리자'} 권한으로 접속했습니다.
-          아래 메뉴에서 관리할 항목을 선택하세요.
+          {session ? ROLE_LABEL[session.role as Role] : '관리자'} 권한으로 접속했습니다.
         </p>
       </Card>
 
-      <nav className="home__menus" aria-label="관리 메뉴 바로가기">
-        {menus.map((item) => (
-          <Link key={item.to} to={item.to} className="home__menu">
-            <span className="home__menu-icon" aria-hidden="true">
-              <Icon name={NAV_ICON[item.icon]} />
-            </span>
-            <span className="home__menu-label">{item.label}</span>
-            <span className="home__menu-arrow" aria-hidden="true">
-              <Icon name="arrow-right" />
-            </span>
-          </Link>
-        ))}
-      </nav>
+      <div className="home__grid">
+        {/* ------------------------------------------------ 좌상 · 공지 -- */}
+        {canNotice ? (
+          <HomePanel title="공지 내역" to="/notices" query={notices} emptyText="등록된 공지가 없습니다">
+            {(rows: NonNullable<typeof notices.data>) =>
+              rows.content.map((n) => (
+                <li key={n.noticeId} className="home__row">
+                  <span className="home__row-main">{n.title}</span>
+                  <span className="home__row-side">
+                    {n.exposeMobile ? <StatusPill tone="success">노출</StatusPill> : null}
+                    <time className="home__row-time">{formatRelative(n.createdAt)}</time>
+                  </span>
+                </li>
+              ))
+            }
+          </HomePanel>
+        ) : null}
+
+        {/* -------------------------------------------- 우상 · 감사 로그 -- */}
+        {canAudit ? (
+          <HomePanel title="감사 로그" to="/audit-logs" query={audits} emptyText="기록된 활동이 없습니다">
+            {(rows: NonNullable<typeof audits.data>) =>
+              rows.content.map((log) => {
+                const target = parseAuditTarget(log.target);
+                return (
+                  <li key={log.logId} className="home__row">
+                    <span className="home__row-main">
+                      <strong>{log.adminUsername}</strong> · {AUDIT_ACTION_LABEL[log.action]}
+                      <span className="home__row-sub">
+                        {target.id ? `${target.label} #${target.id}` : target.label}
+                      </span>
+                    </span>
+                    <time className="home__row-time">{formatRelative(log.createdAt)}</time>
+                  </li>
+                );
+              })
+            }
+          </HomePanel>
+        ) : null}
+
+        {/* -------------------------------------------- 좌하 · 커뮤니티 -- */}
+        {canCommunity ? (
+          <HomePanel title="커뮤니티 글" to="/community" query={posts} emptyText="등록된 게시글이 없습니다">
+            {(rows: NonNullable<typeof posts.data>) =>
+              rows.content.map((p) => (
+                <li key={p.id} className="home__row">
+                  <span className="home__row-main">
+                    {p.title}
+                    <span className="home__row-sub">회원 #{p.memberId}</span>
+                  </span>
+                  <span className="home__row-side">
+                    {/* 신고가 있는 글은 먼저 눈에 띄어야 한다. */}
+                    {p.reportCount > 0 ? (
+                      <StatusPill tone="danger">신고 {p.reportCount}</StatusPill>
+                    ) : null}
+                    <time className="home__row-time">{formatRelative(p.createdAt)}</time>
+                  </span>
+                </li>
+              ))
+            }
+          </HomePanel>
+        ) : null}
+
+        {/* ------------------------------------------- 우하 · 1:1 문의 -- */}
+        {canInquiry ? (
+          <HomePanel title="1:1 문의" to="/inquiries" query={inquiries} emptyText="접수된 문의가 없습니다">
+            {(rows: NonNullable<typeof inquiries.data>) =>
+              rows.content.map((q) => {
+                const status = inquiryStatus(q.answered);
+                return (
+                  <li key={q.id} className="home__row">
+                    <span className="home__row-main">
+                      {q.title}
+                      <span className="home__row-sub">{q.memberNickname}</span>
+                    </span>
+                    <span className="home__row-side">
+                      <StatusPill tone={status.tone}>{status.label}</StatusPill>
+                      <time className="home__row-time">{formatRelative(q.createdAt)}</time>
+                    </span>
+                  </li>
+                );
+              })
+            }
+          </HomePanel>
+        ) : null}
+      </div>
     </div>
+  );
+}
+
+/**
+ * 홈의 칸 하나. 제목 · 바로가기 · 최근 목록의 틀과 로딩/에러/빈 상태를 맡는다.
+ * 네 칸이 같은 모양이라 여기서 한 번만 처리한다.
+ */
+function HomePanel<T>({
+  title,
+  to,
+  query,
+  emptyText,
+  children,
+}: {
+  title: string;
+  to: string;
+  query: { data?: T; isPending: boolean; isError: boolean };
+  emptyText: string;
+  children: (data: T) => React.ReactNode;
+}) {
+  const rows = query.data ? children(query.data) : null;
+  const isEmpty = Array.isArray(rows) && rows.length === 0;
+
+  return (
+    <Card
+      className="home__panel"
+      title={title}
+      action={
+        <Link className="home__more" to={to}>
+          바로가기
+          <Icon name="arrow-right" />
+        </Link>
+      }
+    >
+      {query.isPending ? (
+        <div className="home__loading">
+          <Spinner size={18} />
+        </div>
+      ) : query.isError ? (
+        <EmptyState tone="error" title="불러오지 못했습니다" />
+      ) : isEmpty ? (
+        <EmptyState title={emptyText} />
+      ) : (
+        <ul className="home__rows">{rows}</ul>
+      )}
+    </Card>
   );
 }

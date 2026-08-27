@@ -17,70 +17,114 @@
 }
 
 .home__role {
-  margin-top: var(--space-2);
+  margin-top: var(--space-1);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
   color: var(--text-muted);
 }
 
-/* ---- 메뉴 바로가기 -------------------------------------------------- */
+/* ---- 2 x 2 ---------------------------------------------------------- */
 
-.home__menus {
+.home__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
-.home__menu {
+/* 칸 높이를 맞춰 두 줄이 어긋나 보이지 않게 한다. */
+.home__panel {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-4) var(--space-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  color: var(--text-strong);
-  text-decoration: none;
-  transition: border-color 120ms ease, background 120ms ease;
+  flex-direction: column;
 }
 
-.home__menu:hover {
-  border-color: var(--accent);
-  background: var(--surface-hover);
-}
-
-.home__menu:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.home__menu-icon {
+.home__more {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  flex-shrink: 0;
-  border-radius: var(--radius-md);
-  background: var(--accent-soft);
+  gap: var(--space-1);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
   color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.home__menu-label {
-  flex: 1;
+.home__more:hover {
+  text-decoration: underline;
+}
+
+.home__more svg {
+  width: 14px;
+  height: 14px;
+}
+
+.home__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 0;
+}
+
+/* ---- 목록 ---------------------------------------------------------- */
+
+.home__rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.home__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+}
+
+.home__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.home__row:first-child {
+  padding-top: 0;
+}
+
+/* 제목은 길어질 수 있으니 한 줄로 자른다. */
+.home__row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
   font-size: var(--fs-body);
   line-height: var(--lh-body);
-  font-weight: 500;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* 화살표는 장식이라 평소에는 흐리게 두고 hover 에서만 또렷해진다. */
-.home__menu-arrow {
+.home__row-sub {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.home__row-side {
   display: inline-flex;
-  color: var(--text-placeholder);
-  transition: color 120ms ease, transform 120ms ease;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
 }
 
-.home__menu:hover .home__menu-arrow {
-  color: var(--accent);
-  transform: translateX(2px);
+.home__row-time {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .home__grid {
+    grid-template-columns: 1fr;
+  }
 }

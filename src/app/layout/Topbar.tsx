@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Icon, SearchInput } from '@/shared/ui';
+import { Icon } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { ROLE_LABEL } from '@/shared/lib/constants';
 import { ThemeSwitch } from './ThemeSwitch';
@@ -15,18 +15,13 @@ interface TopbarProps {
 
 /**
  * 상단바 (Figma Header 131:3771).
- * 높이 64px, 반투명 배경 + backdrop-blur, 오른쪽에 검색·알림·프로필.
+ * 높이 64px, 반투명 배경 + backdrop-blur, 오른쪽에 알림·테마·프로필.
  */
 export function Topbar({ title, onToggleSidebar, unreadCount = 0 }: TopbarProps) {
   const { session, signOut } = useAuth();
   const navigate = useNavigate();
-  const [keyword, setKeyword] = useState('');
   const [menuOpen, setMenuOpen] = useState(false);
 
-  function handleSearch(value: string) {
-    setKeyword(value);
-    if (value.trim()) navigate(`/members?keyword=${encodeURIComponent(value.trim())}`);
-  }
 
   return (
     <header className="topbar">
@@ -43,14 +38,6 @@ export function Topbar({ title, onToggleSidebar, unreadCount = 0 }: TopbarProps)
       </div>
 
       <div className="topbar__right">
-        <SearchInput
-          className="topbar__search"
-          shape="pill"
-          value={keyword}
-          onSearch={handleSearch}
-          debounceMs={0}
-          aria-label="전체 검색"
-        />
 
         {/*
           TODO(api): 관리자용 알림 조회 API 가 명세에 없다.
