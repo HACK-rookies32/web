@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
@@ -19,7 +18,6 @@ import {
   formatCurrency,
   formatDate,
   formatDateTime,
-  formatRelative,
   maskAddress,
   maskEmail,
   maskName,
@@ -35,18 +33,10 @@ import {
   memberKeys,
 } from '../api';
 import type { MemberDevice, MemberInquiry } from '../types';
-import { CsvReportModal } from '../components/CsvReportModal';
-import { DownloadGlyph } from '../components/Glyphs';
 import './MemberDetailPage.css';
 
 type TabKey = 'basic' | 'devices' | 'inquiries';
 const TAB_KEYS: TabKey[] = ['basic', 'devices', 'inquiries'];
-
-const DEVICE_STATUS = {
-  ONLINE: { label: '온라인', tone: 'success' },
-  OFFLINE: { label: '오프라인', tone: 'neutral' },
-  BLOCKED: { label: '차단', tone: 'danger' },
-} as const;
 
 /**
  * 회원 상세 (Figma 131:816 / 131:2761 / 131:2).
@@ -61,8 +51,6 @@ export function MemberDetailPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as TabKey | null;
   const tab: TabKey = tabParam && TAB_KEYS.includes(tabParam) ? tabParam : 'basic';
-
-  const [csvOpen, setCsvOpen] = useState(false);
 
   const member = useQuery({
     queryKey: memberKeys.detail(memberId),
@@ -112,32 +100,13 @@ export function MemberDetailPage() {
 
   const m = member.data;
 
+  /*
+   * 이 탭은 회원 본인이 접속한 기기 목록이다. 자녀 기기 관리 화면이 아니다.
+   * 기기명과 OS 만 보여준다.
+   */
   const deviceColumns: Column<MemberDevice>[] = [
-    {
-      key: 'child',
-      header: '사용 자녀',
-      render: (d) => (
-        <span className="detail__strong">{d.childName ? maskName(d.childName) : '본인 기기'}</span>
-      ),
-    },
-    { key: 'model', header: '기기', render: (d) => d.model },
+    { key: 'model', header: '기기', render: (d) => <span className="detail__strong">{d.model}</span> },
     { key: 'os', header: 'OS', render: (d) => d.os },
-    { key: 'appVersion', header: '앱 버전', numeric: true, render: (d) => `v${d.appVersion}` },
-    {
-      key: 'status',
-      header: '상태',
-      width: '96px',
-      render: (d) => (
-        <StatusPill tone={DEVICE_STATUS[d.status].tone}>{DEVICE_STATUS[d.status].label}</StatusPill>
-      ),
-    },
-    {
-      key: 'lastSeenAt',
-      header: '최근 접속',
-      align: 'right',
-      width: '120px',
-      render: (d) => <span className="muted">{formatRelative(d.lastSeenAt)}</span>,
-    },
   ];
 
   const inquiryColumns: Column<MemberInquiry>[] = [
@@ -189,11 +158,6 @@ export function MemberDetailPage() {
             <strong className="tabular">{devices.data?.length ?? m.deviceCount}</strong>대 · 가입{' '}
             {formatDate(m.createdAt)}
           </>
-        }
-        actions={
-          <Button iconLeft={<DownloadGlyph />} onClick={() => setCsvOpen(true)}>
-            회원 리포트 CSV 다운로드
-          </Button>
         }
       />
 
@@ -287,7 +251,7 @@ export function MemberDetailPage() {
         {tab === 'devices' ? (
           <Card
             title="연결 기기"
-            description="자녀 기기의 연결 상태와 앱 버전을 확인합니다."
+            description="이 회원이 접속한 기기 목록입니다."
             flush
           >
             <Table
@@ -323,8 +287,6 @@ export function MemberDetailPage() {
           </Card>
         ) : null}
       </Tabs>
-
-      <CsvReportModal open={csvOpen} member={m} onClose={() => setCsvOpen(false)} />
 
     </div>
   );

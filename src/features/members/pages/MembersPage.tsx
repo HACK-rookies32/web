@@ -6,37 +6,47 @@ import {
   Card,
   ConfirmModal,
   Column,
+  CsvDownloadModal,
+  DownloadGlyph,
   EmptyState,
   Icon,
   ListToolbar,
   Pagination,
   RowActions,
   SearchInput,
-  Select,
   StackedCell,
-  StatusPill,
   Table,
   useToast,
 } from '@/shared/ui';
-import { formatDate, formatNumber, maskEmail, maskName, memberRef } from '@/shared/lib/format';
-import { MEMBER_STATUS, type MemberStatus } from '@/shared/lib/status';
+import {
+  formatDate,
+  formatNumber,
+  maskAddress,
+  maskEmail,
+  maskName,
+  maskPhone,
+  memberRef,
+} from '@/shared/lib/format';
+import type { MemberStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
-import { deleteMember, fetchMember, fetchMembers, memberKeys, updateMember } from '../api';
+import {
+  deleteMember,
+  fetchMember,
+  fetchMembers,
+  fetchMembersCsv,
+  memberKeys,
+  updateMember,
+} from '../api';
 import type { MemberDetail, MemberListItem, MemberUpdateRequest } from '../types';
-import { ChevronGlyph, PencilGlyph, PlusGlyph } from '../components/Glyphs';
+import { ChevronGlyph, PencilGlyph } from '../components/Glyphs';
 import { ExpandedDevices } from '../components/ExpandedDevices';
 import { MemberQuickView } from '../components/MemberQuickView';
 import { MemberFormModal } from '../components/MemberFormModal';
 import './MembersPage.css';
 
-const STATUS_FILTERS: { value: MemberStatus | 'ALL'; label: string }[] = [
-  { value: 'ALL', label: '상태: 전체' },
-  { value: 'ACTIVE', label: '활성' },
-  { value: 'WITHDRAWN', label: '탈퇴' },
-];
 
 /**
  * 회원 관리 목록.
@@ -61,6 +71,7 @@ export function MembersPage() {
   const [editing, setEditing] = useState<MemberDetail | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<MemberListItem | null>(null);
+  const [csvOpen, setCsvOpen] = useState(false);
 
   const params = useMemo(
     () => ({ keyword, status, page, size: DEFAULT_PAGE_SIZE }),
@@ -149,19 +160,22 @@ export function MembersPage() {
       ),
     },
     {
-      key: 'children',
-      header: '연결 자녀',
-      render: (row) =>
-        row.children.length > 0 ? (
-          <span className="members__children">
-            <span className="members__children-count tabular">{row.children.length}명</span>
-            <span className="members__children-names">
-              {row.children.map((c) => maskName(c.name)).join(', ')}
-            </span>
-          </span>
-        ) : (
-          <span className="muted">-</span>
-        ),
+      key: 'loginId',
+      header: '로그인 ID',
+      width: '132px',
+      /* 로그인 아이디는 마스킹 대상이 아니다. */
+      render: (row) => row.username,
+    },
+    {
+      key: 'phone',
+      header: '전화번호',
+      width: '148px',
+      render: (row) => <span className="tabular">{maskPhone(row.phoneNumber)}</span>,
+    },
+    {
+      key: 'address',
+      header: '주소',
+      render: (row) => maskAddress(row.address),
     },
     {
       key: 'devices',
@@ -170,14 +184,6 @@ export function MembersPage() {
       numeric: true,
       width: '88px',
       render: (row) => (row.deviceCount > 0 ? `${row.deviceCount}대` : <span className="muted">-</span>),
-    },
-    {
-      key: 'status',
-      header: '상태',
-      width: '88px',
-      render: (row) => (
-        <StatusPill tone={MEMBER_STATUS[row.status].tone}>{MEMBER_STATUS[row.status].label}</StatusPill>
-      ),
     },
     {
       key: 'createdAt',
@@ -245,30 +251,10 @@ export function MembersPage() {
           />
         }
       >
-        <Select
-          value={status}
-          onChange={(e) => patchParams({ status: e.target.value === 'ALL' ? null : e.target.value })}
-          aria-label="계정 상태 필터"
-        >
-          {STATUS_FILTERS.map((f) => (
-            <option key={f.value} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </Select>
-
-        {canManage ? (
-          <Button
-            variant="primary"
-            iconLeft={<PlusGlyph />}
-            onClick={() => {
-              setEditing(null);
-              setFormOpen(true);
-            }}
-          >
-            회원 추가
-          </Button>
-        ) : null}
+        {/* 전체 회원 목록을 CSV 로 내려받는다. 개별 회원 리포트가 아니라 목록 전체다. */}
+        <Button iconLeft={<DownloadGlyph />} onClick={() => setCsvOpen(true)}>
+          회원 목록 CSV
+        </Button>
       </ListToolbar>
 
       <Card flush>
@@ -337,6 +323,17 @@ export function MembersPage() {
             });
           }
         }}
+      />
+
+      <CsvDownloadModal
+        open={csvOpen}
+        title="회원 목록 CSV 다운로드"
+        targetLabel={`전체 회원 ${formatNumber(data?.totalElements ?? 0)}명`}
+        columnsLabel="회원ID · 로그인ID · 이름 · 닉네임 · 이메일 · 전화번호 · 주소 · 권한 · 부모ID · 탈퇴여부 · 가입일 · 수정일"
+        filenamePrefix="members"
+        fetchCsv={() => fetchMembersCsv({ adminUsername: session?.username ?? 'unknown' })}
+        successDescription={`${formatNumber(data?.totalElements ?? 0)}명의 회원 정보가 저장되었습니다.`}
+        onClose={() => setCsvOpen(false)}
       />
 
       <ConfirmModal

@@ -184,55 +184,47 @@ export async function deleteMember(vars: {
 }
 
 /**
- * 회원 리포트 CSV.
- * 실제: GET /admin/reports/members.csv (명세 5.7) → text/csv 다운로드
- * 목: 화면에 있는 데이터로 CSV 문자열을 만들어 돌려준다.
+ * 전체 회원 목록 CSV (명세 5.7 GET /members/customers/customers.csv).
+ *
+ * 개별 회원 리포트가 아니라 회원 목록 전체다. 컬럼은 명세의 12개를 따른다.
+ * 목에서는 화면에 있는 데이터로 CSV 문자열을 만들어 돌려준다.
+ *
+ * CSV 는 원문을 담는다. 화면 표시용 마스킹과 달리 이 파일은 업무상 반출이
+ * 목적이고, 내려받는 행위 자체가 REPORT_DOWNLOAD 로 감사 로그에 남는다.
  */
-export async function fetchMemberReportCsv(vars: {
-  member: MemberDetail;
-  adminUsername: string;
-}): Promise<string> {
-  const { member } = vars;
+export async function fetchMembersCsv(vars: { adminUsername: string }): Promise<string> {
   if (USE_MOCK) {
-    const devices = MOCK_DEVICES[member.memberId] ?? [];
-    const inquiries = getMemberInquiries(member.memberId);
-    const wallet = MOCK_WALLETS.find((w) => w.userId === member.memberId);
-
     const csv = toCsv(
-      ['항목', '값'],
       [
-        ['회원 ID', member.memberId],
-        ['아이디', member.username],
-        ['이름', member.name],
-        ['이메일', member.email],
-        ['휴대폰', member.phoneNumber],
-        ['상태', member.status],
-        ['가입일', member.createdAt],
-        ['연결 자녀 수', member.children.length],
-        ['등록 기기 수', devices.length],
-        ['지갑 잔액', wallet?.balance ?? 0],
-        ['최근 잔액 변동', wallet?.updatedAt ?? '-'],
-        ['문의 건수', inquiries.length],
-        ['미답변 문의', inquiries.filter((i) => !i.answered).length],
+        '회원ID', '로그인ID', '이름', '닉네임', '이메일', '전화번호',
+        '주소', '권한', '부모ID', '탈퇴여부', '가입일', '수정일',
       ],
+      memberStore.map((m) => [
+        m.memberId,
+        m.username,
+        m.name,
+        m.nickname,
+        m.email,
+        m.phoneNumber,
+        m.address,
+        m.role,
+        '',
+        m.status === 'WITHDRAWN' ? 'Y' : 'N',
+        m.createdAt,
+        m.updatedAt,
+      ]),
     );
 
     appendAuditLog({
       adminUsername: vars.adminUsername,
       action: 'REPORT_DOWNLOAD',
-      target: `member:${member.memberId}`,
-      description: `${member.name} 회원 리포트 CSV 내려받기`,
+      target: 'report:members',
+      description: `전체 회원 목록 CSV 내려받기 — ${memberStore.length}건`,
     });
 
-    // 실제 리포트 생성처럼 보이도록 조금 더 기다린다.
-    return mockResponse(csv, 900);
+    return mockResponse(csv, 600);
   }
 
-  return request<string>({
-    url: '/admin/reports/members.csv',
-    method: 'GET',
-    params: { memberId: member.memberId },
-    responseType: 'text',
-  });
+  return request<string>({ url: '/admin/members/customers/customers.csv', method: 'GET' });
 }
 

@@ -11,6 +11,7 @@ export type { ButtonVariant, ButtonSize } from './Button';
 
 export { Card } from './Card';
 export { ConfirmModal } from './ConfirmModal';
+export { CsvDownloadModal, DownloadGlyph } from './CsvDownloadModal';
 export { EmptyState } from './EmptyState';
 export { FormField, TextInput, TextArea, Select, Toggle } from './FormField';
 export { Icon } from './Icon';

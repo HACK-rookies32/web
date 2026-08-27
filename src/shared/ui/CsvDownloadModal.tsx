@@ -1,30 +1,63 @@
 import { useEffect, useState } from 'react';
-import { Button, Modal, Spinner, useToast } from '@/shared/ui';
-import { downloadCsv, formatDate, maskName, memberRef } from '@/shared/lib/format';
-import { useAuth } from '@/shared/auth/AuthContext';
+import { Button } from './Button';
+import { Modal } from './Modal';
+import { Spinner } from './Spinner';
+import { useToast } from './Toast';
+import { downloadCsv, formatDate } from '@/shared/lib/format';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
-import { fetchMemberReportCsv } from '../api';
-import type { MemberDetail } from '../types';
-import { DownloadGlyph } from './Glyphs';
-import './CsvReportModal.css';
+import './CsvDownloadModal.css';
 
-interface CsvReportModalProps {
+export function DownloadGlyph() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <path
+        d="M7 1.5v7.5m0 0 2.75-2.75M7 9 4.25 6.25"
+        stroke="currentColor"
+        strokeWidth="1.4"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path d="M1.75 11.5h10.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+interface CsvDownloadModalProps {
   open: boolean;
-  member: MemberDetail;
+  /** 모달 제목 (예: "회원 목록 CSV 다운로드") */
+  title: string;
+  /** 다운로드 대상 요약 (예: "전체 회원 1,204명") */
+  targetLabel: string;
+  /** CSV 에 담기는 컬럼을 사람이 읽을 수 있게 나열한 문자열 */
+  columnsLabel: string;
+  /** 파일명 앞부분. 날짜와 확장자는 이 컴포넌트가 붙인다. */
+  filenamePrefix: string;
+  /** CSV 본문을 만들어 오는 함수. 감사 로그 적재는 이 안에서 한다. */
+  fetchCsv: () => Promise<string>;
+  /** 다운로드 완료 토스트의 보조 문구 */
+  successDescription: string;
   onClose: () => void;
 }
 
 type Phase = 'idle' | 'generating' | 'done' | 'error';
 
 /**
- * 회원 리포트 CSV 생성 모달 (Figma 131:5397 / 131:4580).
+ * CSV 생성 · 다운로드 모달 (명세 5.7).
  *
- * 확정 결정에 따라 리포트는 독립 페이지 없이 이 모달로만 제공한다.
- * 생성 → 완료 → 다운로드 + 토스트 순으로 진행된다.
+ * 생성 → 완료 → 다운로드 + 토스트 순으로 진행된다. 내려받는 행위 자체가
+ * 감사 대상(REPORT_DOWNLOAD)이라 완료 후 감사 로그를 동기화한다.
  */
-export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
+export function CsvDownloadModal({
+  open,
+  title,
+  targetLabel,
+  columnsLabel,
+  filenamePrefix,
+  fetchCsv,
+  successDescription,
+  onClose,
+}: CsvDownloadModalProps) {
   const toast = useToast();
-  const { session } = useAuth();
   const syncAuditLog = useAuditLogSync();
   const [phase, setPhase] = useState<Phase>('idle');
   const [csv, setCsv] = useState<string | null>(null);
@@ -37,15 +70,12 @@ export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
     }
   }, [open]);
 
-  const filename = `member-report_${member.memberId}_${formatDate(new Date().toISOString())}.csv`;
+  const filename = `${filenamePrefix}_${formatDate(new Date().toISOString())}.csv`;
 
   async function generate() {
     setPhase('generating');
     try {
-      const result = await fetchMemberReportCsv({
-        member,
-        adminUsername: session?.username ?? 'unknown',
-      });
+      const result = await fetchCsv();
       setCsv(result);
       setPhase('done');
       // 리포트 생성은 감사 대상 활동(REPORT_DOWNLOAD)이다.
@@ -59,18 +89,15 @@ export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
     if (!csv) return;
     downloadCsv(filename, csv);
     onClose();
-    toast.success(
-      'CSV 리포트를 내려받았습니다',
-      `${maskName(member.name)} 회원의 리포트가 저장되었습니다.`,
-    );
+    toast.success(`${title.replace(' 다운로드', '')} 를 내려받았습니다`, successDescription);
   }
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title="회원 리포트 CSV 다운로드"
-      description="이 회원의 기본 정보 · 기기 · 지갑 · 문의 요약을 CSV 파일로 만듭니다."
+      title={title}
+      description="CSV 파일을 만듭니다. 내려받은 기록은 감사 로그에 남습니다."
       footer={
         <>
           <Button onClick={onClose} disabled={phase === 'generating'}>
@@ -119,12 +146,12 @@ export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
         ) : (
           <dl className="csv-modal__preview">
             <div className="csv-modal__row">
-              <dt>대상 회원</dt>
-              <dd>{`${maskName(member.name)} (${memberRef(member.memberId)})`}</dd>
+              <dt>대상</dt>
+              <dd>{targetLabel}</dd>
             </div>
             <div className="csv-modal__row">
               <dt>포함 항목</dt>
-              <dd>기본 정보, 연결 자녀, 등록 기기, 지갑 잔액, 문의 요약</dd>
+              <dd>{columnsLabel}</dd>
             </div>
             <div className="csv-modal__row">
               <dt>파일명</dt>

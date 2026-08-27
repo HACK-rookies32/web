@@ -12,10 +12,13 @@ export interface ChildSummary {
 /** GET /admin/members 의 content 원소. */
 export interface MemberListItem {
   memberId: number;
+  /** 로그인 아이디. 마스킹 대상이 아니다. */
   username: string;
   name: string;
   email: string;
   phoneNumber: string;
+  /** 목록에도 표시하므로 상세가 아니라 여기에 둔다. 화면에서는 maskAddress 를 거친다. */
+  address: string;
   role: 'PARENT' | 'CHILD';
   status: MemberStatus;
   children: ChildSummary[];
@@ -33,7 +36,6 @@ export interface MemberListItem {
  */
 export interface MemberDetail extends MemberListItem {
   nickname: string;
-  address: string;
   profileImageUrl: string | null;
   updatedAt: string;
 }
