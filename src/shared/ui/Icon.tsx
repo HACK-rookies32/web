@@ -13,7 +13,6 @@ import navAudit from '@/assets/icons/nav-audit.svg?raw';
 import navAdmins from '@/assets/icons/nav-admins.svg?raw';
 import menu from '@/assets/icons/menu.svg?raw';
 import search from '@/assets/icons/search.svg?raw';
-import bell from '@/assets/icons/bell.svg?raw';
 import user from '@/assets/icons/user.svg?raw';
 import userLine from '@/assets/icons/user-line.svg?raw';
 import lock from '@/assets/icons/lock.svg?raw';
@@ -37,7 +36,6 @@ const ICONS = {
   'nav-admins': navAdmins,
   menu,
   search,
-  bell,
   user,
   'user-line': userLine,
   lock,

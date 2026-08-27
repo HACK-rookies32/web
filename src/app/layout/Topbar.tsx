@@ -9,15 +9,13 @@ import './Topbar.css';
 interface TopbarProps {
   title: string;
   onToggleSidebar: () => void;
-  /** 읽지 않은 알림 수. 0 이면 점을 표시하지 않는다. */
-  unreadCount?: number;
 }
 
 /**
  * 상단바 (Figma Header 131:3771).
- * 높이 64px, 반투명 배경 + backdrop-blur, 오른쪽에 알림·테마·프로필.
+ * 높이 64px, 반투명 배경 + backdrop-blur, 오른쪽에 테마·프로필.
  */
-export function Topbar({ title, onToggleSidebar, unreadCount = 0 }: TopbarProps) {
+export function Topbar({ title, onToggleSidebar }: TopbarProps) {
   const { session, signOut } = useAuth();
   const navigate = useNavigate();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -38,23 +36,6 @@ export function Topbar({ title, onToggleSidebar, unreadCount = 0 }: TopbarProps)
       </div>
 
       <div className="topbar__right">
-
-        {/*
-          TODO(api): 관리자용 알림 조회 API 가 명세에 없다.
-          예전에는 읽지 않은 알림 수를 3 으로 박아 두고 빨간 점을 띄웠는데,
-          누를 수도 없고 실제 알림도 아니라 오해만 샀다.
-          API 가 생기기 전까지는 비활성 상태로 두고 개수를 표시하지 않는다.
-        */}
-        <button
-          type="button"
-          className="topbar__icon-btn topbar__bell"
-          disabled
-          title="알림 기능은 준비 중입니다"
-          aria-label="알림 (준비 중)"
-        >
-          <Icon name="bell" />
-          {unreadCount > 0 ? <span className="topbar__dot" aria-hidden="true" /> : null}
-        </button>
 
         <div className="topbar__profile">
           <button

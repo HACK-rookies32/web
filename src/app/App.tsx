@@ -42,7 +42,13 @@ const AuditLogsPage = lazy(() =>
 const AdminsPage = lazy(() =>
   import('@/features/admins/pages/AdminsPage').then((m) => ({ default: m.AdminsPage })),
 );
-const UiKitPage = lazy(() => import('./UiKitPage').then((m) => ({ default: m.UiKitPage })));
+/*
+ * 스타일 가이드는 개발 모드에서만 불러온다. 조건을 라우트에만 걸면 라우트는
+ * 사라져도 청크는 운영 빌드에 그대로 실려 주소로 파일을 받아갈 수 있다.
+ */
+const UiKitPage = import.meta.env.DEV
+  ? lazy(() => import('./UiKitPage').then((m) => ({ default: m.UiKitPage })))
+  : null;
 
 /**
  * 서버 상태 클라이언트.
@@ -117,8 +123,8 @@ export function App() {
                       <Route path="community" element={<CommunityPage />} />
                     </Route>
 
-                    {/* 공통 UI 스타일 가이드 */}
-                    <Route path="ui-kit" element={<UiKitPage />} />
+                    {/* 공통 UI 스타일 가이드 (개발 모드 전용) */}
+                    {UiKitPage ? <Route path="ui-kit" element={<UiKitPage />} /> : null}
                   </Route>
                 </Route>
 
