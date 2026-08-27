@@ -94,19 +94,29 @@ export function maskName(name: string): string {
   return `${name[0]}${'*'.repeat(name.length - 2)}${name[name.length - 1]}`;
 }
 
+/**
+ * 마스킹 후에도 화면에 그대로 남는 구간의 길이.
+ *
+ * 목록 검색이 원문을 대상으로 부분 일치하면, 가려 놓은 구간을 검색 결과의
+ * 참/거짓으로 역추론할 수 있다(마스킹이 무력화된다). 검색 조건은 반드시
+ * 이 상수가 가리키는 "이미 보이는 구간"만 대상으로 삼는다.
+ */
+export const EMAIL_VISIBLE_PREFIX_LENGTH = 3;
+export const PHONE_VISIBLE_SUFFIX_LENGTH = 4;
+
 /** min***@gmail.com */
 export function maskEmail(email: string): string {
   const [local, domain] = email.split('@');
   if (!domain) return email;
-  const head = local.slice(0, 3);
-  return `${head}${'*'.repeat(Math.max(local.length - 3, 1))}@${domain}`;
+  const head = local.slice(0, EMAIL_VISIBLE_PREFIX_LENGTH);
+  return `${head}${'*'.repeat(Math.max(local.length - EMAIL_VISIBLE_PREFIX_LENGTH, 1))}@${domain}`;
 }
 
 /** 010-1234-5678 → 010-****-5678 */
 export function maskPhone(phone: string): string {
   const digits = phone.replace(/\D/g, '');
   if (digits.length < 8) return phone;
-  return `${digits.slice(0, 3)}-****-${digits.slice(-4)}`;
+  return `${digits.slice(0, 3)}-****-${digits.slice(-PHONE_VISIBLE_SUFFIX_LENGTH)}`;
 }
 
 /** 서울시 강남구 테헤란로 123 → 서울시 강남구 테헤란로 *** */

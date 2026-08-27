@@ -27,6 +27,11 @@ import './AuditLogsPage.css';
 
 const MIN_AUDIT_DATE = '2000-01-01';
 
+/**
+ * 감사 로그는 과거 기록이므로 조회 상한은 오늘이다.
+ * 모듈 로드 시점에 한 번 고정하면 자정을 넘겨 열어 둔 화면에서 상한이
+ * 어제로 남아 당일 로그를 조회할 수 없으므로, 렌더할 때마다 계산한다.
+ */
 function getTodayDate(): string {
   const today = new Date();
   const year = today.getFullYear();
@@ -34,8 +39,6 @@ function getTodayDate(): string {
   const day = String(today.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
-
-const MAX_AUDIT_DATE = getTodayDate();
 
 function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
   if (action.includes('DELETE') || action === 'MEMBER_BAN') return 'danger';
@@ -73,10 +76,7 @@ export function AuditLogsPage() {
 
   const hasFilters = Boolean(adminIdValue || actionValue || from || to);
   const invalidPeriod = Boolean(from && to && from > to);
-
-  function resetFilters() {
-    resetParams();
-  }
+  const maxAuditDate = getTodayDate();
 
   const columns: Column<AuditLogItem>[] = [
     {
@@ -186,7 +186,7 @@ export function AuditLogsPage() {
                 invalid={props['aria-invalid']}
                 value={from}
                 min={MIN_AUDIT_DATE}
-                max={to && to < MAX_AUDIT_DATE ? to : MAX_AUDIT_DATE}
+                max={to && to < maxAuditDate ? to : maxAuditDate}
                 onChange={(value) => patchParams({ from: value || null })}
               />
             )}
@@ -200,14 +200,14 @@ export function AuditLogsPage() {
                 invalid={props['aria-invalid']}
                 value={to}
                 min={from || MIN_AUDIT_DATE}
-                max={MAX_AUDIT_DATE}
+                max={maxAuditDate}
                 onChange={(value) => patchParams({ to: value || null })}
               />
             )}
           </FormField>
 
           <div className="audit-logs__filter-action">
-            <Button disabled={!hasFilters} onClick={resetFilters}>필터 초기화</Button>
+            <Button disabled={!hasFilters} onClick={resetParams}>필터 초기화</Button>
           </div>
         </div>
       </Card>
@@ -227,7 +227,7 @@ export function AuditLogsPage() {
               title={invalidPeriod ? '조회 기간을 확인해 주세요' : '감사 로그가 없습니다'}
               description={invalidPeriod ? '시작일은 종료일보다 늦을 수 없습니다.' : '현재 조건에 해당하는 활동 기록이 없습니다.'}
               icon={<Icon name="nav-audit" />}
-              action={hasFilters ? <Button size="sm" onClick={resetFilters}>필터 초기화</Button> : undefined}
+              action={hasFilters ? <Button size="sm" onClick={resetParams}>필터 초기화</Button> : undefined}
             />
           }
           footer={

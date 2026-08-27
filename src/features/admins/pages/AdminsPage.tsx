@@ -19,7 +19,13 @@ import {
 } from '@/shared/ui';
 import { ROLE_LABEL, ROLE_OPTIONS } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
-import { formatDateTime, maskEmail, maskPhone } from '@/shared/lib/format';
+import {
+  EMAIL_VISIBLE_PREFIX_LENGTH,
+  PHONE_VISIBLE_SUFFIX_LENGTH,
+  formatDateTime,
+  maskEmail,
+  maskPhone,
+} from '@/shared/lib/format';
 import type { Role } from '@/shared/lib/types';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
@@ -27,13 +33,18 @@ import { adminKeys, fetchAdmins, updateAdminRole } from '../api';
 import type { AdminAccount, AdminRoleFilter } from '../types';
 import './AdminsPage.css';
 
-const PHONE_SUFFIX_SEARCH_DIGITS = 4;
-
+/**
+ * 검색어가 관리자 한 명과 일치하는지 판정한다.
+ *
+ * 연락처는 화면에서 마스킹해 보여주므로(maskEmail·maskPhone), 검색을 원문에
+ * 부분 일치시키면 가려 둔 구간을 검색 결과로 되짚을 수 있다. 그래서 연락처는
+ * "이미 화면에 보이는 구간"과 "전체 값을 이미 알고 조회하는 경우"만 허용한다.
+ */
 function matchesAdminKeyword(admin: AdminAccount, keyword: string): boolean {
   const needle = keyword.trim().toLocaleLowerCase();
   if (!needle) return true;
 
-  // 아이디와 닉네임은 짧은 검색어도 의미가 있으므로 항상 부분 일치를 허용한다.
+  // 아이디와 닉네임은 화면에 그대로 노출되므로 짧은 부분 일치를 허용한다.
   if (
     admin.username.toLocaleLowerCase().includes(needle)
     || admin.nickname.toLocaleLowerCase().includes(needle)
@@ -41,20 +52,20 @@ function matchesAdminKeyword(admin: AdminAccount, keyword: string): boolean {
     return true;
   }
 
-  // 도메인의 공통 문자열(example.com) 때문에 전 계정이 노출되지 않도록 제한한다.
+  // 이메일: 노출된 앞 3자로 시작하거나, 전체 주소를 정확히 입력한 경우만.
+  // 로컬파트 부분 일치를 열어 두면 가려진 문자를 3자씩 확인할 수 있다.
   const email = admin.email.toLocaleLowerCase();
+  const visibleLocal = email.split('@')[0].slice(0, EMAIL_VISIBLE_PREFIX_LENGTH);
   const emailMatches = needle.includes('@')
-    ? email.includes(needle)
-    : /^[a-z0-9._%+-]+$/i.test(needle) && needle.length >= 3
-      ? email.split('@')[0].includes(needle)
-      : false;
+    ? email === needle
+    : /^[a-z0-9._%+-]+$/i.test(needle) && visibleLocal.startsWith(needle);
   if (emailMatches) return true;
 
-  // 화면에서 마스킹한 가운데 번호를 검색 결과로 역추론할 수 없도록 공개된 뒤 4자리만 검색한다.
+  // 전화번호: 노출된 뒤 4자리와 정확히 일치할 때만. 가운데 번호는 역추론 대상이다.
   const phoneDigits = needle.replace(/\D/g, '');
   const isPhoneSearch = /^[\d\s-]+$/.test(needle)
-    && phoneDigits.length === PHONE_SUFFIX_SEARCH_DIGITS;
-  const phoneSuffix = admin.phoneNumber.replace(/\D/g, '').slice(-PHONE_SUFFIX_SEARCH_DIGITS);
+    && phoneDigits.length === PHONE_VISIBLE_SUFFIX_LENGTH;
+  const phoneSuffix = admin.phoneNumber.replace(/\D/g, '').slice(-PHONE_VISIBLE_SUFFIX_LENGTH);
   return isPhoneSearch && phoneSuffix === phoneDigits;
 }
 
@@ -162,7 +173,7 @@ export function AdminsPage() {
           <SearchInput
             value={keyword}
             onSearch={(value) => patchParams({ keyword: value })}
-            placeholder="아이디 · 이름 · 이메일 · 전화번호 뒤 4자리"
+            placeholder="아이디 · 이름 · 이메일 전체 주소 · 전화번호 뒤 4자리"
             aria-label="관리자 검색"
           />
         }
