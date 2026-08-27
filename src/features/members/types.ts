@@ -5,8 +5,6 @@ import type { PageParams } from '@/shared/lib/types';
 export interface ChildSummary {
   childId: number;
   name: string;
-  /** 자녀 기기의 현재 연결 상태 */
-  deviceStatus: 'ONLINE' | 'OFFLINE';
 }
 
 /** GET /admin/members 의 content 원소. */
@@ -36,7 +34,6 @@ export interface MemberListItem {
  */
 export interface MemberDetail extends MemberListItem {
   nickname: string;
-  profileImageUrl: string | null;
   updatedAt: string;
 }
 
@@ -51,7 +48,6 @@ export interface MemberDevice {
   appVersion: string;
   status: 'ONLINE' | 'OFFLINE' | 'BLOCKED';
   lastSeenAt: string;
-  registeredAt: string;
 }
 
 /** 회원 상세의 "1:1 문의 기록" 탭에 쓰는 요약. */
@@ -63,15 +59,8 @@ export interface MemberInquiry {
   answeredAt: string | null;
 }
 
-/** 회원 목록 조회 파라미터. */
-export interface MemberListParams extends PageParams {
-  /**
-   * 계정 상태 필터.
-   * TODO(api): 명세 5.2 의 쿼리에는 keyword/role/page/size 만 있고 status 가 없다.
-   *            목 단계에서는 클라이언트에서 거르고, 백엔드에 파라미터 추가를 요청할 것.
-   */
-  status?: MemberStatus | 'ALL';
-}
+/** 회원 목록 조회 파라미터 (명세 5.2 — keyword/role/page/size). */
+export type MemberListParams = PageParams;
 
 /** PATCH /admin/members/{id} 요청 본문. */
 export interface MemberUpdateRequest {

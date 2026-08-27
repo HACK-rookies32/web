@@ -27,7 +27,6 @@ import {
   maskPhone,
   memberRef,
 } from '@/shared/lib/format';
-import type { MemberStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
@@ -64,7 +63,6 @@ export function MembersPage() {
 
   const { searchParams, patchParams, resetParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
-  const status = (searchParams.get('status') as MemberStatus | 'ALL' | null) ?? 'ALL';
 
   const [expanded, setExpanded] = useState<number[]>([]);
   const [quickView, setQuickView] = useState<MemberListItem | null>(null);
@@ -73,10 +71,7 @@ export function MembersPage() {
   const [deleteTarget, setDeleteTarget] = useState<MemberListItem | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
 
-  const params = useMemo(
-    () => ({ keyword, status, page, size: DEFAULT_PAGE_SIZE }),
-    [keyword, status, page],
-  );
+  const params = useMemo(() => ({ keyword, page, size: DEFAULT_PAGE_SIZE }), [keyword, page]);
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: memberKeys.list(params),
@@ -271,14 +266,10 @@ export function MembersPage() {
           emptyState={
             <EmptyState
               title="조회된 회원이 없습니다"
-              description={
-                keyword || status !== 'ALL'
-                  ? '검색어나 상태 필터를 바꿔보세요.'
-                  : '아직 등록된 회원이 없습니다.'
-              }
+              description={keyword ? '검색어를 바꿔보세요.' : '아직 등록된 회원이 없습니다.'}
               icon={<Icon name="search" />}
               action={
-                keyword || status !== 'ALL' ? (
+                keyword ? (
                   <Button size="sm" onClick={resetParams}>
                     필터 초기화
                   </Button>

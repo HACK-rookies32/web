@@ -49,7 +49,7 @@ function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutr
   if (action === 'PAYMENT_REFUND' || action === 'WALLET_ADJUST') return 'warning';
   // 권한 변경은 되돌리기 어려운 영향이 커서 수정 계열과 구분해 경고로 둔다.
   if (action === 'ADMIN_ROLE_UPDATE') return 'warning';
-  if (action.includes('UPDATE') || action === 'MEMBER_SUSPEND') return 'info';
+  if (action.includes('UPDATE')) return 'info';
   if (action.includes('CREATE')) return 'accent';
   return 'neutral';
 }
@@ -99,7 +99,9 @@ export function AuditLogsPage() {
       header: '활동',
       width: '260px',
       render: (row) => (
-        <StatusPill tone={actionTone(row.action)}>{AUDIT_ACTION_LABEL[row.action]}</StatusPill>
+        <StatusPill tone={actionTone(row.action)}>
+          {AUDIT_ACTION_LABEL[row.action] ?? row.action}
+        </StatusPill>
       ),
     },
     {

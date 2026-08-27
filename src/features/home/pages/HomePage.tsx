@@ -102,7 +102,7 @@ export function HomePage() {
                 return (
                   <li key={log.logId} className="home__row">
                     <span className="home__row-main">
-                      <strong>{log.adminUsername}</strong> · {AUDIT_ACTION_LABEL[log.action]}
+                      <strong>{log.adminUsername}</strong> · {AUDIT_ACTION_LABEL[log.action] ?? log.action}
                       <span className="home__row-sub">
                         {target.id ? `${target.label} #${target.id}` : target.label}
                       </span>

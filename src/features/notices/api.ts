@@ -1,5 +1,5 @@
 import { USE_MOCK, request } from '@/shared/api/client';
-import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
+import { mockResponse, paginate } from '@/shared/api/mock';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_NOTICES } from '@/mocks/notices';
 import type { Page } from '@/shared/lib/types';
@@ -35,7 +35,6 @@ function toListItem(n: NoticeDetail): NoticeListItem {
 export async function fetchNotices(params: NoticeListParams): Promise<Page<NoticeListItem>> {
   if (USE_MOCK) {
     const filtered = noticeStore
-      .filter((n) => matchesKeyword(n, params.keyword, ['title', 'content', 'authorName']))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .map(toListItem);
 

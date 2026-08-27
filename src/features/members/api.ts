@@ -53,14 +53,13 @@ let memberStore: MemberDetail[] = [...MOCK_MEMBERS];
  */
 export async function fetchMembers(params: MemberListParams): Promise<Page<MemberListItem>> {
   if (USE_MOCK) {
-    const filtered = memberStore
-      .filter((m) => (params.status && params.status !== 'ALL' ? m.status === params.status : true))
-      .filter((m) => matchesKeyword(m, params.keyword, ['name', 'username']));
+    const filtered = memberStore.filter((m) =>
+      matchesKeyword(m, params.keyword, ['name', 'username']),
+    );
 
     return mockResponse(paginate(filtered, params));
   }
 
-  // TODO(api): 명세 5.2 의 쿼리에는 status 가 없다. 파라미터 추가 요청 중.
   return request<Page<MemberListItem>>({ url: '/admin/members/customers', method: 'GET', params });
 }
 

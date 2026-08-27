@@ -2,7 +2,6 @@
 export type AuditAction =
   | 'MEMBER_UPDATE'
   | 'MEMBER_DELETE'
-  | 'MEMBER_SUSPEND'
   | 'PAYMENT_REFUND'
   | 'WALLET_ADJUST'
   | 'NOTICE_CREATE'
@@ -18,7 +17,6 @@ export type AuditAction =
 export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   MEMBER_UPDATE: '회원 정보 수정',
   MEMBER_DELETE: '회원 삭제',
-  MEMBER_SUSPEND: '계정 정지',
   PAYMENT_REFUND: '환불 처리',
   WALLET_ADJUST: '지갑 잔액 수동 조정',
   NOTICE_CREATE: '공지 작성',

@@ -30,9 +30,8 @@ export async function fetchAuditLogs(params: AuditLogListParams): Promise<Page<A
       .filter((log) => (params.action ? log.action === params.action : true))
       .filter((log) => (params.from ? new Date(log.createdAt).getTime() >= startOfDay(params.from) : true))
       .filter((log) => (params.to ? new Date(log.createdAt).getTime() <= endOfDay(params.to) : true))
-      .map<AuditLogItem>(({ logId, adminId, adminUsername, action, target, description, createdAt }) => ({
+      .map<AuditLogItem>(({ logId, adminUsername, action, target, description, createdAt }) => ({
         logId,
-        adminId,
         action,
         target,
         createdAt,
