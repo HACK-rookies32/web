@@ -1,14 +1,15 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
   Card,
   Column,
+  CsvDownloadModal,
+  DownloadGlyph,
   EmptyState,
   Icon,
   ListToolbar,
   Pagination,
-  SearchInput,
   Select,
   SlideOver,
   StackedCell,
@@ -17,6 +18,7 @@ import {
   useToast,
 } from '@/shared/ui';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
+import { useAuth } from '@/shared/auth/AuthContext';
 import { inquiryStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useListParams } from '@/shared/hooks/useListParams';
@@ -24,6 +26,7 @@ import {
   createAnswer,
   deleteAnswer,
   fetchInquiries,
+  fetchInquiriesCsv,
   inquiryKeys,
   updateAnswer,
 } from '../api';
@@ -47,22 +50,24 @@ export function InquiriesPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
 
+  const { hasRole, session } = useAuth();
+  /* 문의 CSV 는 문의 담당 권한까지 허용한다 (명세 5.7). 회원 CSV 와 가드가 다르다. */
+  const canDownloadCsv = hasRole(['SUPER_ADMIN', 'INQUIRY_ADMIN']);
+  const [csvOpen, setCsvOpen] = useState(false);
+
   const { searchParams, patchParams, resetParams, page } = useListParams();
-  const keyword = searchParams.get('keyword') ?? '';
   const answered = (searchParams.get('answered') as 'ALL' | 'OPEN' | 'ANSWERED' | null) ?? 'ALL';
   const selectedId = searchParams.get('id') ? Number(searchParams.get('id')) : null;
 
   const params = useMemo(
-    () => ({ keyword, answered, page, size: DEFAULT_PAGE_SIZE }),
-    [keyword, answered, page],
+    () => ({ answered, page, size: DEFAULT_PAGE_SIZE }),
+    [answered, page],
   );
 
   const { data, isPending, isError } = useQuery({
     queryKey: inquiryKeys.list(params),
     queryFn: () => fetchInquiries(params),
   });
-
-  const handleSearch = useCallback((value: string) => patchParams({ keyword: value }), [patchParams]);
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: inquiryKeys.all });
@@ -97,8 +102,6 @@ export function InquiriesPage() {
     },
     onError: (e) => toast.error('답변 삭제에 실패했습니다', e instanceof Error ? e.message : undefined),
   });
-
-  const openCount = data?.content.filter((i) => !i.answered).length ?? 0;
 
   const columns: Column<InquiryListItem>[] = [
     {
@@ -140,20 +143,11 @@ export function InquiriesPage() {
 
   return (
     <div className="inquiries">
-      <ListToolbar
-        search={
-          <SearchInput
-            value={keyword}
-            onSearch={handleSearch}
-            placeholder="제목 · 내용 · 작성자 검색"
-            aria-label="문의 검색"
-          />
-        }
-      >
-        {openCount > 0 ? (
-          <span className="inquiries__badge">
-            이 페이지 답변 대기 <strong className="tabular">{formatNumber(openCount)}</strong>건
-          </span>
+      <ListToolbar>
+        {canDownloadCsv ? (
+          <Button iconLeft={<DownloadGlyph />} onClick={() => setCsvOpen(true)}>
+            문의 내역 CSV
+          </Button>
         ) : null}
 
         <Select
@@ -181,7 +175,7 @@ export function InquiriesPage() {
           emptyState={
             <EmptyState
               title="조회된 문의가 없습니다"
-              description="검색어나 상태 필터를 바꿔보세요."
+              description="상태 필터를 바꿔보세요."
               icon={<Icon name="nav-inquiries" />}
               action={
                 <Button size="sm" onClick={resetParams}>
@@ -203,6 +197,17 @@ export function InquiriesPage() {
           }
         />
       </Card>
+
+      <CsvDownloadModal
+        open={csvOpen}
+        title="1:1 문의 내역 CSV 다운로드"
+        targetLabel={`전체 문의 ${formatNumber(data?.totalElements ?? 0)}건`}
+        columnsLabel="문의ID · 작성자ID · 작성자닉네임 · 제목 · 내용 · 첨부파일URL · 링크URL · 답변여부 · 작성일 · 수정일 · 답변내용 · 답변일"
+        filenamePrefix="inquiries"
+        fetchCsv={() => fetchInquiriesCsv({ adminUsername: session?.username ?? 'unknown' })}
+        successDescription={`${formatNumber(data?.totalElements ?? 0)}건의 문의 내역이 저장되었습니다.`}
+        onClose={() => setCsvOpen(false)}
+      />
 
       <SlideOver
         open={selectedId !== null}

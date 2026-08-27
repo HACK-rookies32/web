@@ -1,6 +1,8 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
 import { MOCK_INQUIRIES } from '@/mocks/inquiries';
+import { appendAuditLog } from '@/mocks/auditLogs';
+import { toCsv } from '@/shared/lib/format';
 import type { Page } from '@/shared/lib/types';
 import type {
   AnswerRequest,
@@ -133,3 +135,44 @@ export async function deleteAnswer(id: number): Promise<void> {
   return request<void>({ url: `/admin/inquiries/${id}/answer`, method: 'DELETE' });
 }
 
+
+/**
+ * GET /admin/inquiries/inquiries.csv — 1:1 문의 내역 CSV (명세 5.7)
+ *
+ * 목에서는 화면에 있는 데이터로 CSV 문자열을 만들어 돌려준다.
+ * 내려받는 행위 자체가 REPORT_DOWNLOAD 로 감사 로그에 남는다.
+ */
+export async function fetchInquiriesCsv(vars: { adminUsername: string }): Promise<string> {
+  if (USE_MOCK) {
+    const csv = toCsv(
+      [
+        '문의ID', '작성자ID', '작성자닉네임', '제목', '내용', '첨부파일URL',
+        '링크URL', '답변여부', '작성일', '수정일', '답변내용', '답변일',
+      ],
+      inquiryStore.map((i) => [
+        i.id,
+        i.memberId,
+        i.memberNickname,
+        i.title,
+        i.content,
+        i.attachmentUrl ?? '',
+        i.linkUrl ?? '',
+        i.answered ? 'Y' : 'N',
+        i.createdAt,
+        i.updatedAt,
+        i.answer?.content ?? '',
+        i.answer?.createdAt ?? '',
+      ]),
+    );
+
+    appendAuditLog({
+      adminUsername: vars.adminUsername,
+      action: 'REPORT_DOWNLOAD',
+      target: 'report:inquiries',
+      description: `1:1 문의 내역 CSV 내려받기 — ${inquiryStore.length}건`,
+    });
+
+    return mockResponse(csv, 600);
+  }
+  return request<string>({ url: '/admin/inquiries/inquiries.csv', method: 'GET' });
+}

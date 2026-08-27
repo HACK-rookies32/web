@@ -6,25 +6,6 @@
 
 /* 툴바는 공통 ListToolbar 로 옮겼다 (@/shared/ui). */
 
-/* 답변 대기 건수 — 색 외에 테두리 형태로도 눈에 띄게 한다. */
-.inquiries__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--danger);
-  border-radius: var(--radius-pill);
-  background: var(--danger-bg);
-  color: var(--danger);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  white-space: nowrap;
-}
-
-.inquiries__badge strong {
-  font-weight: 700;
-}
-
 .inquiries__title {
   display: block;
   font-weight: 500;
