@@ -89,6 +89,9 @@ export const NAV_ITEMS: NavItem[] = [
 /** 명세 3.5 의 기본값은 20 이나, 화면 밀도상 목록은 10건으로 끊는다. */
 export const DEFAULT_PAGE_SIZE = 10;
 
+/** 목록에서 고를 수 있는 페이지당 표시 건수. */
+export const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
+
 /* ------------------------------------------------------------- 저장소 ---- */
 
 export const AUTH_STORAGE_KEY = 'careguard.auth';

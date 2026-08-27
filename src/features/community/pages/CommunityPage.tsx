@@ -13,7 +13,6 @@ import {
   RowActions,
   Select,
   SlideOver,
-  StatusPill,
   Table,
   TextArea,
   useToast,
@@ -22,7 +21,7 @@ import { useAuth } from '@/shared/auth/AuthContext';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
-import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
+import { DEFAULT_PAGE_SIZE, PAGE_SIZE_OPTIONS } from '@/shared/lib/constants';
 import {
   banCommunityMember,
   communityKeys,
@@ -40,6 +39,11 @@ export function CommunityPage() {
   const { hasRole, session } = useAuth();
   const { searchParams, patchParams, page } = useListParams();
   const sort = searchParams.get('sort') ?? 'id,desc';
+  /* 표시 건수도 URL 로 관리해 새로고침·링크 공유에서 같은 목록이 나오게 한다. */
+  const sizeParam = Number(searchParams.get('size') ?? DEFAULT_PAGE_SIZE);
+  const size = PAGE_SIZE_OPTIONS.includes(sizeParam as (typeof PAGE_SIZE_OPTIONS)[number])
+    ? sizeParam
+    : DEFAULT_PAGE_SIZE;
   const selectedId = searchParams.get('id') ? Number(searchParams.get('id')) : null;
   /*
    * 명세 5.5 의 커뮤니티 API 별 요구 권한.
@@ -67,7 +71,7 @@ export function CommunityPage() {
   const [durationDays, setDurationDays] = useState(7);
   const [banError, setBanError] = useState('');
 
-  const params = useMemo(() => ({ page, size: DEFAULT_PAGE_SIZE, sort }), [page, sort]);
+  const params = useMemo(() => ({ page, size, sort }), [page, size, sort]);
   const query = useQuery({
     queryKey: communityKeys.list(params),
     queryFn: () => fetchCommunityPosts(params),
@@ -138,20 +142,8 @@ export function CommunityPage() {
     {
       key: 'member',
       header: '작성자',
-      width: '120px',
+      width: '140px',
       render: (row) => <span className="muted community__muted">회원 #{row.memberId}</span>,
-    },
-    {
-      key: 'reports',
-      header: '신고',
-      width: '104px',
-      align: 'center',
-      numeric: true,
-      render: (row) => (
-        <StatusPill tone={row.reportCount > 0 ? 'danger' : 'neutral'} shape="pill">
-          {formatNumber(row.reportCount)}건
-        </StatusPill>
-      ),
     },
     {
       key: 'createdAt',
@@ -163,15 +155,12 @@ export function CommunityPage() {
     {
       key: 'actions',
       header: <span className="sr-only">관리</span>,
-      width: canModerate ? '168px' : '104px',
+      width: '96px',
       align: 'right',
       render: (row) => (
         <RowActions>
           {canModerate ? (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => openBan(row)}>밴</Button>
-              <Button variant="ghost" size="sm" className="community__danger" onClick={() => setDeleteTarget(row)}>삭제</Button>
-            </>
+            <Button variant="ghost" size="sm" className="community__danger" onClick={() => setDeleteTarget(row)}>삭제</Button>
           ) : null}
         </RowActions>
       ),
@@ -182,12 +171,23 @@ export function CommunityPage() {
     <div className="community">
       <ListToolbar summary={`총 ${formatNumber(query.data?.totalElements ?? 0)}건`}>
         <Select
+          aria-label="페이지당 표시 건수"
+          value={size}
+          onChange={(event) => patchParams({ size: event.target.value }, true)}
+        >
+          {PAGE_SIZE_OPTIONS.map((n) => (
+            <option key={n} value={n}>
+              {n}건씩 보기
+            </option>
+          ))}
+        </Select>
+
+        <Select
           aria-label="게시글 정렬"
           value={sort}
           onChange={(event) => patchParams({ sort: event.target.value }, true)}
         >
           <option value="id,desc">최신순</option>
-          <option value="reportCount,desc">신고 많은 순</option>
         </Select>
       </ListToolbar>
 

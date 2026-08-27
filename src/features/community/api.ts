@@ -32,11 +32,7 @@ export async function fetchCommunityPosts(
   params: CommunityPostListParams,
 ): Promise<Page<CommunityPostListItem>> {
   if (USE_MOCK) {
-    const sorted = [...postStore].sort((a, b) =>
-      params.sort === 'reportCount,desc'
-        ? b.reportCount - a.reportCount
-        : b.id - a.id,
-    );
+    const sorted = [...postStore].sort((a, b) => b.id - a.id);
     return mockResponse(paginate(sorted.map(toListItem), params));
   }
 
