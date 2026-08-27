@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
@@ -10,15 +10,12 @@ import {
   ListToolbar,
   Modal,
   RowActions,
-  SearchInput,
-  StatusPill,
   Table,
   TextInput,
   useToast,
 } from '@/shared/ui';
 import { formatDateTime, josa } from '@/shared/lib/format';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
-import { useListParams } from '@/shared/hooks/useListParams';
 import { useAuth } from '@/shared/auth/AuthContext';
 import {
   createHarmfulKeyword,
@@ -34,9 +31,7 @@ export function HarmfulKeywordsPage() {
   const queryClient = useQueryClient();
   const { session } = useAuth();
   const syncAuditLog = useAuditLogSync();
-  const { patchParams, getParam } = useListParams();
   const [keyword, setKeyword] = useState('');
-  const search = getParam('keyword');
   const [addOpen, setAddOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<HarmfulKeyword | null>(null);
   const [fieldError, setFieldError] = useState('');
@@ -45,14 +40,6 @@ export function HarmfulKeywordsPage() {
     queryKey: harmfulKeywordKeys.all,
     queryFn: fetchHarmfulKeywords,
   });
-
-  const visibleKeywords = useMemo(() => {
-    const needle = search.trim().toLocaleLowerCase();
-    if (!needle) return query.data ?? [];
-    return (query.data ?? []).filter((item) =>
-      item.keyword.toLocaleLowerCase().includes(needle),
-    );
-  }, [query.data, search]);
 
   const createMutation = useMutation({
     mutationFn: (body: { keyword: string }) =>
@@ -85,11 +72,6 @@ export function HarmfulKeywordsPage() {
     onError: () => toast.error('삭제에 실패했습니다', '잠시 후 다시 시도해 주세요.'),
   });
 
-  const handleSearch = useCallback(
-    (value: string) => patchParams({ keyword: value.trim() }),
-    [patchParams],
-  );
-
   function openAddModal() {
     setKeyword('');
     setFieldError('');
@@ -120,23 +102,18 @@ export function HarmfulKeywordsPage() {
     {
       key: 'keyword',
       header: '차단 키워드',
-      render: (row) => (
-        <div className="harmful__keyword-cell">
-          <span className="harmful__keyword">{row.keyword}</span>
-          <StatusPill tone="danger" shape="pill">차단 중</StatusPill>
-        </div>
-      ),
+      render: (row) => <span className="harmful__keyword">{row.keyword}</span>,
     },
     {
       key: 'createdAt',
       header: '등록일시',
-      width: '220px',
+      width: '200px',
       render: (row) => <span className="muted harmful__muted tabular">{formatDateTime(row.createdAt)}</span>,
     },
     {
       key: 'actions',
       header: <span className="sr-only">관리</span>,
-      width: '120px',
+      width: '96px',
       align: 'right',
       render: (row) => (
         <RowActions>
@@ -160,33 +137,23 @@ export function HarmfulKeywordsPage() {
         </div>
       </Card>
 
-      <ListToolbar
-        search={
-          <SearchInput
-            value={search}
-            onSearch={handleSearch}
-            placeholder="차단 키워드 검색"
-            aria-label="차단 키워드 검색"
-          />
-        }
-      >
-        <span className="muted harmful__result-count">검색 결과 {visibleKeywords.length}개</span>
+      <ListToolbar summary={`총 ${query.data?.length ?? 0}개`}>
         <Button variant="primary" onClick={openAddModal}>키워드 추가</Button>
       </ListToolbar>
 
       <Card flush>
         <Table
           columns={columns}
-          rows={visibleKeywords}
+          rows={query.data ?? []}
           rowKey={(row) => row.id}
           caption="차단 키워드 목록"
           loading={query.isPending}
           error={query.isError ? '차단 키워드 목록을 불러오지 못했습니다.' : undefined}
           emptyState={
             <EmptyState
-              title={search ? '검색 결과가 없습니다' : '등록된 차단 키워드가 없습니다'}
-              description={search ? '다른 검색어를 입력해 보세요.' : '키워드를 추가해 유해 사이트를 차단하세요.'}
-              action={!search ? <Button variant="primary" size="sm" onClick={openAddModal}>키워드 추가</Button> : undefined}
+              title="등록된 차단 키워드가 없습니다"
+              description="키워드를 추가해 유해 사이트를 차단하세요."
+              action={<Button variant="primary" size="sm" onClick={openAddModal}>키워드 추가</Button>}
             />
           }
         />

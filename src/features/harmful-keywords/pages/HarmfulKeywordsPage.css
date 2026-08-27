@@ -42,16 +42,9 @@
 
 /* 툴바는 공통 ListToolbar 로 옮겼다 (@/shared/ui). */
 
-.harmful__result-count,
 .harmful__muted {
   font-size: var(--fs-label);
   line-height: var(--lh-label);
-}
-
-.harmful__keyword-cell {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
 }
 
 .harmful__keyword {
