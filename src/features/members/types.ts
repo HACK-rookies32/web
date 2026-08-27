@@ -69,5 +69,4 @@ export interface MemberUpdateRequest {
   email?: string;
   phoneNumber?: string;
   address?: string;
-  status?: MemberStatus;
 }

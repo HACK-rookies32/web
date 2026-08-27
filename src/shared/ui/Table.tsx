@@ -31,10 +31,6 @@ interface TableProps<T> {
   /** 결과가 없을 때 보여줄 내용. 생략하면 기본 문구. */
   emptyState?: ReactNode;
   onRowClick?: (row: T) => void;
-  /** 행 확장 영역 (예: 회원의 연결 자녀 기기) */
-  renderExpanded?: (row: T) => ReactNode;
-  /** 현재 펼쳐진 행의 키 목록 */
-  expandedKeys?: (string | number)[];
   /** 표 하단에 붙일 요소 (보통 Pagination) */
   footer?: ReactNode;
 }
@@ -55,8 +51,6 @@ export function Table<T>({
   error,
   emptyState,
   onRowClick,
-  renderExpanded,
-  expandedKeys = [],
   footer,
 }: TableProps<T>) {
   const showBody = !loading && !error && rows.length > 0;
@@ -90,7 +84,6 @@ export function Table<T>({
             <tbody>
               {rows.map((row) => {
                 const key = rowKey(row);
-                const expanded = expandedKeys.includes(key);
 
                 return (
                   <Fragment key={key}>
@@ -124,12 +117,6 @@ export function Table<T>({
                         </td>
                       ))}
                     </tr>
-
-                    {expanded && renderExpanded ? (
-                      <tr className="table__expanded">
-                        <td colSpan={columns.length}>{renderExpanded(row)}</td>
-                      </tr>
-                    ) : null}
                   </Fragment>
                 );
               })}

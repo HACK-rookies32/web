@@ -40,8 +40,7 @@ import {
   updateMember,
 } from '../api';
 import type { MemberDetail, MemberListItem, MemberUpdateRequest } from '../types';
-import { ChevronGlyph, PencilGlyph } from '../components/Glyphs';
-import { ExpandedDevices } from '../components/ExpandedDevices';
+import { PencilGlyph } from '../components/Glyphs';
 import { MemberQuickView } from '../components/MemberQuickView';
 import { MemberFormModal } from '../components/MemberFormModal';
 import './MembersPage.css';
@@ -64,7 +63,6 @@ export function MembersPage() {
   const { searchParams, patchParams, resetParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
 
-  const [expanded, setExpanded] = useState<number[]>([]);
   const [quickView, setQuickView] = useState<MemberListItem | null>(null);
   const [editing, setEditing] = useState<MemberDetail | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -116,33 +114,7 @@ export function MembersPage() {
     }
   }
 
-  function toggleExpand(memberId: number) {
-    setExpanded((prev) =>
-      prev.includes(memberId) ? prev.filter((id) => id !== memberId) : [...prev, memberId],
-    );
-  }
-
   const columns: Column<MemberListItem>[] = [
-    {
-      key: 'expand',
-      header: <span className="sr-only">기기 목록 펼치기</span>,
-      width: '44px',
-      align: 'center',
-      render: (row) => (
-        <button
-          type="button"
-          className="members__expand"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleExpand(row.memberId);
-          }}
-          aria-expanded={expanded.includes(row.memberId)}
-          aria-label={`${maskName(row.name)} 연결 기기 ${expanded.includes(row.memberId) ? '접기' : '펼치기'}`}
-        >
-          <ChevronGlyph open={expanded.includes(row.memberId)} />
-        </button>
-      ),
-    },
     {
       key: 'member',
       header: '회원',
@@ -261,8 +233,6 @@ export function MembersPage() {
           loading={isPending}
           error={isError ? (error instanceof Error ? error.message : '알 수 없는 오류') : undefined}
           onRowClick={(row) => navigate(`/members/${row.memberId}`)}
-          renderExpanded={(row) => <ExpandedDevices memberId={row.memberId} />}
-          expandedKeys={expanded}
           emptyState={
             <EmptyState
               title="조회된 회원이 없습니다"
@@ -301,19 +271,10 @@ export function MembersPage() {
           setFormOpen(false);
           setEditing(null);
         }}
-        onSubmit={(values) => {
-          if (editing) {
-            updateMutation.mutate({ memberId: editing.memberId, body: values });
-          } else {
-            // TODO(api): 관리자 전용 회원 생성 엔드포인트가 아직 없다.
-            setFormOpen(false);
-            toast.showToast({
-              tone: 'info',
-              title: '회원 추가는 백엔드 연동 후 제공됩니다',
-              description: '관리자 전용 생성 API 가 준비되면 연결합니다.',
-            });
-          }
-        }}
+        /* 이 모달은 수정 전용이다. 목록에 회원 추가 진입점이 없다. */
+        onSubmit={(values) =>
+          editing && updateMutation.mutate({ memberId: editing.memberId, body: values })
+        }
       />
 
       <CsvDownloadModal

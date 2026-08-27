@@ -83,13 +83,6 @@
   opacity: 1;
 }
 
-/* 확장 행 */
-.table__expanded > td {
-  padding: 0;
-  background: var(--surface-subtle);
-  border-bottom: 1px solid var(--border-subtle);
-}
-
 /* ---- 셀 보조 --------------------------------------------------------- */
 
 .cell-stack {

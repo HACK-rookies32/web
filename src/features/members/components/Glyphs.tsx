@@ -18,27 +18,6 @@ export function PencilGlyph() {
   );
 }
 
-export function ChevronGlyph({ open }: { open: boolean }) {
-  return (
-    <svg
-      width="10"
-      height="6"
-      viewBox="0 0 10 6"
-      fill="none"
-      aria-hidden="true"
-      style={{ transform: open ? 'rotate(180deg)' : undefined, transition: 'transform var(--transition)' }}
-    >
-      <path
-        d="M1 1l4 4 4-4"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 export function DeviceGlyph() {
   return (
     <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">

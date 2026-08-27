@@ -8,24 +8,6 @@
 
 /* ---- 셀 --------------------------------------------------------------- */
 
-.members__expand {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 0;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text);
-  transition: background-color var(--transition);
-}
-
-.members__expand:hover {
-  background: var(--surface-tint);
-  color: var(--accent-strong);
-}
-
 .members__danger:hover {
   color: var(--danger);
 }

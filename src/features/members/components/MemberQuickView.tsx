@@ -10,8 +10,16 @@ import {
   Spinner,
   StatusPill,
 } from '@/shared/ui';
-import { formatCurrency, formatDate, formatRelative, maskEmail, maskName, memberRef } from '@/shared/lib/format';
-import { MEMBER_STATUS } from '@/shared/lib/status';
+import {
+  formatCurrency,
+  formatDate,
+  formatRelative,
+  maskAddress,
+  maskEmail,
+  maskName,
+  maskPhone,
+  memberRef,
+} from '@/shared/lib/format';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
 import { fetchMemberDevices, fetchMemberWallet, memberKeys } from '../api';
 import type { MemberListItem } from '../types';
@@ -25,7 +33,10 @@ interface MemberQuickViewProps {
 
 /**
  * 회원 빠른 보기 슬라이드오버.
- * 자녀 기기와 결제 요약만 간단히 보여주고, 자세한 내용은 각 화면으로 넘긴다.
+ *
+ * 계정 정보는 회원 목록의 컬럼과 같은 항목을, 기기는 회원 상세의 "연결 기기" 탭과
+ * 같은 항목(기기·OS)을 보여준다. 같은 회원을 보는 화면끼리 기준이 달라지면
+ * 어느 쪽이 맞는지 확인하러 화면을 옮겨다니게 된다.
  */
 export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
   const memberId = member?.memberId ?? 0;
@@ -65,16 +76,24 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
     >
       {member ? (
         <>
-          <div className="quickview__summary">
-            <StatusPill tone={MEMBER_STATUS[member.status].tone}>
-              {MEMBER_STATUS[member.status].label}
-            </StatusPill>
-            <span className="quickview__meta">가입 {formatDate(member.createdAt)}</span>
-          </div>
-
-          {/* ---- 연결 자녀 기기 ---- */}
+          {/* ---- 계정 정보 (회원 목록 컬럼과 동일) ---- */}
           <section className="quickview__section">
-            <h3 className="quickview__heading">연결 자녀 기기</h3>
+            <h3 className="quickview__heading">계정 정보</h3>
+            <DetailBox>
+              <DetailRow label="로그인 ID" value={member.username} />
+              <DetailRow
+                label="전화번호"
+                value={<span className="tabular">{maskPhone(member.phoneNumber)}</span>}
+              />
+              <DetailRow label="주소" value={maskAddress(member.address)} />
+              <DetailRow label="등록 기기" value={`${member.deviceCount}대`} />
+              <DetailRow label="가입일" value={formatDate(member.createdAt)} />
+            </DetailBox>
+          </section>
+
+          {/* ---- 연결 기기 (회원 상세 탭과 동일하게 기기·OS 만) ---- */}
+          <section className="quickview__section">
+            <h3 className="quickview__heading">연결 기기</h3>
 
             {devices.isPending ? (
               <div className="quickview__loading">
@@ -88,16 +107,9 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
                       <DeviceGlyph />
                     </span>
                     <span className="quickview__device-body">
-                      <span className="quickview__device-name">
-                        {d.childName ? maskName(d.childName) : '본인 기기'}
-                      </span>
-                      <span className="quickview__device-meta">
-                        {d.model} · {d.os}
-                      </span>
+                      <span className="quickview__device-name">{d.model}</span>
+                      <span className="quickview__device-meta">{d.os}</span>
                     </span>
-                    <StatusPill tone={d.status === 'ONLINE' ? 'success' : d.status === 'BLOCKED' ? 'danger' : 'neutral'}>
-                      {d.status === 'ONLINE' ? '온라인' : d.status === 'BLOCKED' ? '차단' : '오프라인'}
-                    </StatusPill>
                   </li>
                 ))}
               </ul>

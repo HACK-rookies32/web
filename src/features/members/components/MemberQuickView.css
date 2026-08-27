@@ -1,16 +1,3 @@
-.quickview__summary {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
-}
-
-.quickview__meta {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-muted);
-}
-
 .quickview__section {
   display: flex;
   flex-direction: column;

@@ -19,7 +19,6 @@ import type { Page } from '@/shared/lib/types';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members';
 import { MOCK_WALLETS } from '@/mocks/payments';
-import { MEMBER_STATUS } from '@/shared/lib/status';
 import type { WalletSummary } from '@/shared/lib/wallet';
 import type {
   MemberDetail,
@@ -53,9 +52,11 @@ let memberStore: MemberDetail[] = [...MOCK_MEMBERS];
  */
 export async function fetchMembers(params: MemberListParams): Promise<Page<MemberListItem>> {
   if (USE_MOCK) {
-    const filtered = memberStore.filter((m) =>
-      matchesKeyword(m, params.keyword, ['name', 'username']),
-    );
+    /* 탈퇴 회원은 목록에 두지 않는다. 탈퇴는 되돌리지 않는 상태이고,
+       섞어 두면 목록에서 활성 회원과 구분할 방법이 없다. */
+    const filtered = memberStore
+      .filter((m) => m.status !== 'WITHDRAWN')
+      .filter((m) => matchesKeyword(m, params.keyword, ['name', 'username']));
 
     return mockResponse(paginate(filtered, params));
   }
@@ -124,14 +125,11 @@ export async function updateMember(vars: {
     const next = { ...before, ...vars.body, updatedAt: new Date().toISOString() };
     memberStore = memberStore.map((m, i) => (i === index ? next : m));
 
-    const statusChanged = vars.body.status !== undefined && vars.body.status !== before.status;
     appendAuditLog({
       adminUsername: vars.adminUsername,
       action: 'MEMBER_UPDATE',
       target: `member:${vars.memberId}`,
-      description: statusChanged
-        ? `${before.name} 회원 상태 ${MEMBER_STATUS[before.status].label} → ${MEMBER_STATUS[vars.body.status!].label}`
-        : `${before.name} 회원 정보 수정 — ${describeChanges(before, vars.body)}`,
+      description: `${before.name} 회원 정보 수정 — ${describeChanges(before, vars.body)}`,
     });
 
     return mockResponse(next);
@@ -150,7 +148,6 @@ const MEMBER_FIELD_LABEL: Record<keyof MemberUpdateRequest, string> = {
   email: '이메일',
   phoneNumber: '휴대폰',
   address: '주소',
-  status: '상태',
 };
 
 function describeChanges(before: MemberDetail, body: MemberUpdateRequest): string {
