@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button, Modal, Spinner, useToast } from '@/shared/ui';
-import { downloadCsv, formatDate, maskName } from '@/shared/lib/format';
+import { downloadCsv, formatDate, maskName, memberRef } from '@/shared/lib/format';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { fetchMemberReportCsv } from '../api';
@@ -120,7 +120,7 @@ export function CsvReportModal({ open, member, onClose }: CsvReportModalProps) {
           <dl className="csv-modal__preview">
             <div className="csv-modal__row">
               <dt>대상 회원</dt>
-              <dd>{maskName(member.name)}</dd>
+              <dd>{`${maskName(member.name)} (${memberRef(member.memberId)})`}</dd>
             </div>
             <div className="csv-modal__row">
               <dt>포함 항목</dt>

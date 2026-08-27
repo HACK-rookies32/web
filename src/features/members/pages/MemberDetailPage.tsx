@@ -26,6 +26,7 @@ import {
   maskEmail,
   maskName,
   maskPhone,
+  memberRef,
 } from '@/shared/lib/format';
 import { MEMBER_STATUS, inquiryStatus } from '@/shared/lib/status';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
@@ -386,8 +387,8 @@ export function MemberDetailPage() {
         }
       >
         <p className="detail__confirm">
-          <strong>{maskName(m.name)}</strong> ({maskEmail(m.email)}) 회원의 계정을 정지합니다. 이
-          작업은 감사 로그에 기록됩니다.
+          <strong>{maskName(m.name)}</strong> ({memberRef(m.memberId)} · {maskEmail(m.email)}) 회원의
+          계정을 정지합니다. 이 작업은 감사 로그에 기록됩니다.
         </p>
       </Modal>
     </div>

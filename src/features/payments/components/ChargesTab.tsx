@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { SetURLSearchParams } from 'react-router-dom';
 import { Button, Column, RowActions, Select, StackedCell, StatusPill } from '@/shared/ui';
 import { FundsTabLayout } from './FundsTabLayout';
-import { formatCurrency, formatDateTime, maskEmail, maskName } from '@/shared/lib/format';
+import { formatCurrency, formatDateTime, maskEmail, maskName, memberRef } from '@/shared/lib/format';
 import { CHARGE_STATUS, type ChargeStatus } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { fetchCharges, fundKeys } from '../api';
@@ -56,7 +56,12 @@ export function ChargesTab({
       key: 'user',
       header: '회원',
       width: '24%',
-      render: (row) => <StackedCell primary={maskName(row.userName)} secondary={maskEmail(row.userEmail)} />,
+      render: (row) => (
+        <StackedCell
+          primary={maskName(row.userName)}
+          secondary={`${memberRef(row.userId)} · ${maskEmail(row.userEmail)}`}
+        />
+      ),
     },
     {
       key: 'amount',

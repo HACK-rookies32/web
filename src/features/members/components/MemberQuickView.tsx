@@ -10,7 +10,7 @@ import {
   Spinner,
   StatusPill,
 } from '@/shared/ui';
-import { formatCurrency, formatDate, formatRelative, maskEmail, maskName } from '@/shared/lib/format';
+import { formatCurrency, formatDate, formatRelative, maskEmail, maskName, memberRef } from '@/shared/lib/format';
 import { MEMBER_STATUS } from '@/shared/lib/status';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
 import { fetchMemberDevices, fetchMemberWallet, memberKeys } from '../api';
@@ -47,7 +47,7 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
       open={member !== null}
       onClose={onClose}
       title={member ? maskName(member.name) : ''}
-      subtitle={member ? maskEmail(member.email) : undefined}
+      subtitle={member ? `${memberRef(member.memberId)} · ${maskEmail(member.email)}` : undefined}
       footer={
         member ? (
           <>
@@ -89,7 +89,9 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
                       <DeviceGlyph />
                     </span>
                     <span className="quickview__device-body">
-                      <span className="quickview__device-name">{d.childName ?? '본인 기기'}</span>
+                      <span className="quickview__device-name">
+                        {d.childName ? maskName(d.childName) : '본인 기기'}
+                      </span>
                       <span className="quickview__device-meta">
                         {d.model} · {d.os}
                       </span>

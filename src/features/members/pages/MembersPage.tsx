@@ -18,7 +18,7 @@ import {
   Table,
   useToast,
 } from '@/shared/ui';
-import { formatDate, formatNumber, formatRelative, maskEmail, maskName } from '@/shared/lib/format';
+import { formatDate, formatNumber, formatRelative, maskEmail, maskName, memberRef } from '@/shared/lib/format';
 import { MEMBER_STATUS, type MemberStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
@@ -142,7 +142,12 @@ export function MembersPage() {
       key: 'member',
       header: '회원',
       width: '22%',
-      render: (row) => <StackedCell primary={maskName(row.name)} secondary={maskEmail(row.email)} />,
+      render: (row) => (
+        <StackedCell
+          primary={maskName(row.name)}
+          secondary={`${memberRef(row.memberId)} · ${maskEmail(row.email)}`}
+        />
+      ),
     },
     {
       key: 'children',
@@ -349,8 +354,9 @@ export function MembersPage() {
       >
         {deleteTarget ? (
           <p className="members__confirm">
-            <strong>{maskName(deleteTarget.name)}</strong> ({maskEmail(deleteTarget.email)}) 회원과
-            연결된 자녀 {formatNumber(deleteTarget.children.length)}명의 정보가 함께 삭제됩니다.
+            <strong>{maskName(deleteTarget.name)}</strong> ({memberRef(deleteTarget.memberId)} ·{' '}
+            {maskEmail(deleteTarget.email)}) 회원과 연결된 자녀{' '}
+            {formatNumber(deleteTarget.children.length)}명의 정보가 함께 삭제됩니다.
           </p>
         ) : null}
       </ConfirmModal>

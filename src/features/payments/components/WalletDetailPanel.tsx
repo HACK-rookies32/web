@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { DetailBox, DetailRow, EmptyState, LoadingBlock, StatusPill } from '@/shared/ui';
-import { formatCurrency, formatDateTime, maskEmail, maskName } from '@/shared/lib/format';
+import { formatCurrency, formatDateTime, maskEmail, maskName, memberRef } from '@/shared/lib/format';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
 import { fetchWallet, fundKeys } from '../api';
 import './WalletDetailPanel.css';
@@ -25,7 +25,10 @@ export function WalletDetailPanel({ userId }: { userId: number }) {
       </div>
 
       <DetailBox>
-        <DetailRow label="회원" value={maskName(data.userName)} />
+        <DetailRow
+          label="회원"
+          value={`${maskName(data.userName)} (${memberRef(data.userId, data.role === 'CHILD' ? '자녀' : '회원')})`}
+        />
         <DetailRow
           label="구분"
           value={

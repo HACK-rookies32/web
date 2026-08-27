@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button, DetailBox, DetailRow, FormField, Modal, TextInput } from '@/shared/ui';
-import { formatCurrency, maskName } from '@/shared/lib/format';
+import { formatCurrency, maskName, memberRef } from '@/shared/lib/format';
 import { formatSignedAmount, type WalletSummary } from '@/shared/lib/wallet';
 
 interface AdjustBalanceModalProps {
@@ -77,7 +77,10 @@ export function AdjustBalanceModal({ wallet, submitting, onClose, onSubmit }: Ad
           style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
         >
           <DetailBox>
-            <DetailRow label="대상" value={maskName(wallet.userName)} />
+            <DetailRow
+              label="대상"
+              value={`${maskName(wallet.userName)} (${memberRef(wallet.userId, wallet.role === 'CHILD' ? '자녀' : '회원')})`}
+            />
             <DetailRow label="현재 잔액" value={formatCurrency(wallet.balance)} />
             <DetailRow
               label="조정 후 잔액"

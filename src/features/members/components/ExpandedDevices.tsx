@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { EmptyState, Spinner, StatusPill } from '@/shared/ui';
-import { formatRelative } from '@/shared/lib/format';
+import { formatRelative, maskName } from '@/shared/lib/format';
 import { fetchMemberDevices, memberKeys } from '../api';
 import { DeviceGlyph } from './Glyphs';
 import './ExpandedDevices.css';
@@ -51,7 +51,9 @@ export function ExpandedDevices({ memberId }: { memberId: number }) {
             <span className="expanded__icon">
               <DeviceGlyph />
             </span>
-            <span className="expanded__name">{d.childName ?? '본인 기기'}</span>
+            <span className="expanded__name">
+              {d.childName ? maskName(d.childName) : '본인 기기'}
+            </span>
             <span className="expanded__meta">
               {d.model} · {d.os} · v{d.appVersion}
             </span>

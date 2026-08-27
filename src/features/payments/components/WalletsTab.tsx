@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { SetURLSearchParams } from 'react-router-dom';
 import { Button, Column, Icon, RowActions, Select, StackedCell, StatusPill } from '@/shared/ui';
 import { FundsTabLayout } from './FundsTabLayout';
-import { formatCurrency, formatRelative, maskEmail, maskName } from '@/shared/lib/format';
+import { formatCurrency, formatRelative, maskEmail, maskName, memberRef } from '@/shared/lib/format';
 import type { WalletSummary } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { fetchWallets, fundKeys } from '../api';
@@ -56,7 +56,7 @@ export function WalletsTab({
       render: (row) => (
         <StackedCell
           primary={maskName(row.userName)}
-          secondary={row.userEmail === '-' ? '자녀 계정' : maskEmail(row.userEmail)}
+          secondary={`${memberRef(row.userId, row.role === 'CHILD' ? '자녀' : '회원')} · ${row.userEmail === '-' ? '자녀 계정' : maskEmail(row.userEmail)}`}
         />
       ),
     },

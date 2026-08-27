@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { SlideOver, Tabs, useToast } from '@/shared/ui';
-import { formatCurrency, formatDateTime, formatNumber, josa, maskName } from '@/shared/lib/format';
+import { formatCurrency, formatDateTime, formatNumber, josa, maskName, memberRef } from '@/shared/lib/format';
 import type { ChargeStatus, StorePaymentStatus, WalletSummary } from '@/shared/lib/wallet';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
@@ -229,7 +229,11 @@ export function PaymentsPage() {
         open={walletTarget !== null}
         onClose={() => setWalletTarget(null)}
         title="지갑 상세"
-        subtitle={walletTarget ? maskName(walletTarget.userName) : undefined}
+        subtitle={
+          walletTarget
+            ? `${maskName(walletTarget.userName)} (${memberRef(walletTarget.userId, walletTarget.role === 'CHILD' ? '자녀' : '회원')})`
+            : undefined
+        }
       >
         {walletTarget ? <WalletDetailPanel userId={walletTarget.userId} /> : null}
       </SlideOver>
@@ -244,8 +248,14 @@ export function PaymentsPage() {
         details={
           refundTarget
             ? [
-                { label: '자녀', value: maskName(refundTarget.childName) },
-                { label: '보호자', value: maskName(refundTarget.parentName) },
+                {
+                  label: '자녀',
+                  value: `${maskName(refundTarget.childName)} (${memberRef(refundTarget.childId, '자녀')})`,
+                },
+                {
+                  label: '보호자',
+                  value: `${maskName(refundTarget.parentName)} (${memberRef(refundTarget.parentId)})`,
+                },
                 { label: '매장', value: refundTarget.merchantName },
                 { label: '결제 일시', value: formatDateTime(refundTarget.paidAt) },
                 { label: '환불 금액', value: formatCurrency(refundTarget.amount) },
@@ -269,7 +279,10 @@ export function PaymentsPage() {
         details={
           chargeRefundTarget
             ? [
-                { label: '회원', value: maskName(chargeRefundTarget.userName) },
+                {
+                  label: '회원',
+                  value: `${maskName(chargeRefundTarget.userName)} (${memberRef(chargeRefundTarget.userId)})`,
+                },
                 { label: '결제수단', value: chargeRefundTarget.method },
                 { label: '충전 일시', value: formatDateTime(chargeRefundTarget.createdAt) },
                 { label: '차감 금액', value: formatCurrency(chargeRefundTarget.amount) },

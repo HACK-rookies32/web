@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { SetURLSearchParams } from 'react-router-dom';
 import { Button, Column, RowActions, Select, StackedCell, StatusPill } from '@/shared/ui';
 import { FundsTabLayout } from './FundsTabLayout';
-import { formatCurrency, formatDateTime, maskName } from '@/shared/lib/format';
+import { formatCurrency, formatDateTime, maskName, memberRef } from '@/shared/lib/format';
 import { STORE_PAYMENT_STATUS, type StorePaymentStatus } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { fetchStorePayments, fundKeys } from '../api';
@@ -57,8 +57,8 @@ export function StorePaymentsTab({
       width: '20%',
       render: (row) => (
         <StackedCell
-          primary={maskName(row.childName)}
-          secondary={`보호자 ${maskName(row.parentName)}`}
+          primary={`${maskName(row.childName)} (${memberRef(row.childId, '자녀')})`}
+          secondary={`보호자 ${maskName(row.parentName)} (${memberRef(row.parentId)})`}
         />
       ),
     },
