@@ -45,7 +45,7 @@ function getTodayDate(): string {
 }
 
 function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
-  if (action.includes('DELETE') || action === 'MEMBER_BAN') return 'danger';
+  if (action.includes('DELETE')) return 'danger';
   if (action === 'PAYMENT_REFUND' || action === 'WALLET_ADJUST') return 'warning';
   // 권한 변경은 되돌리기 어려운 영향이 커서 수정 계열과 구분해 경고로 둔다.
   if (action === 'ADMIN_ROLE_UPDATE') return 'warning';

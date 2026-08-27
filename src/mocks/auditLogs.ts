@@ -41,9 +41,9 @@ const seed: AuditLog[] = [
   {
     logId: 40002,
     adminUsername: 'general_lee',
-    action: 'MEMBER_BAN',
+    action: 'MEMBER_UPDATE',
     target: 'member:1003',
-    description: '커뮤니티 7일 밴 — 욕설 및 비방 신고 누적',
+    description: '회원 연락처 정정 요청 처리',
     createdAt: hoursAgo(9),
   },
   {

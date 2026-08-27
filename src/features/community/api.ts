@@ -7,7 +7,6 @@ import type {
   CommunityPostDetail,
   CommunityPostListItem,
   CommunityPostListParams,
-  MemberBanRequest,
   SpringPage,
 } from './types';
 
@@ -27,7 +26,7 @@ function toListItem(post: CommunityPostDetail): CommunityPostListItem {
   return item;
 }
 
-/** GET /admin/community/posts?page&size&sort */
+/** GET /admin/community/posts — 최신순 고정 (화면에 정렬 선택이 없다) */
 export async function fetchCommunityPosts(
   params: CommunityPostListParams,
 ): Promise<Page<CommunityPostListItem>> {
@@ -39,7 +38,7 @@ export async function fetchCommunityPosts(
   const data = await request<SpringPage<CommunityPostListItem>>({
     url: '/admin/community/posts',
     method: 'GET',
-    params: { page: params.page ?? 0, size: params.size ?? 10, sort: params.sort ?? 'id,desc' },
+    params: { page: params.page ?? 0, size: params.size ?? 10, sort: 'id,desc' },
   });
 
   return {
@@ -91,27 +90,3 @@ export async function deleteCommunityPost(vars: {
  *   요청 대기: 커뮤니티 응답에 loginId 추가 또는 밴 API 가 memberId 도 수용.
  *   그때까지 임시 경로를 유지한다.
  */
-/** 임시 연동 경로: POST /admin/community/members/{memberId}/ban */
-export async function banCommunityMember(vars: {
-  memberId: number;
-  body: MemberBanRequest;
-  adminUsername: string;
-}): Promise<void> {
-  if (USE_MOCK) {
-    appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'MEMBER_BAN',
-      target: `member:${vars.memberId}`,
-      description:
-        vars.body.durationDays === 0
-          ? `커뮤니티 밴 해제 — ${vars.body.reason}`
-          : `커뮤니티 ${vars.body.durationDays}일 밴 — ${vars.body.reason}`,
-    });
-    return mockResponse(undefined, 650);
-  }
-  return request<void>({
-    url: `/admin/community/members/${vars.memberId}/ban`,
-    method: 'POST',
-    data: vars.body,
-  });
-}

@@ -21,14 +21,7 @@ export interface CommunityPostDetail extends CommunityPostListItem {
   comments: CommunityComment[];
 }
 
-export interface CommunityPostListParams extends PageParams {
-  sort?: string;
-}
-
-export interface MemberBanRequest {
-  reason: string;
-  durationDays: number;
-}
+export type CommunityPostListParams = PageParams;
 
 export interface SpringSort {
   empty: boolean;

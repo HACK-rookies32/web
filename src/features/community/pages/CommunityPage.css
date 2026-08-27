@@ -33,10 +33,3 @@
 .community__danger:hover {
   color: var(--danger);
 }
-
-
-.community__ban-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}

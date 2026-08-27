@@ -7,19 +7,11 @@ import './CommunityDetailPanel.css';
 
 interface CommunityDetailPanelProps {
   postId: number;
-  canModerateMember: boolean;
   deleting: boolean;
   onDelete: (post: CommunityPostDetail) => void;
-  onBan: (post: CommunityPostDetail) => void;
 }
 
-export function CommunityDetailPanel({
-  postId,
-  canModerateMember,
-  deleting,
-  onDelete,
-  onBan,
-}: CommunityDetailPanelProps) {
+export function CommunityDetailPanel({ postId, deleting, onDelete }: CommunityDetailPanelProps) {
   const { data, isPending, isError } = useQuery({
     queryKey: communityKeys.detail(postId),
     queryFn: () => fetchCommunityPost(postId),
@@ -69,9 +61,6 @@ export function CommunityDetailPanel({
       </section>
 
       <div className="community-detail__actions">
-        {canModerateMember ? (
-          <Button variant="dark" onClick={() => onBan(data)}>작성자 밴</Button>
-        ) : null}
         <Button variant="danger" loading={deleting} onClick={() => onDelete(data)}>게시글 삭제</Button>
       </div>
     </div>

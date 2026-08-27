@@ -8,7 +8,6 @@ export type AuditAction =
   | 'NOTICE_UPDATE'
   | 'NOTICE_DELETE'
   | 'POST_DELETE'
-  | 'MEMBER_BAN'
   | 'KEYWORD_CREATE'
   | 'KEYWORD_DELETE'
   | 'ADMIN_ROLE_UPDATE'
@@ -23,7 +22,6 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   NOTICE_UPDATE: '공지 수정',
   NOTICE_DELETE: '공지 삭제',
   POST_DELETE: '게시글 삭제',
-  MEMBER_BAN: '사용자 밴',
   KEYWORD_CREATE: '차단 키워드 추가',
   KEYWORD_DELETE: '차단 키워드 제외',
   ADMIN_ROLE_UPDATE: '관리자 권한 변경',
