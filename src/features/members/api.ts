@@ -29,12 +29,19 @@ export const memberKeys = {
 /* 목 모드에서 수정·삭제 결과를 세션 동안 유지하기 위한 작업 사본. */
 let memberStore: MemberDetail[] = [...MOCK_MEMBERS];
 
-/** GET /admin/members — 목록/검색 */
+/**
+ * GET /admin/members — 목록/검색
+ *
+ * 검색 대상은 명세 5.2 가 정한 `loginId`/`username`(실명)/`nickname` 만이다.
+ * 이메일·전화번호를 검색 대상에 넣으면, 화면에서 마스킹한 구간을 검색 결과의
+ * 참/거짓으로 되짚을 수 있어(가운데 번호 4자리를 조회로 확인 가능) 마스킹이
+ * 무력화된다. 목록 응답에 nickname 이 없어 지금은 실명·아이디만 대상으로 둔다.
+ */
 export async function fetchMembers(params: MemberListParams): Promise<Page<MemberListItem>> {
   if (USE_MOCK) {
     const filtered = memberStore
       .filter((m) => (params.status && params.status !== 'ALL' ? m.status === params.status : true))
-      .filter((m) => matchesKeyword(m, params.keyword, ['name', 'email', 'username', 'phoneNumber']));
+      .filter((m) => matchesKeyword(m, params.keyword, ['name', 'username']));
 
     return mockResponse(paginate(filtered, params));
   }

@@ -25,10 +25,15 @@ export interface MemberListItem {
   lastLoginAt: string | null;
 }
 
-/** GET /admin/members/{id} 의 data. 목록 항목에 상세 필드를 더한 형태. */
+/**
+ * GET /admin/members/{id} 의 data. 목록 항목에 상세 필드를 더한 형태.
+ *
+ * 생년월일은 두지 않는다. 명세 5.2 의 목록·상세 응답 어디에도 없고
+ * (등장하는 곳은 회원가입 요청 본문뿐이다) 관리 화면에서 쓸 일도 없다.
+ * 받지 않는 항목은 화면에 두지 않는 것이 개인정보 최소 수집에 맞다.
+ */
 export interface MemberDetail extends MemberListItem {
   nickname: string;
-  birthDate: string;
   address: string;
   profileImageUrl: string | null;
   updatedAt: string;

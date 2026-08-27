@@ -246,7 +246,6 @@ export function MemberDetailPage() {
                 <DetailRow label="닉네임" value={m.nickname} />
                 <DetailRow label="이메일" value={maskEmail(m.email)} />
                 <DetailRow label="휴대폰" value={<span className="tabular">{maskPhone(m.phoneNumber)}</span>} />
-                <DetailRow label="생년월일" value={<span className="tabular">{m.birthDate}</span>} />
                 <DetailRow label="주소" value={maskAddress(m.address)} />
               </DetailBox>
 

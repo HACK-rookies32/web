@@ -9,7 +9,7 @@ import {
   StatusPill,
   TextArea,
 } from '@/shared/ui';
-import { formatDateTime, maskName } from '@/shared/lib/format';
+import { formatDateTime } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
 import { fetchInquiry, inquiryKeys } from '../api';
 import './InquiryDetailPanel.css';
@@ -100,7 +100,8 @@ export function InquiryDetailPanel({
         <h3 className="inquiry-panel__title">{data.title}</h3>
 
         <p className="inquiry-panel__author">
-          작성자 {maskName(data.memberNickname)} ·{' '}
+          {/* 닉네임은 마스킹 대상이 아니다 — InquiriesPage 주석 참고. */}
+          작성자 {data.memberNickname} (회원 #{data.memberId}) ·{' '}
           <Link to={`/members/${data.memberId}`}>회원 상세</Link>
         </p>
 

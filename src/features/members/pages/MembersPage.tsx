@@ -245,7 +245,9 @@ export function MembersPage() {
           <SearchInput
             value={keyword}
             onSearch={handleSearch}
-            placeholder="회원명 · 이메일 · 아이디 검색"
+            /* 검색 대상은 명세 5.2 기준 실명·아이디다. 마스킹한 이메일·전화번호는
+               검색으로 되짚을 수 있어 대상에서 뺐다(api.ts 주석 참고). */
+            placeholder="회원명(실명) · 아이디 검색"
             aria-label="회원 검색"
           />
         }

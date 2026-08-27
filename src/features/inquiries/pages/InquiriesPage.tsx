@@ -16,7 +16,7 @@ import {
   Table,
   useToast,
 } from '@/shared/ui';
-import { formatDateTime, formatNumber, maskName } from '@/shared/lib/format';
+import { formatDateTime, formatNumber } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useListParams } from '@/shared/hooks/useListParams';
@@ -119,8 +119,14 @@ export function InquiriesPage() {
       key: 'member',
       header: '작성자',
       width: '160px',
+      /*
+       * 닉네임은 마스킹하지 않는다. 서비스 안에서 다른 사용자에게 그대로 보이는
+       * 표시명이고, 문의·커뮤니티 응대에서는 이게 주 식별 수단이다. 가리면
+       * "민**빠" 가 되어 상담이 불가능해진다. 보호 대상인 실명(username)은
+       * 회원 화면에서 계속 마스킹하므로 실명 노출은 늘지 않는다.
+       */
       render: (row) => (
-        <StackedCell primary={maskName(row.memberNickname)} secondary={`회원 #${row.memberId}`} />
+        <StackedCell primary={row.memberNickname} secondary={`회원 #${row.memberId}`} />
       ),
     },
     {
