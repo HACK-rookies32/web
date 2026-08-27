@@ -1,22 +1,9 @@
 import { NavLink } from 'react-router-dom';
 import { Icon } from '@/shared/ui';
-import type { IconName } from '@/shared/ui';
-import { NAV_ITEMS, type NavIconName } from '@/shared/lib/constants';
+import { NAV_ICON, NAV_ITEMS } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
 import logoMark from '@/assets/brand/logo-mark.png';
 import './Sidebar.css';
-
-const NAV_ICON: Record<NavIconName, IconName> = {
-  dashboard: 'nav-dashboard',
-  members: 'nav-members',
-  payments: 'nav-payments',
-  notices: 'nav-notices',
-  inquiries: 'nav-inquiries',
-  community: 'nav-community',
-  harmful: 'nav-harmful',
-  audit: 'nav-audit',
-  admins: 'nav-admins',
-};
 
 /**
  * 좌측 사이드바 (Figma Aside 131:3798).

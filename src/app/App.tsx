@@ -10,8 +10,8 @@ import { AppLayout } from './layout/AppLayout';
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })),
 );
-const DashboardPage = lazy(() =>
-  import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+const HomePage = lazy(() =>
+  import('@/features/home/pages/HomePage').then((m) => ({ default: m.HomePage })),
 );
 const MembersPage = lazy(() =>
   import('@/features/members/pages/MembersPage').then((m) => ({ default: m.MembersPage })),
@@ -82,7 +82,7 @@ export function App() {
 
                 <Route element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>
-                    <Route index element={<DashboardPage />} />
+                    <Route index element={<HomePage />} />
 
                     {/* 회원 관리 — SUPER_ADMIN · GENERAL_ADMIN */}
                     <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN']} />}>

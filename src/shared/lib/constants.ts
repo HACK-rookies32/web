@@ -1,3 +1,4 @@
+import type { IconName } from '@/shared/ui';
 import type { Role } from './types';
 
 /* --------------------------------------------------------------- 역할 ---- */
@@ -47,8 +48,21 @@ export interface NavItem {
  * 1:1 문의는 명세 5.4 기준 SUPER_ADMIN · INQUIRY_ADMIN 만 접근할 수 있다
  * (GENERAL_ADMIN 은 403).
  */
+/** 메뉴 아이콘 이름 → 실제 아이콘 자산. 사이드바와 홈 화면이 함께 쓴다. */
+export const NAV_ICON: Record<NavIconName, IconName> = {
+  dashboard: 'nav-dashboard',
+  members: 'nav-members',
+  payments: 'nav-payments',
+  notices: 'nav-notices',
+  inquiries: 'nav-inquiries',
+  community: 'nav-community',
+  harmful: 'nav-harmful',
+  audit: 'nav-audit',
+  admins: 'nav-admins',
+};
+
 export const NAV_ITEMS: NavItem[] = [
-  { to: '/', label: '대시보드', icon: 'dashboard' },
+  { to: '/', label: '홈 화면', icon: 'dashboard' },
   { to: '/members', label: '회원 관리', icon: 'members', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
   { to: '/payments', label: '자금·결제 관리', icon: 'payments', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
   { to: '/notices', label: '공지 관리', icon: 'notices', roles: ['SUPER_ADMIN'] },
