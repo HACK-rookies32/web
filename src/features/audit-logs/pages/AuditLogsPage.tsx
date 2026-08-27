@@ -11,7 +11,6 @@ import {
   ListToolbar,
   Pagination,
   Select,
-  StackedCell,
   StatusPill,
   Table,
   TextInput,
@@ -92,42 +91,34 @@ export function AuditLogsPage() {
       key: 'admin',
       header: '관리자',
       width: '200px',
-      /* 계정명을 앞세우고 숫자 ID 는 보조로 내린다. */
-      render: (row) => <StackedCell primary={row.adminUsername} secondary={`#${row.adminId}`} />,
+      /* 계정 아이디만 보여준다. 숫자 ID 는 화면에서 쓸 일이 없다. */
+      render: (row) => row.adminUsername,
     },
     {
       key: 'action',
       header: '활동',
       width: '260px',
       render: (row) => (
-        <div className="audit-logs__action">
-          <StatusPill tone={actionTone(row.action)}>{AUDIT_ACTION_LABEL[row.action]}</StatusPill>
-          <code>{row.action}</code>
-        </div>
+        <StatusPill tone={actionTone(row.action)}>{AUDIT_ACTION_LABEL[row.action]}</StatusPill>
       ),
     },
     {
       key: 'target',
       header: '대상',
       /*
-       * target 은 "member:1001" 같은 문자열이다. 종류를 우리말로 풀고,
-       * 해당 관리 화면으로 바로 갈 수 있게 링크를 건다. 연결할 화면이
+       * target 은 "member:1001" 같은 문자열이다. 종류를 우리말로 풀어 한 줄로
+       * 보여주고, 해당 관리 화면으로 바로 갈 수 있게 링크를 건다. 연결할 화면이
        * 없는 종류(리포트 등)는 링크 없이 값만 보여준다.
        */
       render: (row) => {
         const target = parseAuditTarget(row.target);
-        const body = (
-          <StackedCell
-            primary={target.id ? `${target.label} #${target.id}` : target.label}
-            secondary={row.target}
-          />
-        );
+        const label = target.id ? `${target.label} #${target.id}` : target.label;
         return target.href ? (
           <Link className="audit-logs__target-link" to={target.href}>
-            {body}
+            {label}
           </Link>
         ) : (
-          body
+          label
         );
       },
     },
