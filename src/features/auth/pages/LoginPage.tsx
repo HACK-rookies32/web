@@ -23,7 +23,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [username, setUsername] = useState('admin01');
+  const [loginId, setLoginId] = useState('admin01');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<Role>('SUPER_ADMIN');
   const [showPassword, setShowPassword] = useState(false);
@@ -32,7 +32,7 @@ export function LoginPage() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!username.trim()) {
+    if (!loginId.trim()) {
       setError('아이디를 입력해 주세요.');
       return;
     }
@@ -41,7 +41,7 @@ export function LoginPage() {
     setError(null);
 
     try {
-      const result = await login({ username: username.trim(), password, role });
+      const result = await login({ loginId: loginId.trim(), password, role });
       signIn({
         token: result.token,
         username: result.username,
@@ -81,8 +81,8 @@ export function LoginPage() {
                 <TextInput
                   {...p}
                   className="login__input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={loginId}
+                  onChange={(e) => setLoginId(e.target.value)}
                   placeholder="관리자 아이디를 입력하세요"
                   autoComplete="username"
                 />
