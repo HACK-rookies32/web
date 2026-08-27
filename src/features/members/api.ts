@@ -1,3 +1,17 @@
+/**
+ * 회원 관리 API (명세 5.2).
+ *
+ * 경로는 `/admin/members/customers/...` 다. 명세의 일부 헤딩이
+ * `DELETE /admin/members/{id}` · `GET /admin/members/{id}/devices` 처럼 적혀
+ * 있으나 각 절 본문의 Request 예시는 모두 `/customers` 를 포함한다.
+ *
+ * TODO(api): 응답 필드명이 우리 타입과 다르다. 연동 시 이 계층에서 매핑해야 한다.
+ *   명세 id → memberId, loginId → username, username(실명) → name
+ *   그리고 명세 응답에 없는 항목을 화면이 쓰고 있다 —
+ *   lastLoginAt(최근 접속), deviceCount(등록 기기), children[](연결 자녀).
+ *   회원 상태도 명세는 isDeleted(boolean) 뿐이라 정지 상태를 표현할 수 없다.
+ *   백엔드 확인 대기.
+ */
 import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
 import { toCsv } from '@/shared/lib/format';
@@ -47,7 +61,7 @@ export async function fetchMembers(params: MemberListParams): Promise<Page<Membe
   }
 
   // TODO(api): 명세 5.2 의 쿼리에는 status 가 없다. 파라미터 추가 요청 중.
-  return request<Page<MemberListItem>>({ url: '/admin/members', method: 'GET', params });
+  return request<Page<MemberListItem>>({ url: '/admin/members/customers', method: 'GET', params });
 }
 
 /** GET /admin/members/{id} */
@@ -57,13 +71,13 @@ export async function fetchMember(memberId: number): Promise<MemberDetail> {
     if (!found) throw new Error('회원을 찾을 수 없습니다.');
     return mockResponse(found);
   }
-  return request<MemberDetail>({ url: `/admin/members/${memberId}`, method: 'GET' });
+  return request<MemberDetail>({ url: `/admin/members/customers/${memberId}`, method: 'GET' });
 }
 
 /** GET /admin/members/{id}/devices */
 export async function fetchMemberDevices(memberId: number): Promise<MemberDevice[]> {
   if (USE_MOCK) return mockResponse(MOCK_DEVICES[memberId] ?? []);
-  return request<MemberDevice[]>({ url: `/admin/members/${memberId}/devices`, method: 'GET' });
+  return request<MemberDevice[]>({ url: `/admin/members/customers/${memberId}/devices`, method: 'GET' });
 }
 
 /**
@@ -124,7 +138,7 @@ export async function updateMember(vars: {
     return mockResponse(next);
   }
   return request<MemberDetail>({
-    url: `/admin/members/${vars.memberId}`,
+    url: `/admin/members/customers/${vars.memberId}`,
     method: 'PATCH',
     data: vars.body,
   });
@@ -166,7 +180,7 @@ export async function deleteMember(vars: {
 
     return mockResponse(undefined);
   }
-  return request<void>({ url: `/admin/members/${vars.memberId}`, method: 'DELETE' });
+  return request<void>({ url: `/admin/members/customers/${vars.memberId}`, method: 'DELETE' });
 }
 
 /**

@@ -83,8 +83,18 @@ export async function deleteCommunityPost(vars: {
   return request<void>({ url: `/admin/community/posts/${vars.postId}`, method: 'DELETE' });
 }
 
-// TODO(api): 현재 명세는 POST /admin/community/members/ban 이지만 대상 회원 식별자가 없다.
-// 백엔드와 {memberId} Path Parameter 사용 여부가 확정되면 명세와 구현을 함께 맞춘다.
+/**
+ * 커뮤니티 사용자 밴.
+ *
+ * TODO(api): 명세 5.5 가 갱신되어 대상 식별자가 정해졌으나 아직 연동할 수 없다.
+ *   명세: POST /admin/community/members/ban, body = { loginId, reason, durationDays }
+ *         응답 = { memberId, loginId, banned, reason, bannedUntil }
+ *   문제: 밴 대상을 `loginId` 로 지정해야 하는데, 게시글 목록·상세 응답
+ *         (5.5 의 CommunityPostListItem)에는 `memberId` 만 있고 loginId 가 없다.
+ *         화면에서 loginId 를 알 방법이 없어 명세대로 호출이 불가능하다.
+ *   요청 대기: 커뮤니티 응답에 loginId 추가 또는 밴 API 가 memberId 도 수용.
+ *   그때까지 임시 경로를 유지한다.
+ */
 /** 임시 연동 경로: POST /admin/community/members/{memberId}/ban */
 export async function banCommunityMember(vars: {
   memberId: number;
