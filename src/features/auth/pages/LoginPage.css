@@ -1,0 +1,243 @@
+.login {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+/* ---- 배경 장식 (Figma 131:1961/1962) ---------------------------------- */
+
+.login__decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.login__blob {
+  position: absolute;
+  width: 384px;
+  height: 384px;
+  border-radius: var(--radius-pill);
+  filter: blur(32px);
+  opacity: 0.6;
+}
+
+.login__blob--top {
+  top: -96px;
+  left: -96px;
+  background: var(--accent-wash);
+}
+
+.login__blob--bottom {
+  right: -96px;
+  bottom: -96px;
+  background: var(--accent-wash-strong);
+}
+
+/* ---- 카드 ------------------------------------------------------------- */
+
+.login__card {
+  position: relative;
+  width: 100%;
+  max-width: 448px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  padding: 36px var(--space-6) var(--space-6);
+  background: var(--surface);
+  border-top: 4px solid var(--accent);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.login__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.login__logo {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+}
+
+.login__title {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  letter-spacing: var(--tracking-title);
+  color: var(--text-strong);
+  text-align: center;
+}
+
+.login__subtitle {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
+  text-align: center;
+}
+
+/* ---- 폼 --------------------------------------------------------------- */
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.login__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.login__control-icon {
+  position: absolute;
+  left: var(--space-4);
+  color: var(--text-placeholder);
+  pointer-events: none;
+}
+
+.login__input {
+  padding-left: 41px;
+  font-size: 16px;
+}
+
+.login__input--password {
+  padding-right: 48px;
+}
+
+.login__reveal {
+  position: absolute;
+  right: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+}
+
+.login__reveal:hover {
+  background: var(--surface-subtle);
+  color: var(--accent-strong);
+}
+
+.login__error {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--danger);
+}
+
+/* ---- 데모 역할 선택 --------------------------------------------------- */
+
+.login__roles {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.login__roles-legend {
+  padding: 0 0 var(--space-2);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.login__roles-note {
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.login__roles-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+
+.login__role {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    background-color var(--transition);
+}
+
+.login__role:hover {
+  border-color: var(--accent);
+}
+
+.login__role.is-selected {
+  border-color: var(--accent);
+  background: var(--surface-tint);
+}
+
+.login__role:focus-within {
+  box-shadow: var(--focus-ring);
+}
+
+.login__role-label {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+.login__role-hint {
+  font-size: var(--fs-badge);
+  line-height: var(--lh-badge);
+  color: var(--text-muted);
+}
+
+/* ---- 하단 ------------------------------------------------------------- */
+
+.login__links {
+  display: flex;
+  justify-content: center;
+}
+
+.login__link {
+  border: 0;
+  background: transparent;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--accent-strong);
+}
+
+.login__link:hover {
+  text-decoration: underline;
+}
+
+.login__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  align-self: center;
+  padding: 9px 17px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-pill);
+  background: var(--surface-tint);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text-muted);
+  text-align: center;
+}

@@ -1,0 +1,137 @@
+.quickview__summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
+.quickview__meta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+.quickview__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.quickview__heading {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.quickview__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-5);
+}
+
+/* ---- 기기 목록 -------------------------------------------------------- */
+
+.quickview__devices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quickview__device {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.quickview__device-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: var(--radius);
+  background: var(--surface-tint);
+  color: var(--accent-strong);
+}
+
+.quickview__device-body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.quickview__device-name {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.quickview__device-meta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+/* ---- 링크 ------------------------------------------------------------- */
+
+.quickview__link {
+  align-self: flex-start;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+  color: var(--accent-strong);
+}
+
+/* 버튼 모양은 buttonClass({ variant: 'primary' }) 가 붙여 준다.
+   여기서는 푸터에서 폭을 나눠 갖는 것만 지정한다. */
+.quickview__cta {
+  flex: 1 1 0;
+}
+
+/* ---- 지갑 거래 요약 ---------------------------------------------------- */
+
+.quickview__ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.quickview__tx {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.quickview__tx-amount {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+}
+
+.quickview__tx-amount.is-plus {
+  color: var(--success);
+}
+
+.quickview__tx-amount.is-minus {
+  color: var(--danger);
+}

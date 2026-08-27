@@ -52,9 +52,10 @@ src/
 ├─ app/            # 라우터, 프로바이더, 전역 셸
 ├─ shared/
 │  ├─ api/         # client.ts(axios+봉투 언랩+JWT), mock.ts
-│  ├─ ui/          # 공통 컴포넌트 (Button, Table, Modal, ...)
+│  ├─ ui/          # 공통 컴포넌트 (Button, Table, Modal, ListToolbar, ConfirmModal, ...)
 │  ├─ auth/        # AuthContext, ProtectedRoute, useAuth, useRole
-│  ├─ lib/         # types, 포맷터(date/currency/mask), 상수(nav, roles)
+│  ├─ hooks/       # useListParams (목록 URL 쿼리)
+│  ├─ lib/         # types, 포맷터(date/currency/mask/josa), 상수(nav, roles), audit
 │  └─ styles/      # tokens.css (디자인 변수 + 전역)
 ├─ assets/         # Figma 에서 내보낸 아이콘 · 로고
 ├─ mocks/          # 도메인별 목 데이터
@@ -89,7 +90,11 @@ src/
 | `--border` | `#ddc1b0` | 테두리 |
 
 서체는 Noto Sans KR (Google Fonts), 폴백 `system-ui`.
-라이트/다크 모두 지원하며, `<html data-theme="dark">` 로 강제하거나 OS 설정을 따릅니다.
+
+라이트/다크 모두 지원합니다. **상단바 프로필 메뉴 → "화면 테마"** 에서 라이트 / 다크 / 시스템 설정을 고를 수 있고,
+선택값은 `localStorage`의 `careguard.theme` 에 저장됩니다. 아무것도 고르지 않으면 OS 설정(`prefers-color-scheme`)을 따릅니다.
+
+색감·간격·컴포넌트 스펙을 정리한 스타일 레퍼런스는 [`docs/FIGMA-STYLE.md`](docs/FIGMA-STYLE.md) 에 있습니다.
 
 공통 컴포넌트가 실제로 어떻게 보이는지는 개발 서버에서 **`/ui-kit`** 경로로 확인할 수 있습니다.
 
@@ -147,6 +152,11 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 - 컴포넌트 `PascalCase`, 훅 `useXxx`, 폴더 `kebab-case`
 - 서버 상태는 TanStack Query. 쿼리 키는 `["members", params]`, `["member", id]` 형태
 - 목록 페이징은 `page`(0-base) / `size` / `totalPages` — API 명세 3.5 규약과 동일
+- 목록의 검색어·필터·페이지는 **URL 쿼리**로 관리합니다. `setSearchParams` 를 직접 다루지 말고
+  `shared/hooks/useListParams` 를 쓰세요 (화면마다 복사되며 빈 값 처리 규칙이 갈렸던 적이 있습니다)
+- 개인정보는 반드시 `shared/lib/format.ts` 의 마스킹 유틸(`maskName` `maskEmail` `maskPhone` …)을
+  거쳐 표시합니다. 화면에서 직접 문자열을 자르지 않습니다
+- 명세에 없는 API 를 쓰거나 명세와 다르게 호출할 때는 `// TODO(api):` 주석으로 남깁니다
 
 ### 화면 완료 기준 (DoD)
 
@@ -162,15 +172,50 @@ git checkout dev && git pull && git checkout -b dev-<이름>
 
 ## 권한
 
-| 역할 | 접근 범위 |
-| --- | --- |
-| `SUPER_ADMIN` | 전체 |
-| `GENERAL_ADMIN` | 회원·결제 조회, 1:1 문의 |
-| `COMMUNITY_ADMIN` | 커뮤니티 관리 |
-| `INQUIRY_ADMIN` | 1:1 문의 |
+역할은 `GET /admin/admins` 응답의 `role` 값 4가지입니다 (명세 5.1).
 
-`SUPER_ADMIN` 전용: 관리자 계정 관리, 회원 삭제, 환불, 카드 마스킹 해제, 감사 로그, 공지 CUD.
-권한이 없는 메뉴·버튼은 화면에서 숨깁니다.
+`SUPER_ADMIN` · `GENERAL_ADMIN` · `COMMUNITY_ADMIN` · `INQUIRY_ADMIN`
+
+아래는 **API 명세 5장의 엔드포인트별 요구 권한을 그대로 옮긴 것**입니다.
+역할표를 먼저 정하고 화면을 맞추는 게 아니라, 엔드포인트가 기준입니다.
+
+| 기능 | 명세 | 허용 역할 |
+| --- | --- | --- |
+| 회원 목록·상세·기기 조회 | 5.2 | `SUPER_ADMIN`, `GENERAL_ADMIN` |
+| 회원 수정·삭제 | 5.2 | `SUPER_ADMIN` |
+| 공지 목록·상세 | 5.3 | 인증만 되면 가능 (역할 제한 없음) |
+| 공지 작성·수정·삭제, 전체 알림 발송 | 5.3 | `SUPER_ADMIN` |
+| 1:1 문의 조회·답변 등록/수정/삭제 | 5.4 | `SUPER_ADMIN`, `INQUIRY_ADMIN` |
+| 커뮤니티 게시글 **목록** | 5.5 | `SUPER_ADMIN`, `GENERAL_ADMIN`, `COMMUNITY_ADMIN` |
+| 커뮤니티 게시글 **상세·삭제**, 사용자 밴 | 5.5 | `SUPER_ADMIN`, `COMMUNITY_ADMIN` (아래 참고) |
+| 커뮤니티 신고 조회 | 5.5 | `SUPER_ADMIN` |
+| 유해 키워드 목록·추가·삭제 | 5.6 | `SUPER_ADMIN` |
+| 리포트 CSV (회원) | 5.7 | `SUPER_ADMIN` |
+| 리포트 CSV (문의) | 5.7 | `SUPER_ADMIN`, `INQUIRY_ADMIN` |
+| 감사 로그 조회 | 5.8 | `SUPER_ADMIN` |
+| 충전·결제·지갑·통계 조회 | 5.9 | `SUPER_ADMIN`, `GENERAL_ADMIN` |
+| 강제 환불·충전 취소, 지갑 잔액 조정 | 5.9 | `SUPER_ADMIN` |
+| 관리자 계정 목록·권한 변경 | 5.1 | `SUPER_ADMIN` |
+
+권한이 없는 메뉴·버튼은 화면에서 **숨깁니다** (`disabled` 가 아니라 렌더하지 않음).
 
 > ⚠️ **프론트엔드의 권한 검사는 UX 용입니다.** 실제 접근 통제는 서버(Spring Security)가 담당합니다.
 > 프론트 가드를 믿고 서버 권한 검사를 생략하면 안 됩니다.
+
+### 명세에서 확인이 필요한 부분
+
+- **커뮤니티 상세 조회·사용자 밴 — 코드가 문서보다 좁습니다.** 명세의
+  `GET /admin/community/posts/{id}` 와 `POST /admin/community/members/ban` 에는
+  `GENERAL_ADMIN` 이 적혀 있지만 코드는 `SUPER_ADMIN` · `COMMUNITY_ADMIN` 만 허용합니다
+  (`CommunityPage` 의 `canModerate`). 같은 자리에 있던 `DELETE /admin/community/posts/{id}`
+  의 `GENERAL_ADMIN` 은 백엔드가 **잘못 들어간 것**이라고 확인해 문서에서 뺐는데,
+  나머지 둘도 같은 오기인지는 확인받지 못했습니다. **문서만 보고 넓히지 마세요.**
+
+### 감사 로그
+
+관리자 활동은 서버가 자동으로 기록합니다(명세 5.8, 별도 생성 API 없음). 프론트는 조회만 합니다.
+
+목 모드에서는 각 `api.ts` 가 `appendAuditLog` 로 같은 기록을 흉내 냅니다 — 서버 연동 후에는
+그 블록을 지웁니다. 다만 **캐시 무효화는 두 모드 모두 필요합니다.** 감사 대상 활동을 끝낸
+뮤테이션의 `onSuccess` 에서 `useAuditLogSync()` 를 반드시 호출하세요. 빠뜨리면 `staleTime`
+(30초) 안에 감사 로그 화면을 열었을 때 방금 한 작업이 빠진 채로 캐시가 그대로 나옵니다.

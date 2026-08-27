@@ -1,0 +1,62 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) 0;
+}
+
+.card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.card__title {
+  font-size: var(--fs-heading);
+  line-height: var(--lh-heading);
+  color: var(--text-strong);
+}
+
+.card__description {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text-muted);
+}
+
+.card__action {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.card__body {
+  padding: var(--space-5);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.card__body--flush {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 헤더가 있을 때 본문 위쪽 여백을 줄여 Figma 간격(20px)에 맞춘다. */
+.card__header + .card__body {
+  padding-top: var(--space-4);
+}
+.card__header + .card__body--flush {
+  padding-top: var(--space-4);
+}

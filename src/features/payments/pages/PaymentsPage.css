@@ -1,0 +1,48 @@
+.funds {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ---- 탭 본문 ---------------------------------------------------------- */
+
+.funds__tab {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* 툴바는 공통 ListToolbar 로 옮겼다 (@/shared/ui). */
+
+/* ---- 표 셀 ------------------------------------------------------------ */
+
+.funds__amount {
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+.funds__balance {
+  font-weight: 700;
+  color: var(--accent-strong);
+}
+
+.funds__refund-btn {
+  color: var(--danger);
+  white-space: nowrap;
+}
+
+.funds__refund-btn:hover:not(:disabled) {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+/* ---- 안내 ------------------------------------------------------------- */
+
+.funds__note {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--surface-subtle);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}

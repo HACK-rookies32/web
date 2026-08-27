@@ -1,0 +1,66 @@
+.members {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* 툴바는 공통 ListToolbar 로 옮겼다 (@/shared/ui). */
+
+/* ---- 셀 --------------------------------------------------------------- */
+
+.members__expand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  transition: background-color var(--transition);
+}
+
+.members__expand:hover {
+  background: var(--surface-tint);
+  color: var(--accent-strong);
+}
+
+.members__children {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.members__children-count {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+.members__children-names {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.members__danger:hover {
+  color: var(--danger);
+}
+
+/* ---- 삭제 확인 -------------------------------------------------------- */
+
+.members__confirm {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
+}
+
+.members__confirm strong {
+  color: var(--text-strong);
+}

@@ -1,0 +1,109 @@
+.wallet-panel__balance {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--surface-tint);
+}
+
+.wallet-panel__balance-label {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text);
+}
+
+.wallet-panel__balance-value {
+  font-size: var(--fs-metric);
+  line-height: var(--lh-metric);
+  font-weight: 700;
+  letter-spacing: var(--tracking-metric);
+  color: var(--accent-strong);
+}
+
+.wallet-panel__balance-meta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+.wallet-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.wallet-panel__heading {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* ---- 거래 원장 --------------------------------------------------------- */
+
+.wallet-panel__ledger {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wallet-panel__tx {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--bg);
+}
+
+.wallet-panel__tx-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.wallet-panel__tx-amount {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 700;
+}
+
+.wallet-panel__tx-amount.is-plus {
+  color: var(--success);
+}
+
+.wallet-panel__tx-amount.is-minus {
+  color: var(--danger);
+}
+
+.wallet-panel__tx-meta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+.wallet-panel__tx-memo {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text);
+}
+
+.wallet-panel__tx-ref {
+  font-size: var(--fs-badge);
+  line-height: var(--lh-badge);
+  color: var(--text-placeholder);
+}
+
+.wallet-panel__link {
+  align-self: flex-start;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+  color: var(--accent-strong);
+}

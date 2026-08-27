@@ -1,0 +1,148 @@
+.home {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+/* ---- 인사 ---------------------------------------------------------- */
+
+.home__hello {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-heading);
+  color: var(--text-strong);
+}
+
+.home__hello strong {
+  font-weight: 600;
+}
+
+.home__role {
+  margin-top: var(--space-1);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-muted);
+}
+
+/* ---- 2 x 2 ---------------------------------------------------------- */
+
+.home__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+/* 칸 높이를 맞춰 두 줄이 어긋나 보이지 않게 한다. */
+.home__panel {
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * 홈의 칸은 제목과 시각이 좌우 끝으로 벌어지는 구조라, 기본 카드 여백(24px)
+ * 으로는 내용이 가장자리에 붙어 보인다. 좌우만 32px 로 넓힌다.
+ */
+.home__panel > .card__header {
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+}
+
+.home__panel > .card__body {
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+}
+
+.home__more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.home__more:hover {
+  text-decoration: underline;
+}
+
+.home__more svg {
+  width: 14px;
+  height: 14px;
+}
+
+.home__loading {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 0;
+}
+
+/* ---- 목록 ---------------------------------------------------------- */
+
+/* ul 기본 들여쓰기(40px)를 지운다. 두면 왼쪽만 그만큼 더 밀려 좌우가 어긋난다. */
+.home__rows {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border-subtle, var(--border));
+}
+
+.home__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.home__row:first-child {
+  padding-top: 0;
+}
+
+/* 제목은 길어질 수 있으니 한 줄로 자른다. */
+.home__row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home__row-sub {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.home__row-side {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.home__row-time {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .home__grid {
+    grid-template-columns: 1fr;
+  }
+}

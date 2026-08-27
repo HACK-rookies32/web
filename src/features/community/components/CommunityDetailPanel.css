@@ -1,0 +1,95 @@
+.community-detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.community-detail__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.community-detail__section + .community-detail__section {
+  padding-top: var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.community-detail__meta-row,
+.community-detail__comment-head,
+.community-detail__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.community-detail__title {
+  font-size: var(--fs-heading);
+  line-height: var(--lh-heading);
+}
+
+.community-detail__heading {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.community-detail__author {
+  color: var(--accent-strong);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.community-detail__content {
+  white-space: pre-wrap;
+  color: var(--text);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body-long);
+}
+
+.community-detail__comments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.community-detail__comment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
+  background: var(--surface-subtle);
+}
+
+.community-detail__comment-head strong {
+  color: var(--text-strong);
+  font-size: var(--fs-label);
+}
+
+.community-detail__comment p {
+  color: var(--text);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+}
+
+.community-detail__reported {
+  color: var(--danger);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+}
+
+.community-detail__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}

@@ -1,0 +1,72 @@
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.pagination__summary {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.pagination__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.pagination__page {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+}
+
+.pagination__page:hover:not(.is-active) {
+  background: var(--surface-subtle);
+}
+
+.pagination__page.is-active {
+  background: var(--accent);
+  color: var(--accent-on-fill);
+}
+
+.pagination__arrow {
+  width: 24px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  transition:
+    background-color var(--transition),
+    opacity var(--transition);
+}
+
+.pagination__arrow:hover:not(:disabled) {
+  background: var(--surface-subtle);
+}
+
+/* Figma: 더 이동할 수 없는 화살표는 opacity 0.5 */
+.pagination__arrow:disabled {
+  opacity: 0.5;
+}

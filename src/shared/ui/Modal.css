@@ -1,0 +1,119 @@
+.modal-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+}
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--scrim);
+  animation: modal-fade 140ms ease;
+}
+
+.modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-height: calc(100vh - var(--space-7));
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: modal-rise 160ms ease;
+}
+
+.modal--sm {
+  max-width: 400px;
+}
+.modal--md {
+  max-width: 520px;
+}
+.modal--lg {
+  max-width: 720px;
+}
+
+.modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.modal__heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.modal__title {
+  font-size: var(--fs-heading);
+  line-height: var(--lh-heading);
+  color: var(--text-strong);
+}
+
+.modal__description {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text-muted);
+}
+
+.modal__close {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  transition: background-color var(--transition);
+}
+
+.modal__close:hover {
+  background: var(--surface-subtle);
+  color: var(--text-strong);
+}
+
+.modal__body {
+  padding: var(--space-5);
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border-top: 1px solid var(--border-subtle);
+}
+
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+/* ConfirmModal 의 확인 문구 — 삭제 대상이 또렷하게 보이도록 강조한다. */
+.confirm-modal__text {
+  color: var(--text-strong);
+  font-weight: 500;
+}

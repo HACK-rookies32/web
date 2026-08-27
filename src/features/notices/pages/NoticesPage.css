@@ -1,0 +1,156 @@
+.notices {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* 툴바는 공통 ListToolbar 로 옮겼다 (@/shared/ui). */
+
+/* ---- 표 셀 ------------------------------------------------------------ */
+
+.notices__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.notices__title-text {
+  font-weight: 500;
+  color: var(--text-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notices__chip {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  font-size: var(--fs-badge);
+  line-height: var(--lh-badge);
+}
+
+.notices__danger:hover {
+  color: var(--danger);
+}
+
+.notices__confirm {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+/* ---- 내용 보기 -------------------------------------------------------- */
+
+.notices__preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.notices__preview-body {
+  /* 목 데이터의 줄바꿈을 그대로 살린다. */
+  white-space: pre-wrap;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body-long);
+  color: var(--text);
+}
+
+.notices__preview-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.notices__preview-heading {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.notices__preview-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text);
+  word-break: break-all;
+}
+
+/* ---- 전체 알림 미리보기 ------------------------------------------------ */
+
+.broadcast-preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.broadcast-preview__label {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.broadcast-preview__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-tint);
+}
+
+.broadcast-preview__type {
+  align-self: flex-start;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--surface-tint-strong);
+  color: var(--accent-strong);
+  font-size: var(--fs-badge);
+  line-height: var(--lh-badge);
+  font-weight: 500;
+}
+
+.broadcast-preview__title {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text-strong);
+}
+
+.broadcast-preview__body {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+/* 공지 작성/수정 모달 — 첨부 파일 */
+.control[type='file'] {
+  padding: var(--space-2);
+  line-height: var(--lh-label);
+}
+
+.notice-form__files {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: calc(var(--space-2) * -1) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text-muted);
+}

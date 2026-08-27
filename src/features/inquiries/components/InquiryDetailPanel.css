@@ -1,0 +1,79 @@
+.inquiry-panel__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.inquiry-panel__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.inquiry-panel__title {
+  font-size: var(--fs-heading);
+  line-height: var(--lh-heading);
+  color: var(--text-strong);
+}
+
+.inquiry-panel__author {
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text-muted);
+}
+
+.inquiry-panel__meta {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+}
+
+.inquiry-panel__body {
+  /* 회원이 입력한 줄바꿈을 그대로 살린다. */
+  white-space: pre-wrap;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body-long);
+  color: var(--text);
+}
+
+.inquiry-panel__attachments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-3);
+  list-style: none;
+  border-radius: var(--radius);
+  background: var(--surface-subtle);
+  font-size: var(--fs-caption);
+  line-height: var(--lh-caption);
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.inquiry-panel__heading {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 700;
+  color: var(--text-strong);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.inquiry-panel__answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius);
+  background: var(--surface-tint);
+}
+
+.inquiry-panel__actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.inquiry-panel__actions > * {
+  flex: 1 1 0;
+}

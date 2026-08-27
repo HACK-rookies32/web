@@ -1,0 +1,17 @@
+.icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: inherit;
+}
+
+.icon > svg {
+  display: block;
+}
+
+/* size 를 지정한 경우에만 래퍼 크기에 맞춘다. */
+.icon[data-sized] > svg {
+  width: 100%;
+  height: 100%;
+}

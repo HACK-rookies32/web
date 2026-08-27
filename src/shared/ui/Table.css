@@ -1,0 +1,124 @@
+.table-wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+/* 넓은 표는 표 안에서만 가로 스크롤한다 (페이지 본문은 절대 가로로 밀리지 않게). */
+.table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+/* ---- 헤더 ------------------------------------------------------------- */
+
+.table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+/* ---- 본문 ------------------------------------------------------------- */
+
+.table__row {
+  border-bottom: 1px solid var(--border-subtle);
+  transition: background-color var(--transition);
+}
+
+.table__row.is-clickable {
+  cursor: pointer;
+}
+
+.table__row:hover {
+  background: var(--surface-subtle);
+}
+
+.table__row:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus-ring);
+}
+
+.table tbody td {
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.table .is-left {
+  text-align: left;
+}
+.table .is-center {
+  text-align: center;
+}
+.table .is-right {
+  text-align: right;
+}
+
+/* Figma: 액션 칸은 평소 숨어 있다가 행 hover/포커스 시 나타난다. */
+.table td.is-hover-only {
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.table__row:hover td.is-hover-only,
+.table__row:focus-within td.is-hover-only {
+  opacity: 1;
+}
+
+/* 확장 행 */
+.table__expanded > td {
+  padding: 0;
+  background: var(--surface-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+/* ---- 셀 보조 --------------------------------------------------------- */
+
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.cell-stack__primary {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+.cell-stack__secondary {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-body);
+  color: var(--text);
+}
+
+.row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* ---- 하단 (페이지네이션) ---------------------------------------------- */
+
+.table-wrap__footer {
+  border-top: 1px solid var(--border-subtle);
+  background: var(--bg);
+}
