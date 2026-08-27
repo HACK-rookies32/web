@@ -37,6 +37,20 @@
   flex-direction: column;
 }
 
+/*
+ * 홈의 칸은 제목과 시각이 좌우 끝으로 벌어지는 구조라, 기본 카드 여백(24px)
+ * 으로는 내용이 가장자리에 붙어 보인다. 좌우만 32px 로 넓힌다.
+ */
+.home__panel > .card__header {
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+}
+
+.home__panel > .card__body {
+  padding-left: var(--space-6);
+  padding-right: var(--space-6);
+}
+
 .home__more {
   display: inline-flex;
   align-items: center;
@@ -65,9 +79,13 @@
 
 /* ---- 목록 ---------------------------------------------------------- */
 
+/* ul 기본 들여쓰기(40px)를 지운다. 두면 왼쪽만 그만큼 더 밀려 좌우가 어긋난다. */
 .home__rows {
   display: flex;
   flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .home__row {
