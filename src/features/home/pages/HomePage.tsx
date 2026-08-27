@@ -13,8 +13,12 @@ import { communityKeys, fetchCommunityPosts } from '@/features/community/api';
 import { fetchInquiries, inquiryKeys } from '@/features/inquiries/api';
 import './HomePage.css';
 
-/** 각 칸에 몇 건까지 보여줄지. 홈은 훑어보는 화면이라 짧게 끊는다. */
-const PREVIEW_SIZE = 5;
+/**
+ * 각 칸에 몇 건까지 보여줄지.
+ * 네 칸이 2x2 로 놓이므로 3건이면 스크롤 없이 한 화면에 들어온다.
+ * 더 보려면 각 칸의 바로가기로 넘어가면 된다.
+ */
+const PREVIEW_SIZE = 3;
 
 /**
  * 홈 화면.
