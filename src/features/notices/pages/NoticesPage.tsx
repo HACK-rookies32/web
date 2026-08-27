@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Button,
@@ -11,9 +11,6 @@ import {
   Modal,
   Pagination,
   RowActions,
-  SearchInput,
-  Select,
-  StatusPill,
   Table,
   useToast,
 } from '@/shared/ui';
@@ -36,12 +33,6 @@ import { NoticeFormModal } from '../components/NoticeFormModal';
 import { BroadcastModal } from '../components/BroadcastModal';
 import './NoticesPage.css';
 
-const EXPOSE_FILTERS = [
-  { value: 'ALL', label: '노출: 전체' },
-  { value: 'EXPOSED', label: '모바일 노출' },
-  { value: 'HIDDEN', label: '내부 전용' },
-] as const;
-
 /**
  * 공지 관리 (API 명세 5.3).
  * 목록 CRUD + 작성/수정 모달 + 전체 알림 발송.
@@ -55,9 +46,7 @@ export function NoticesPage() {
   const canManage = hasRole(['SUPER_ADMIN']);
   const adminUsername = session?.username ?? 'unknown';
 
-  const { searchParams, patchParams, page } = useListParams();
-  const keyword = searchParams.get('keyword') ?? '';
-  const exposeMobile = (searchParams.get('expose') as 'ALL' | 'EXPOSED' | 'HIDDEN' | null) ?? 'ALL';
+  const { patchParams, page } = useListParams();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<NoticeDetail | null>(null);
@@ -65,17 +54,12 @@ export function NoticesPage() {
   const [deleteTarget, setDeleteTarget] = useState<NoticeListItem | null>(null);
   const [broadcastOpen, setBroadcastOpen] = useState(false);
 
-  const params = useMemo(
-    () => ({ keyword, exposeMobile, page, size: DEFAULT_PAGE_SIZE }),
-    [keyword, exposeMobile, page],
-  );
+  const params = useMemo(() => ({ page, size: DEFAULT_PAGE_SIZE }), [page]);
 
   const { data, isPending, isError } = useQuery({
     queryKey: noticeKeys.list(params),
     queryFn: () => fetchNotices(params),
   });
-
-  const handleSearch = useCallback((value: string) => patchParams({ keyword: value }), [patchParams]);
 
   const saveMutation = useMutation({
     mutationFn: (vars: { noticeId?: number; body: NoticeRequest }) =>
@@ -89,7 +73,7 @@ export function NoticesPage() {
       setEditing(null);
       toast.success(
         vars.noticeId ? '공지를 수정했습니다' : '공지를 등록했습니다',
-        notice.exposeMobile ? '모바일 공지 페이지에도 표시됩니다.' : '관리자 콘솔에서만 보입니다.',
+        notice.title,
       );
     },
     onError: () => toast.error('저장에 실패했습니다', '잠시 후 다시 시도해 주세요.'),
@@ -144,16 +128,6 @@ export function NoticesPage() {
           ) : null}
           {row.linkCount > 0 ? <span className="notices__chip">링크 {row.linkCount}</span> : null}
         </span>
-      ),
-    },
-    {
-      key: 'expose',
-      header: '모바일 노출',
-      width: '116px',
-      render: (row) => (
-        <StatusPill tone={row.exposeMobile ? 'success' : 'neutral'}>
-          {row.exposeMobile ? '노출' : '내부 전용'}
-        </StatusPill>
       ),
     },
     { key: 'author', header: '작성자', width: '96px', render: (row) => row.authorName },
@@ -216,26 +190,7 @@ export function NoticesPage() {
   return (
     <div className="notices">
       <ListToolbar
-        search={
-          <SearchInput
-            value={keyword}
-            onSearch={handleSearch}
-            placeholder="제목 · 본문 · 작성자 검색"
-            aria-label="공지 검색"
-          />
-        }
       >
-        <Select
-          value={exposeMobile}
-          onChange={(e) => patchParams({ expose: e.target.value === 'ALL' ? null : e.target.value })}
-          aria-label="모바일 노출 필터"
-        >
-          {EXPOSE_FILTERS.map((f) => (
-            <option key={f.value} value={f.value}>
-              {f.label}
-            </option>
-          ))}
-        </Select>
 
         {canManage ? (
           <>
@@ -265,10 +220,10 @@ export function NoticesPage() {
           emptyState={
             <EmptyState
               title="등록된 공지가 없습니다"
-              description={keyword ? '검색어를 바꿔보세요.' : '첫 공지를 작성해 보세요.'}
+              description="첫 공지를 작성해 보세요."
               icon={<Icon name="nav-notices" />}
               action={
-                canManage && !keyword ? (
+                canManage ? (
                   <Button
                     size="sm"
                     onClick={() => {
@@ -304,7 +259,7 @@ export function NoticesPage() {
         title={preview?.title ?? ''}
         description={
           preview
-            ? `${preview.authorName} · ${formatDateTime(preview.createdAt)}${preview.exposeMobile ? ' · 모바일 노출' : ' · 내부 전용'}`
+            ? `${preview.authorName} · ${formatDateTime(preview.createdAt)}`
             : undefined
         }
         footer={

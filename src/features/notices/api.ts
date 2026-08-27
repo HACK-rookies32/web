@@ -35,10 +35,6 @@ function toListItem(n: NoticeDetail): NoticeListItem {
 export async function fetchNotices(params: NoticeListParams): Promise<Page<NoticeListItem>> {
   if (USE_MOCK) {
     const filtered = noticeStore
-      .filter((n) => {
-        if (!params.exposeMobile || params.exposeMobile === 'ALL') return true;
-        return params.exposeMobile === 'EXPOSED' ? n.exposeMobile : !n.exposeMobile;
-      })
       .filter((n) => matchesKeyword(n, params.keyword, ['title', 'content', 'authorName']))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .map(toListItem);
@@ -71,7 +67,6 @@ export async function createNotice(vars: {
       content: vars.body.content,
       attachments: vars.body.attachments ?? [],
       links: vars.body.links ?? [],
-      exposeMobile: vars.body.exposeMobile ?? false,
       authorName: vars.adminUsername,
       attachmentCount: (vars.body.attachments ?? []).length,
       linkCount: (vars.body.links ?? []).length,
@@ -107,7 +102,6 @@ export async function updateNotice(vars: {
       ...vars.body,
       attachments: vars.body.attachments ?? noticeStore[index].attachments,
       links: vars.body.links ?? noticeStore[index].links,
-      exposeMobile: vars.body.exposeMobile ?? noticeStore[index].exposeMobile,
       attachmentCount: (vars.body.attachments ?? noticeStore[index].attachments).length,
       linkCount: (vars.body.links ?? noticeStore[index].links).length,
       updatedAt: new Date().toISOString(),

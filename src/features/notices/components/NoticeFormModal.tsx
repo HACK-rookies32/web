@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Button, FormField, Modal, TextArea, TextInput, Toggle } from '@/shared/ui';
+import { Button, FormField, Modal, TextArea, TextInput } from '@/shared/ui';
 import type { NoticeDetail, NoticeRequest } from '../types';
 
 interface NoticeFormModalProps {
@@ -22,7 +22,7 @@ export function NoticeFormModal({
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [links, setLinks] = useState('');
-  const [exposeMobile, setExposeMobile] = useState(true);
+  const [attachments, setAttachments] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,7 +31,7 @@ export function NoticeFormModal({
     setTitle(notice?.title ?? '');
     setContent(notice?.content ?? '');
     setLinks((notice?.links ?? []).join('\n'));
-    setExposeMobile(notice?.exposeMobile ?? true);
+    setAttachments(notice?.attachments ?? []);
   }, [open, notice]);
 
   function handleSubmit(e: FormEvent) {
@@ -53,7 +53,7 @@ export function NoticeFormModal({
         .split('\n')
         .map((l) => l.trim())
         .filter(Boolean),
-      exposeMobile,
+      attachments,
     });
   }
 
@@ -63,7 +63,7 @@ export function NoticeFormModal({
       onClose={onClose}
       size="lg"
       title={notice ? '공지 수정' : '공지 작성'}
-      description="모바일 노출을 켜면 앱의 공지 페이지에도 함께 표시됩니다."
+      description="제목과 본문은 필수입니다. 링크와 첨부 파일은 선택입니다."
       footer={
         <>
           <Button onClick={onClose} disabled={submitting}>
@@ -113,12 +113,30 @@ export function NoticeFormModal({
           )}
         </FormField>
 
-        <Toggle
-          checked={exposeMobile}
-          onChange={setExposeMobile}
-          label="모바일 공지 페이지 노출"
-          description="끄면 관리자 콘솔에서만 보이는 내부 공지가 됩니다."
-        />
+        {/*
+          TODO(api): 관리자 명세 5.3 에 첨부 업로드 엔드포인트가 없다.
+          지금은 고른 파일의 이름만 들고 있다가 함께 넘긴다. 실제 업로드 경로가
+          생기면 여기서 presign → upload → 완료 확인 순서로 바꾼다.
+        */}
+        <FormField label="첨부 파일" hint="여러 개를 고를 수 있습니다.">
+          {(p) => (
+            <input
+              {...p}
+              className="control"
+              type="file"
+              multiple
+              onChange={(e) => setAttachments([...(e.target.files ?? [])].map((f) => f.name))}
+            />
+          )}
+        </FormField>
+
+        {attachments.length > 0 ? (
+          <ul className="notice-form__files">
+            {attachments.map((name) => (
+              <li key={name}>{name}</li>
+            ))}
+          </ul>
+        ) : null}
 
         {error ? (
           <p role="alert" style={{ color: 'var(--danger)', fontSize: 'var(--fs-label)' }}>

@@ -136,3 +136,21 @@
   color: var(--text);
   white-space: pre-wrap;
 }
+
+/* 공지 작성/수정 모달 — 첨부 파일 */
+.control[type='file'] {
+  padding: var(--space-2);
+  line-height: var(--lh-label);
+}
+
+.notice-form__files {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: calc(var(--space-2) * -1) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  color: var(--text-muted);
+}

@@ -85,7 +85,6 @@ export function HomePage() {
                 <li key={n.noticeId} className="home__row">
                   <span className="home__row-main">{n.title}</span>
                   <span className="home__row-side">
-                    {n.exposeMobile ? <StatusPill tone="success">노출</StatusPill> : null}
                     <time className="home__row-time">{formatRelative(n.createdAt)}</time>
                   </span>
                 </li>

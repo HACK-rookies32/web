@@ -4,8 +4,6 @@ import type { PageParams } from '@/shared/lib/types';
 export interface NoticeListItem {
   noticeId: number;
   title: string;
-  /** 모바일 공지 페이지 노출 여부 */
-  exposeMobile: boolean;
   authorName: string;
   /** 첨부파일 / 링크 개수 (목록에서는 개수만 보여준다) */
   attachmentCount: number;
@@ -27,13 +25,9 @@ export interface NoticeRequest {
   content: string;
   attachments?: string[];
   links?: string[];
-  exposeMobile?: boolean;
 }
 
-export interface NoticeListParams extends PageParams {
-  /** 모바일 노출 여부 필터 (화면 편의용) */
-  exposeMobile?: 'ALL' | 'EXPOSED' | 'HIDDEN';
-}
+export type NoticeListParams = PageParams;
 
 /** 전체 알림 발송 유형 (POST /admin/notifications/broadcast). */
 export type BroadcastType = 'MAINTENANCE' | 'UPDATE' | 'EVENT' | 'NOTICE';
