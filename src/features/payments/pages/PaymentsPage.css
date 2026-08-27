@@ -4,55 +4,6 @@
   gap: var(--space-5);
 }
 
-/* ---- KPI -------------------------------------------------------------- */
-
-.funds__kpis {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-4);
-}
-
-@media (max-width: 1180px) {
-  .funds__kpis {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
-.funds__kpi {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-4) var(--space-5);
-  border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-card);
-}
-
-.funds__kpi-label {
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  color: var(--text);
-}
-
-.funds__kpi-value {
-  font-size: var(--fs-metric);
-  line-height: var(--lh-metric);
-  font-weight: 700;
-  letter-spacing: var(--tracking-metric);
-  color: var(--text-strong);
-}
-
-.funds__kpi-foot {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-muted);
-}
-
-/* 환불은 형태(왼쪽 막대)로도 구분한다. */
-.funds__kpi--alert {
-  border-left: 3px solid var(--warning);
-}
-
 /* ---- 탭 본문 ---------------------------------------------------------- */
 
 .funds__tab {

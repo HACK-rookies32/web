@@ -1,6 +1,5 @@
 import type {
   ChargeItem,
-  FundStats,
   StorePayment,
   TransferItem,
   WalletSummary,
@@ -557,64 +556,3 @@ export const MOCK_WALLETS: WalletSummary[] = [
     recentTransactions: [tx(90018, 'PAYMENT', -3400, 16600, daysAgo(5), 'payment:8808')],
   },
 ];
-
-/* ------------------------------------------------------------- 통계 ---- */
-
-/**
- * 자금 지표.
- *
- * 예전에는 합계를 손으로 적어 뒀는데 원장과 맞지 않았다.
- * (`totalCharged: 335,000` 은 전체 합 365,000 도, 완료분 합 295,000 도 아니었고
- *  `totalPaid` 만 취소·환불까지 포함한 전체 합이라 기준도 서로 달랐다.)
- *
- * 이제 충전·결제 목에서 직접 합산한다. 기준은 **완료(PAID)된 건만** 이다.
- * 화면의 "미사용 잔액 = 충전액 − 결제액" 이 성립하려면 실제로 오간 돈만 세야 한다.
- */
-function sumPaid(items: { amount: number; status: string }[]): number {
-  return items.filter((item) => item.status === 'PAID').reduce((acc, item) => acc + item.amount, 0);
-}
-
-function countPaid(items: { status: string }[]): number {
-  return items.filter((item) => item.status === 'PAID').length;
-}
-
-/** 명세 5.9 의 `groupBy=DAY` 집계. 완료된 건만 요일별로 모은다. */
-const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
-
-function dailyTotals(charges: ChargeItem[], payments: StorePayment[]): FundStats['daily'] {
-  const buckets = WEEKDAYS.map((date) => ({ date, charged: 0, paid: 0 }));
-
-  charges
-    .filter((c) => c.status === 'PAID')
-    .forEach((charge) => {
-      buckets[new Date(charge.createdAt).getDay()].charged += charge.amount;
-    });
-  payments
-    .filter((p) => p.status === 'PAID')
-    .forEach((payment) => {
-      buckets[new Date(payment.paidAt).getDay()].paid += payment.amount;
-    });
-
-  // 월요일부터 보이도록 앞으로 당긴다.
-  return [...buckets.slice(1), buckets[0]];
-}
-
-/**
- * 현재 충전·결제 목록으로 지표를 계산한다.
- *
- * 고정 상수로 두면 화면에서 환불·충전 취소를 해도 위쪽 KPI 만 옛날 값으로 남아
- * 바로 아래 표와 어긋난다. 그래서 api 층이 **지금 저장소**를 넘겨 매번 계산한다.
- * 환불 건수는 매장 결제 환불 + 충전 취소를 함께 센다.
- */
-export function computeFundStats(charges: ChargeItem[], payments: StorePayment[]): FundStats {
-  return {
-    totalCharged: sumPaid(charges),
-    totalPaid: sumPaid(payments),
-    chargeCount: countPaid(charges),
-    paymentCount: countPaid(payments),
-    refundCount:
-      payments.filter((payment) => payment.status === 'REFUNDED').length +
-      charges.filter((charge) => charge.status === 'CANCELED').length,
-    daily: dailyTotals(charges, payments),
-  };
-}

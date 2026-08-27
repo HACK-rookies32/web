@@ -102,32 +102,16 @@ export interface StorePayment {
 /* ------------------------------------------------------------- 통계 ---- */
 
 /** GET /admin/stats 의 data. */
-/**
- * 자금 지표 (명세 5.9 GET /admin/stats).
- *
- * 금액·건수는 모두 **완료(PAID)된 건** 기준이다.
- * 화면의 "미사용 잔액 = 충전액 − 결제액" 이 성립하려면 실제로 오간 돈만 세야 한다.
- */
-export interface FundStats {
-  totalCharged: number;
-  totalPaid: number;
-  chargeCount: number;
-  paymentCount: number;
-  refundCount: number;
-  /** `groupBy=DAY` 기간별 집계. 아직 화면에 차트는 없지만 명세상 응답에 포함된다. */
-  daily: { date: string; charged: number; paid: number }[];
-}
-
 /* ------------------------------------------------------------- 환불 ---- */
 
 /**
  * 환불 대상 종류 (명세 5.9 POST /admin/wallets/refund).
  *
- * 충전 취소와 매장 결제 환불은 **지갑 잔액이 움직이는 방향이 반대**다.
- *   PAYMENT — 자녀가 쓴 돈을 되돌린다 → 지갑 잔액 증가
- *   CHARGE  — 부모 카드로 돈이 되돌아간다 → 지갑 잔액 차감
+ * 명세는 PAYMENT(매장 결제 강제 환불)도 정의하지만 관리자 웹에서는 쓰지 않는다.
+ * 매장 결제 내역은 조회 전용이고, 웹에서 되돌리는 건 충전뿐이다.
+ *   CHARGE — 부모 카드로 돈이 되돌아간다 → 지갑 잔액 차감
  */
-export type RefundTargetType = 'CHARGE' | 'PAYMENT';
+export type RefundTargetType = 'CHARGE';
 
 /** POST /admin/wallets/refund 의 요청 본문. */
 export interface RefundRequest {

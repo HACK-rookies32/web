@@ -6,13 +6,11 @@ import {
   MOCK_STORE_PAYMENTS,
   MOCK_TRANSFERS,
   MOCK_WALLETS,
-  computeFundStats,
 } from '@/mocks/payments';
 import type { Page } from '@/shared/lib/types';
 import type {
   ChargeItem,
   ChargeListParams,
-  FundStats,
   FundsFlowParams,
   FundsFlowRow,
   RefundRequest,
@@ -36,7 +34,6 @@ import type {
 
 export const fundKeys = {
   all: ['funds'] as const,
-  stats: ['funds', 'stats'] as const,
   charges: (p: ChargeListParams) => ['funds', 'charges', p] as const,
   flow: (p: FundsFlowParams) => ['funds', 'flow', p] as const,
   payments: (p: StorePaymentListParams) => ['funds', 'payments', p] as const,
@@ -50,15 +47,6 @@ let chargeStore: ChargeItem[] = [...MOCK_CHARGES];
 let paymentStore: StorePayment[] = [...MOCK_STORE_PAYMENTS];
 let walletStore: WalletSummary[] = MOCK_WALLETS.map((w) => ({ ...w }));
 let nextTxId = 91000;
-
-/* ------------------------------------------------------------- 통계 ---- */
-
-/** GET /admin/stats */
-export async function fetchFundStats(): Promise<FundStats> {
-  // 환불·충전 취소가 곧바로 반영되도록 지금 저장소로 계산한다.
-  if (USE_MOCK) return mockResponse(computeFundStats(chargeStore, paymentStore));
-  return request<FundStats>({ url: '/admin/stats', method: 'GET', params: { groupBy: 'DAY' } });
-}
 
 /* ------------------------------------------------------------- 충전 ---- */
 
@@ -157,69 +145,16 @@ export async function fetchStorePayments(
  * 어느 쪽이든 결국 하는 일은 같다 — 지갑 잔액을 되돌리고
  * `wallet_transaction(REFUND)` 과 감사 로그를 남긴다. 다만 **방향이 반대**다.
  *
- *   PAYMENT — 자녀가 매장에서 쓴 돈을 되돌린다 → 자녀 지갑 **증가**
- *   CHARGE  — 부모 카드로 충전액이 되돌아간다 → 부모 지갑 **차감**
+ *   CHARGE — 부모 카드로 충전액이 되돌아간다 → 부모 지갑 **차감**
  *
- * CHARGE 는 이미 써버려 잔액이 모자라면 취소할 수 없다(명세상 409 CONFLICT).
+ * 이미 써버려 잔액이 모자라면 취소할 수 없다(명세상 409 CONFLICT).
+ * 명세의 PAYMENT(매장 결제 강제 환불)는 관리자 웹에서 쓰지 않는다.
  */
 export async function refund(
   vars: RefundRequest & { adminUsername: string },
 ): Promise<RefundResult> {
   if (USE_MOCK) {
     const now = new Date().toISOString();
-
-    if (vars.targetType === 'PAYMENT') {
-      const index = paymentStore.findIndex((p) => p.paymentId === vars.targetId);
-      if (index < 0) throw new Error('존재하지 않는 결제 건입니다.');
-
-      const target = paymentStore[index];
-      if (target.status !== 'PAID') {
-        throw new Error('결제 완료된 건만 환불할 수 있습니다.');
-      }
-
-      paymentStore = paymentStore.map((p, i) =>
-        i === index
-          ? {
-              ...p,
-              status: 'REFUNDED',
-              refundedAt: now,
-              refundReason: vars.reason,
-              balanceAfter: p.balanceAfter + p.amount,
-            }
-          : p,
-      );
-
-      const wallet = applyRefundToWallet({
-        userId: target.childId,
-        delta: target.amount,
-        refId: `payment:${target.paymentId}`,
-        reason: vars.reason,
-        at: now,
-      });
-
-      appendAuditLog({
-        adminUsername: vars.adminUsername,
-        action: 'PAYMENT_REFUND',
-        target: `payment:${target.paymentId}`,
-        description: `${target.childName} 자녀의 ${target.merchantName} 결제 ${target.amount.toLocaleString('ko-KR')}원 강제 환불 — ${vars.reason}`,
-      });
-
-      return mockResponse(
-        {
-          targetType: 'PAYMENT',
-          targetId: target.paymentId,
-          userId: target.childId,
-          userName: wallet?.userName ?? target.childName,
-          walletId: wallet?.walletId ?? 0,
-          amount: target.amount,
-          delta: target.amount,
-          balanceAfter: wallet?.balance ?? 0,
-          refundedAt: now,
-          reason: vars.reason,
-        },
-        700,
-      );
-    }
 
     const index = chargeStore.findIndex((c) => c.chargeId === vars.targetId);
     if (index < 0) throw new Error('존재하지 않는 충전 건입니다.');

@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { SetURLSearchParams } from 'react-router-dom';
-import { Button, Column, RowActions, Select, StackedCell, StatusPill } from '@/shared/ui';
+import { Column, Select, StackedCell, StatusPill } from '@/shared/ui';
 import { FundsTabLayout } from './FundsTabLayout';
 import { formatCurrency, formatDateTime, maskName, memberRef } from '@/shared/lib/format';
 import { STORE_PAYMENT_STATUS, type StorePaymentStatus } from '@/shared/lib/wallet';
@@ -21,22 +21,21 @@ interface StorePaymentsTabProps {
   status: StorePaymentStatus | 'ALL';
   childId?: number;
   page: number;
-  canManage: boolean;
   patchParams: (patch: Record<string, string | null>, resetPage?: boolean) => void;
   setSearchParams: SetURLSearchParams;
-  onRefund: (payment: StorePayment) => void;
 }
 
-/** 자녀의 매장 QR 결제 내역 (GET /admin/payments). */
+/**
+ * 자녀의 매장 QR 결제 내역 (GET /admin/payments).
+ * 조회 전용이다. 강제 환불은 사용하지 않는다(충전 취소는 "충전·용돈" 탭에 있다).
+ */
 export function StorePaymentsTab({
   keyword,
   status,
   childId,
   page,
-  canManage,
   patchParams,
   setSearchParams,
-  onRefund,
 }: StorePaymentsTabProps) {
   const params = useMemo(
     () => ({ keyword, status, childId, page, size: DEFAULT_PAGE_SIZE }),
@@ -54,7 +53,7 @@ export function StorePaymentsTab({
     {
       key: 'child',
       header: '자녀 / 보호자',
-      width: '20%',
+      width: '24%',
       render: (row) => (
         <StackedCell
           primary={`${maskName(row.childName)} (${memberRef(row.childId, '자녀')})`}
@@ -68,7 +67,7 @@ export function StorePaymentsTab({
       header: '결제 금액',
       align: 'right',
       numeric: true,
-      width: '112px',
+      width: '128px',
       render: (row) => <span className="funds__amount">{formatCurrency(row.amount)}</span>,
     },
     {
@@ -76,7 +75,7 @@ export function StorePaymentsTab({
       header: '결제 후 잔액',
       align: 'right',
       numeric: true,
-      width: '120px',
+      width: '136px',
       render: (row) => <span className="muted">{formatCurrency(row.balanceAfter)}</span>,
     },
     {
@@ -95,27 +94,6 @@ export function StorePaymentsTab({
       numeric: true,
       width: '168px',
       render: (row) => formatDateTime(row.paidAt),
-    },
-    {
-      key: 'actions',
-      header: '액션',
-      align: 'center',
-      width: canManage ? '108px' : '48px',
-      hoverOnly: true,
-      render: (row) =>
-        canManage && row.status === 'PAID' ? (
-          <RowActions>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="funds__refund-btn"
-              onClick={() => onRefund(row)}
-              aria-label={`${maskName(row.childName)} ${row.merchantName} 결제 강제 환불`}
-            >
-              강제 환불
-            </Button>
-          </RowActions>
-        ) : null,
     },
   ];
 

@@ -13,18 +13,18 @@ interface AdjustBalanceModalProps {
 /**
  * 잔액 수동 조정 모달 (POST /admin/wallets/{userId}/adjust).
  *
- * 명세상 amount 는 +/- 모두 허용되고 reason 은 필수다(누락 시 400 INVALID_PARAMETER).
- * 조정 후 잔액이 음수가 되는 입력은 보내기 전에 막는다.
+ * 명세상 amount 는 +/- 모두 허용되지만 화면에서는 **증액만** 제공한다.
+ * 차감은 충전 취소(환불) 경로로 처리하며, 여기서는 항상 양수를 보낸다.
+ * 따라서 조정 후 잔액이 음수가 될 수 없어 별도 검증도 두지 않는다.
+ * reason 은 필수다(누락 시 400 INVALID_PARAMETER).
  */
 export function AdjustBalanceModal({ wallet, submitting, onClose, onSubmit }: AdjustBalanceModalProps) {
-  const [sign, setSign] = useState<1 | -1>(1);
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (wallet) {
-      setSign(1);
       setAmount('');
       setReason('');
       setError(null);
@@ -32,8 +32,8 @@ export function AdjustBalanceModal({ wallet, submitting, onClose, onSubmit }: Ad
   }, [wallet]);
 
   const parsed = Number(amount.replace(/[^\d]/g, ''));
-  const signed = Number.isFinite(parsed) ? parsed * sign : 0;
-  const nextBalance = wallet ? wallet.balance + signed : 0;
+  const increase = Number.isFinite(parsed) ? parsed : 0;
+  const nextBalance = wallet ? wallet.balance + increase : 0;
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -46,12 +46,7 @@ export function AdjustBalanceModal({ wallet, submitting, onClose, onSubmit }: Ad
       setError('조정 사유를 입력해 주세요. 사유는 필수이며 감사 로그에 기록됩니다.');
       return;
     }
-    if (nextBalance < 0) {
-      setError('조정 후 잔액이 음수가 될 수 없습니다.');
-      return;
-    }
-
-    onSubmit(signed, reason.trim());
+    onSubmit(increase, reason.trim());
   }
 
   return (
@@ -82,41 +77,17 @@ export function AdjustBalanceModal({ wallet, submitting, onClose, onSubmit }: Ad
               value={`${maskName(wallet.userName)} (${memberRef(wallet.userId, wallet.role === 'CHILD' ? '자녀' : '회원')})`}
             />
             <DetailRow label="현재 잔액" value={formatCurrency(wallet.balance)} />
-            <DetailRow
-              label="조정 후 잔액"
-              value={
-                <span style={{ color: nextBalance < 0 ? 'var(--danger)' : undefined }}>
-                  {formatCurrency(nextBalance)}
-                </span>
-              }
-            />
+            <DetailRow label="조정 후 잔액" value={formatCurrency(nextBalance)} />
           </DetailBox>
 
-          <FormField label="조정 방향">
-            {() => (
-              <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-                <Button
-                  variant={sign === 1 ? 'primary' : 'secondary'}
-                  onClick={() => setSign(1)}
-                  aria-pressed={sign === 1}
-                >
-                  증액 (+)
-                </Button>
-                <Button
-                  variant={sign === -1 ? 'danger' : 'secondary'}
-                  onClick={() => setSign(-1)}
-                  aria-pressed={sign === -1}
-                >
-                  차감 (−)
-                </Button>
-              </div>
-            )}
-          </FormField>
-
           <FormField
-            label="조정 금액"
+            label="증액 금액"
             required
-            hint={parsed > 0 ? `${formatSignedAmount(signed)} 적용됩니다.` : '원 단위로 입력하세요.'}
+            hint={
+              increase > 0
+                ? `${formatSignedAmount(increase)} 적용됩니다.`
+                : '원 단위로 입력하세요. 증액만 가능합니다.'
+            }
           >
             {(p) => (
               <TextInput
