@@ -41,7 +41,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     ],
     deviceCount: 2,
     createdAt: daysAgo(412),
-    lastLoginAt: minutesAgo(23),
     updatedAt: daysAgo(12),
   },
   {
@@ -58,7 +57,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     children: [{ childId: 2003, name: '이수아', deviceStatus: 'ONLINE' }],
     deviceCount: 1,
     createdAt: daysAgo(298),
-    lastLoginAt: minutesAgo(140),
     updatedAt: daysAgo(30),
   },
   {
@@ -69,13 +67,12 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     email: 'junho.park@daum.net',
     phoneNumber: '010-3320-1187',
     role: 'PARENT',
-    status: 'SUSPENDED',
+    status: 'ACTIVE',
     address: '부산시 해운대구 센텀중앙로 90',
     profileImageUrl: null,
     children: [{ childId: 2004, name: '박시우', deviceStatus: 'OFFLINE' }],
     deviceCount: 1,
     createdAt: daysAgo(520),
-    lastLoginAt: daysAgo(9),
     updatedAt: daysAgo(9),
   },
   {
@@ -96,7 +93,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     ],
     deviceCount: 3,
     createdAt: daysAgo(155),
-    lastLoginAt: minutesAgo(8),
     updatedAt: daysAgo(2),
   },
   {
@@ -113,7 +109,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     children: [],
     deviceCount: 0,
     createdAt: daysAgo(610),
-    lastLoginAt: daysAgo(74),
     updatedAt: daysAgo(74),
   },
   {
@@ -130,7 +125,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     children: [{ childId: 2008, name: '송채원', deviceStatus: 'ONLINE' }],
     deviceCount: 1,
     createdAt: daysAgo(88),
-    lastLoginAt: minutesAgo(310),
     updatedAt: daysAgo(5),
   },
   {
@@ -150,7 +144,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     ],
     deviceCount: 2,
     createdAt: daysAgo(233),
-    lastLoginAt: minutesAgo(55),
     updatedAt: daysAgo(18),
   },
   {
@@ -161,13 +154,12 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     email: 'nari.oh@daum.net',
     phoneNumber: '010-8890-3312',
     role: 'PARENT',
-    status: 'SUSPENDED',
+    status: 'ACTIVE',
     address: '대구시 수성구 동대구로 400',
     profileImageUrl: null,
     children: [{ childId: 2011, name: '오하준', deviceStatus: 'OFFLINE' }],
     deviceCount: 1,
     createdAt: daysAgo(47),
-    lastLoginAt: daysAgo(3),
     updatedAt: daysAgo(3),
   },
   {
@@ -184,7 +176,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     children: [{ childId: 2012, name: '권서윤', deviceStatus: 'ONLINE' }],
     deviceCount: 1,
     createdAt: daysAgo(365),
-    lastLoginAt: minutesAgo(720),
     updatedAt: daysAgo(41),
   },
   {
@@ -204,7 +195,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     ],
     deviceCount: 2,
     createdAt: daysAgo(19),
-    lastLoginAt: minutesAgo(4),
     updatedAt: daysAgo(1),
   },
   {
@@ -221,7 +211,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     children: [{ childId: 2015, name: '신도현', deviceStatus: 'ONLINE' }],
     deviceCount: 1,
     createdAt: daysAgo(129),
-    lastLoginAt: minutesAgo(95),
     updatedAt: daysAgo(7),
   },
   {
@@ -238,7 +227,6 @@ export const MOCK_MEMBERS: MemberDetail[] = [
     children: [],
     deviceCount: 0,
     createdAt: daysAgo(6),
-    lastLoginAt: minutesAgo(1300),
     updatedAt: daysAgo(6),
   },
 ];

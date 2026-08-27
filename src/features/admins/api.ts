@@ -42,7 +42,7 @@ export async function updateAdminRole(vars: {
       adminUsername: vars.adminUsername,
       action: 'ADMIN_ROLE_UPDATE',
       target: `admin:${vars.id}`,
-      description: `${updated.username} 권한 ${ROLE_LABEL[before.role]} → ${ROLE_LABEL[vars.body.role]}`,
+      description: `${updated.loginId} 권한 ${ROLE_LABEL[before.role]} → ${ROLE_LABEL[vars.body.role]}`,
     });
 
     return mockResponse(updated, 550);

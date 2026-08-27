@@ -42,6 +42,42 @@ export interface ChargeItem {
   cancelReason: string | null;
 }
 
+/**
+ * 부모 → 자녀 용돈 이동 1건.
+ *
+ * 지갑 원장에는 보내는 쪽 `TRANSFER_OUT` 과 받는 쪽 `TRANSFER_IN` 두 줄로 남지만,
+ * 관리자 화면에서는 "누가 누구에게 얼마를" 이 한 눈에 보여야 하므로 한 줄로 합친다.
+ *
+ * TODO(api): 명세 5.9 확정 후 `GET /finance/transactions?type=TRANSFER_OUT` 로 옮긴다.
+ *            현재 5.9 는 회신 대기 중이라 목으로만 동작한다.
+ */
+export interface TransferItem {
+  transferId: number;
+  /** 보낸 사람 (보호자) */
+  fromUserId: number;
+  fromUserName: string;
+  /** 받은 사람 (자녀) */
+  toUserId: number;
+  toUserName: string;
+  amount: number;
+  /** 보낼 때 남긴 메모 (예: "주간 용돈") */
+  memo: string | null;
+  createdAt: string;
+}
+
+/**
+ * 충전 탭에서 함께 보여줄 거래 종류.
+ *
+ * 부모가 카드로 넣은 돈(CHARGE)과 그 돈이 자녀에게 건너간 것(TRANSFER)은
+ * 이어지는 하나의 흐름이라, 관리자가 한 화면에서 따라갈 수 있어야 한다.
+ */
+export type FundsFlowFilter = 'ALL' | 'CHARGE' | 'TRANSFER';
+
+/** 충전 탭의 행. 충전과 용돈 이동을 한 목록에 섞어 보여주기 위한 합집합. */
+export type FundsFlowRow =
+  | ({ kind: 'CHARGE' } & ChargeItem)
+  | ({ kind: 'TRANSFER' } & TransferItem);
+
 /* --------------------------------------------------------- 매장 결제 ---- */
 
 
@@ -124,6 +160,17 @@ export interface RefundResult {
 export interface ChargeListParams extends PageParams {
   userId?: number;
   status?: ChargeStatus | 'ALL';
+}
+
+export interface TransferListParams extends PageParams {
+  keyword?: string;
+}
+
+/** 충전 탭(충전 + 용돈 이동) 조회 파라미터. */
+export interface FundsFlowParams extends PageParams {
+  flow?: FundsFlowFilter;
+  status?: ChargeStatus | 'ALL';
+  userId?: number;
 }
 
 export interface StorePaymentListParams extends PageParams {

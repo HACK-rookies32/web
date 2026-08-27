@@ -18,7 +18,7 @@ import {
   Table,
   useToast,
 } from '@/shared/ui';
-import { formatDate, formatNumber, formatRelative, maskEmail, maskName, memberRef } from '@/shared/lib/format';
+import { formatDate, formatNumber, maskEmail, maskName, memberRef } from '@/shared/lib/format';
 import { MEMBER_STATUS, type MemberStatus } from '@/shared/lib/status';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
@@ -35,7 +35,6 @@ import './MembersPage.css';
 const STATUS_FILTERS: { value: MemberStatus | 'ALL'; label: string }[] = [
   { value: 'ALL', label: '상태: 전체' },
   { value: 'ACTIVE', label: '활성' },
-  { value: 'SUSPENDED', label: '정지' },
   { value: 'WITHDRAWN', label: '탈퇴' },
 ];
 
@@ -186,12 +185,6 @@ export function MembersPage() {
       numeric: true,
       width: '104px',
       render: (row) => formatDate(row.createdAt),
-    },
-    {
-      key: 'lastLoginAt',
-      header: '최근 접속',
-      width: '104px',
-      render: (row) => <span className="muted">{formatRelative(row.lastLoginAt)}</span>,
     },
     {
       key: 'actions',

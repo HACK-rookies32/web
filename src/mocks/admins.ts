@@ -3,7 +3,7 @@ import type { AdminUser } from '@/shared/lib/types';
 export const MOCK_ADMINS: AdminUser[] = [
   {
     id: 1,
-    username: 'admin01',
+    loginId: 'admin01',
     nickname: '최고관리자',
     email: 'admin01@example.com',
     phoneNumber: '010-1111-2222',
@@ -13,7 +13,7 @@ export const MOCK_ADMINS: AdminUser[] = [
   },
   {
     id: 2,
-    username: 'general_lee',
+    loginId: 'general_lee',
     nickname: '일반관리자 이지수',
     email: 'general.lee@example.com',
     phoneNumber: '010-2222-3333',
@@ -23,7 +23,7 @@ export const MOCK_ADMINS: AdminUser[] = [
   },
   {
     id: 3,
-    username: 'minho_park',
+    loginId: 'minho_park',
     nickname: '커뮤니티 박민호',
     email: 'minho.park@example.com',
     phoneNumber: '010-3333-4444',
@@ -33,7 +33,7 @@ export const MOCK_ADMINS: AdminUser[] = [
   },
   {
     id: 4,
-    username: 'inquiry_kim',
+    loginId: 'inquiry_kim',
     nickname: '문의 김하늘',
     email: 'inquiry.kim@example.com',
     phoneNumber: '010-4444-5555',
@@ -43,7 +43,7 @@ export const MOCK_ADMINS: AdminUser[] = [
   },
   {
     id: 5,
-    username: 'general_choi',
+    loginId: 'general_choi',
     nickname: '일반관리자 최서윤',
     email: 'general.choi@example.com',
     phoneNumber: '010-5555-6666',

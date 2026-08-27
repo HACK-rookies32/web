@@ -160,11 +160,6 @@ export function LoginPage() {
           </Button>
         </div>
 
-        <div className="login__links">
-          <button type="button" className="login__link">
-            비밀번호 찾기
-          </button>
-        </div>
 
         <p className="login__badge">
           <Icon name="shield" />

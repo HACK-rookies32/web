@@ -70,7 +70,6 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
               {MEMBER_STATUS[member.status].label}
             </StatusPill>
             <span className="quickview__meta">가입 {formatDate(member.createdAt)}</span>
-            <span className="quickview__meta">최근 접속 {formatRelative(member.lastLoginAt)}</span>
           </div>
 
           {/* ---- 연결 자녀 기기 ---- */}

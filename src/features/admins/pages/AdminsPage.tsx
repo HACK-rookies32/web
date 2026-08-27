@@ -47,7 +47,7 @@ function matchesAdminKeyword(admin: AdminAccount, keyword: string): boolean {
 
   // 아이디와 닉네임은 화면에 그대로 노출되므로 짧은 부분 일치를 허용한다.
   if (
-    admin.username.toLocaleLowerCase().includes(needle)
+    admin.loginId.toLocaleLowerCase().includes(needle)
     || admin.nickname.toLocaleLowerCase().includes(needle)
   ) {
     return true;
@@ -115,7 +115,7 @@ export function AdminsPage() {
       );
       syncAuditLog();
       setEditing(null);
-      toast.success('관리자 권한을 변경했습니다', `${updated.username} · ${ROLE_LABEL[updated.role]}`);
+      toast.success('관리자 권한을 변경했습니다', `${updated.loginId} · ${ROLE_LABEL[updated.role]}`);
     },
     onError: (error) => toast.error('권한 변경에 실패했습니다', error instanceof Error ? error.message : undefined),
   });
@@ -136,8 +136,8 @@ export function AdminsPage() {
        */
       render: (row) => (
         <StackedCell
-          primary={row.nickname || row.username}
-          secondary={`${memberRef(row.id, '관리자')} · ${row.username}`}
+          primary={row.nickname || row.loginId}
+          secondary={`${memberRef(row.id, '관리자')} · ${row.loginId}`}
         />
       ),
     },
@@ -167,7 +167,7 @@ export function AdminsPage() {
       align: 'right',
       render: (row) => (
         <RowActions>
-          {row.username === session?.username ? (
+          {row.loginId === session?.username ? (
             <span className="muted">현재 계정</span>
           ) : (
             <Button variant="ghost" size="sm" onClick={() => openRoleModal(row)}>권한 변경</Button>
@@ -221,7 +221,7 @@ export function AdminsPage() {
         title="관리자 권한 변경"
         description={
           editing
-            ? `${editing.nickname || editing.username} (${memberRef(editing.id, '관리자')} · ${editing.username})`
+            ? `${editing.nickname || editing.loginId} (${memberRef(editing.id, '관리자')} · ${editing.loginId})`
             : undefined
         }
         size="sm"

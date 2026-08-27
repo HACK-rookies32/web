@@ -4,6 +4,7 @@ import { appendAuditLog } from '@/mocks/auditLogs';
 import {
   MOCK_CHARGES,
   MOCK_STORE_PAYMENTS,
+  MOCK_TRANSFERS,
   MOCK_WALLETS,
   computeFundStats,
 } from '@/mocks/payments';
@@ -12,10 +13,14 @@ import type {
   ChargeItem,
   ChargeListParams,
   FundStats,
+  FundsFlowParams,
+  FundsFlowRow,
   RefundRequest,
   RefundResult,
   StorePayment,
   StorePaymentListParams,
+  TransferItem,
+  TransferListParams,
   WalletListParams,
   WalletSummary,
   WalletTransaction,
@@ -33,6 +38,7 @@ export const fundKeys = {
   all: ['funds'] as const,
   stats: ['funds', 'stats'] as const,
   charges: (p: ChargeListParams) => ['funds', 'charges', p] as const,
+  flow: (p: FundsFlowParams) => ['funds', 'flow', p] as const,
   payments: (p: StorePaymentListParams) => ['funds', 'payments', p] as const,
   wallets: (p: WalletListParams) => ['funds', 'wallets', p] as const,
   wallet: (userId: number) => ['funds', 'wallet', userId] as const,
@@ -67,6 +73,59 @@ export async function fetchCharges(params: ChargeListParams): Promise<Page<Charg
     return mockResponse(paginate(filtered, params));
   }
   return request<Page<ChargeItem>>({ url: '/admin/charges', method: 'GET', params });
+}
+
+/* --------------------------------------------------- 부모→자녀 용돈 ---- */
+
+/**
+ * 부모가 자녀에게 보낸 용돈 이동 내역.
+ *
+ * 지갑 원장에는 보내는 쪽·받는 쪽 두 줄로 남지만, 관리자 화면에서는
+ * "누가 누구에게 얼마를" 이 한 줄로 보여야 해서 합쳐서 돌려준다.
+ *
+ * TODO(api): 명세 5.9 확정 후 `GET /finance/transactions?type=TRANSFER_OUT` 으로
+ *            옮긴다. 지금은 5.9 회신 대기 중이라 목 전용이다.
+ */
+export async function fetchTransfers(params: TransferListParams): Promise<Page<TransferItem>> {
+  const filtered = MOCK_TRANSFERS.filter((t) =>
+    matchesKeyword(t, params.keyword, ['fromUserName', 'toUserName', 'memo']),
+  );
+  return mockResponse(paginate(filtered, params));
+}
+
+/**
+ * 충전 탭 목록 — 충전과 부모→자녀 용돈 이동을 한 흐름으로 합쳐 돌려준다.
+ *
+ * 부모가 카드로 넣은 돈과 그 돈이 자녀에게 건너간 것은 이어지는 하나의 흐름이라
+ * 관리자가 한 화면에서 따라갈 수 있어야 한다. `flow` 로 한쪽만 볼 수도 있다.
+ *
+ * TODO(api): 명세 5.9 가 확정되면 `GET /finance/transactions?type=CHARGE|TRANSFER_OUT`
+ *            한 번으로 대체된다. 그때 이 합치기는 서버로 넘어간다.
+ */
+export async function fetchFundsFlow(params: FundsFlowParams): Promise<Page<FundsFlowRow>> {
+  const flow = params.flow ?? 'ALL';
+
+  const charges: FundsFlowRow[] =
+    flow === 'TRANSFER'
+      ? []
+      : chargeStore
+          .filter((c) => (params.userId ? c.userId === params.userId : true))
+          .filter((c) => (params.status && params.status !== 'ALL' ? c.status === params.status : true))
+          .filter((c) => matchesKeyword(c, params.keyword, ['userName', 'userEmail', 'method']))
+          .map((c) => ({ kind: 'CHARGE' as const, ...c }));
+
+  // 용돈 이동에는 충전 상태가 없다. 상태 필터가 걸리면 자연히 빠진다.
+  const transfers: FundsFlowRow[] =
+    flow === 'CHARGE' || (params.status && params.status !== 'ALL')
+      ? []
+      : MOCK_TRANSFERS.filter((t) =>
+          params.userId ? t.fromUserId === params.userId || t.toUserId === params.userId : true,
+        )
+          .filter((t) => matchesKeyword(t, params.keyword, ['fromUserName', 'toUserName', 'memo']))
+          .map((t) => ({ kind: 'TRANSFER' as const, ...t }));
+
+  const merged = [...charges, ...transfers].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return mockResponse(paginate(merged, params));
 }
 
 /* --------------------------------------------------------- 매장 결제 ---- */

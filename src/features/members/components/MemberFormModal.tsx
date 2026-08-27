@@ -132,7 +132,6 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
           {(p) => (
             <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as MemberStatus)}>
               <option value="ACTIVE">활성</option>
-              <option value="SUSPENDED">정지</option>
               <option value="WITHDRAWN">탈퇴</option>
             </Select>
           )}

@@ -18,10 +18,15 @@ export function inquiryStatus(answered: boolean): { label: string; tone: Tone } 
 }
 
 /** 회원 계정 상태. */
-export type MemberStatus = 'ACTIVE' | 'SUSPENDED' | 'WITHDRAWN';
+/**
+ * 회원 상태.
+ *
+ * 명세 5.2 의 회원 응답은 `isDeleted`(boolean) 뿐이고 백엔드도 이 값만 쓰기로
+ * 확정했다(8/27). 그래서 정지 상태는 두지 않고 활성/탈퇴 두 가지만 표현한다.
+ */
+export type MemberStatus = 'ACTIVE' | 'WITHDRAWN';
 
 export const MEMBER_STATUS: Record<MemberStatus, { label: string; tone: Tone }> = {
   ACTIVE: { label: '활성', tone: 'success' },
-  SUSPENDED: { label: '정지', tone: 'danger' },
   WITHDRAWN: { label: '탈퇴', tone: 'neutral' },
 };

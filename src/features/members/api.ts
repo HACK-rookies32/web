@@ -109,8 +109,8 @@ export async function fetchMemberInquiries(memberId: number): Promise<MemberInqu
 /**
  * PATCH /admin/members/{id} — SUPER_ADMIN 전용
  *
- * 상태를 바꾸면 계정 정지(MEMBER_SUSPEND), 그 밖에는 회원 정보 수정(MEMBER_UPDATE)
- * 으로 감사 로그가 남는다. 서버 연동 후에는 서버가 기록하므로 목 블록만 남긴다.
+ * 회원 정보 수정(MEMBER_UPDATE)으로 감사 로그가 남는다.
+ * 서버 연동 후에는 서버가 기록하므로 목 블록만 남긴다.
  */
 export async function updateMember(vars: {
   memberId: number;
@@ -128,7 +128,7 @@ export async function updateMember(vars: {
     const statusChanged = vars.body.status !== undefined && vars.body.status !== before.status;
     appendAuditLog({
       adminUsername: vars.adminUsername,
-      action: statusChanged && vars.body.status === 'SUSPENDED' ? 'MEMBER_SUSPEND' : 'MEMBER_UPDATE',
+      action: 'MEMBER_UPDATE',
       target: `member:${vars.memberId}`,
       description: statusChanged
         ? `${before.name} 회원 상태 ${MEMBER_STATUS[before.status].label} → ${MEMBER_STATUS[vars.body.status!].label}`

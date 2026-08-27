@@ -7,7 +7,7 @@ import { useAuth } from '@/shared/auth/AuthContext';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
 import { adjustWallet, fetchFundStats, fundKeys, refund } from '../api';
-import type { ChargeItem, StorePayment } from '../types';
+import type { ChargeItem, FundsFlowFilter, StorePayment } from '../types';
 import { ChargesTab } from '../components/ChargesTab';
 import { StorePaymentsTab } from '../components/StorePaymentsTab';
 import { WalletsTab } from '../components/WalletsTab';
@@ -52,7 +52,7 @@ function FundsKpi({
  *
  * 구독/PG 대행 모델이 폐기되고 자체 지갑 기반으로 바뀌면서 화면을 재구성했다.
  *
- *   충전 내역   — 부모가 카드로 지갑을 충전한 기록
+ *   충전·용돈   — 부모가 카드로 충전한 기록 + 자녀에게 보낸 용돈 이동
  *   매장 결제   — 자녀가 QR 로 매장에서 결제한 기록 (강제 환불 대상)
  *   회원 지갑   — 회원별 잔액과 거래 원장 (잔액 수동 조정 대상)
  *
@@ -173,7 +173,7 @@ export function PaymentsPage() {
         value={tab}
         onChange={changeTab}
         items={[
-          { key: 'charges', label: '충전 내역' },
+          { key: 'charges', label: '충전·용돈' },
           { key: 'payments', label: '매장 결제 내역' },
           { key: 'wallets', label: '회원 지갑' },
         ]}
@@ -182,6 +182,7 @@ export function PaymentsPage() {
           <ChargesTab
             keyword={keyword}
             status={(searchParams.get('status') as ChargeStatus | 'ALL' | null) ?? 'ALL'}
+            flow={(searchParams.get('flow') as FundsFlowFilter | null) ?? 'ALL'}
             userId={memberId}
             page={page}
             canManage={canManage}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Button,
@@ -10,12 +10,10 @@ import {
   EmptyState,
   Icon,
   LoadingBlock,
-  Modal,
   PageHeader,
   StatusPill,
   Table,
   Tabs,
-  useToast,
 } from '@/shared/ui';
 import {
   formatCurrency,
@@ -26,23 +24,19 @@ import {
   maskEmail,
   maskName,
   maskPhone,
-  memberRef,
 } from '@/shared/lib/format';
 import { MEMBER_STATUS, inquiryStatus } from '@/shared/lib/status';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
-import { useAuth } from '@/shared/auth/AuthContext';
-import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import {
   fetchMember,
   fetchMemberDevices,
   fetchMemberInquiries,
   fetchMemberWallet,
   memberKeys,
-  updateMember,
 } from '../api';
 import type { MemberDevice, MemberInquiry } from '../types';
-import { BanGlyph, DownloadGlyph } from '../components/Glyphs';
 import { CsvReportModal } from '../components/CsvReportModal';
+import { DownloadGlyph } from '../components/Glyphs';
 import './MemberDetailPage.css';
 
 type TabKey = 'basic' | 'devices' | 'inquiries';
@@ -63,18 +57,12 @@ export function MemberDetailPage() {
   const { memberId: rawId } = useParams();
   const memberId = Number(rawId);
   const navigate = useNavigate();
-  const toast = useToast();
-  const queryClient = useQueryClient();
-  const { hasRole, session } = useAuth();
-  const syncAuditLog = useAuditLogSync();
-  const canManage = hasRole(['SUPER_ADMIN']);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab') as TabKey | null;
   const tab: TabKey = tabParam && TAB_KEYS.includes(tabParam) ? tabParam : 'basic';
 
   const [csvOpen, setCsvOpen] = useState(false);
-  const [suspendOpen, setSuspendOpen] = useState(false);
 
   const member = useQuery({
     queryKey: memberKeys.detail(memberId),
@@ -100,22 +88,6 @@ export function MemberDetailPage() {
     enabled: Number.isFinite(memberId),
   });
 
-  const suspendMutation = useMutation({
-    mutationFn: () =>
-      updateMember({
-        memberId,
-        body: { status: 'SUSPENDED' },
-        adminUsername: session?.username ?? 'unknown',
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: memberKeys.all });
-      queryClient.invalidateQueries({ queryKey: memberKeys.detail(memberId) });
-      syncAuditLog();
-      setSuspendOpen(false);
-      toast.success('계정을 정지했습니다', '이 작업은 감사 로그에 기록되었습니다.');
-    },
-    onError: () => toast.error('계정 정지에 실패했습니다', '잠시 후 다시 시도해 주세요.'),
-  });
 
   function changeTab(next: TabKey) {
     setSearchParams((prev) => {
@@ -258,7 +230,6 @@ export function MemberDetailPage() {
               <Card title="활동">
                 <DetailBox>
                   <DetailRow label="가입일" value={formatDateTime(m.createdAt)} />
-                  <DetailRow label="최근 접속" value={formatRelative(m.lastLoginAt)} />
                   <DetailRow label="최근 수정" value={formatDateTime(m.updatedAt)} />
                 </DetailBox>
               </Card>
@@ -317,15 +288,6 @@ export function MemberDetailPage() {
           <Card
             title="연결 기기"
             description="자녀 기기의 연결 상태와 앱 버전을 확인합니다."
-            action={
-              canManage && m.status !== 'SUSPENDED' ? (
-                <Button variant="danger" iconLeft={<BanGlyph />} onClick={() => setSuspendOpen(true)}>
-                  계정 정지
-                </Button>
-              ) : canManage ? (
-                <StatusPill tone="danger">정지된 계정</StatusPill>
-              ) : undefined
-            }
             flush
           >
             <Table
@@ -364,32 +326,6 @@ export function MemberDetailPage() {
 
       <CsvReportModal open={csvOpen} member={m} onClose={() => setCsvOpen(false)} />
 
-      <Modal
-        open={suspendOpen}
-        onClose={() => setSuspendOpen(false)}
-        size="sm"
-        title="계정을 정지할까요?"
-        description="정지하면 해당 회원과 연결된 자녀 기기의 앱 사용이 제한됩니다."
-        footer={
-          <>
-            <Button onClick={() => setSuspendOpen(false)} disabled={suspendMutation.isPending}>
-              취소
-            </Button>
-            <Button
-              variant="danger"
-              loading={suspendMutation.isPending}
-              onClick={() => suspendMutation.mutate()}
-            >
-              계정 정지
-            </Button>
-          </>
-        }
-      >
-        <p className="detail__confirm">
-          <strong>{maskName(m.name)}</strong> ({memberRef(m.memberId)} · {maskEmail(m.email)}) 회원의
-          계정을 정지합니다. 이 작업은 감사 로그에 기록됩니다.
-        </p>
-      </Modal>
     </div>
   );
 }

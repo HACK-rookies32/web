@@ -21,10 +21,16 @@
  */
 export type Role = 'SUPER_ADMIN' | 'GENERAL_ADMIN' | 'COMMUNITY_ADMIN' | 'INQUIRY_ADMIN';
 
-/** GET /admin/admins 의 원소. */
+/**
+ * GET /admin/admins 의 원소.
+ *
+ * 아이디 필드는 `loginId` 다(명세 5.1, 8/27 개정). 회원 API(5.2)의
+ * `username` 은 실명을 뜻하므로 헷갈리지 않도록 이름을 맞춰 둔다.
+ * 다만 로그인 응답(LoginResult)은 아직 같은 값을 `username` 으로 내려준다.
+ */
 export interface AdminUser {
   id: number;
-  username: string;
+  loginId: string;
   nickname: string;
   email: string;
   phoneNumber: string;

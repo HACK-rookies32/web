@@ -22,7 +22,6 @@ export interface MemberListItem {
   /** 등록 기기 수 */
   deviceCount: number;
   createdAt: string;
-  lastLoginAt: string | null;
 }
 
 /**

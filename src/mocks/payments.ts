@@ -2,6 +2,7 @@ import type {
   ChargeItem,
   FundStats,
   StorePayment,
+  TransferItem,
   WalletSummary,
   WalletTransaction,
 } from '@/features/payments/types';
@@ -156,6 +157,66 @@ export const MOCK_CHARGES: ChargeItem[] = [
     createdAt: daysAgo(10),
     canceledAt: null,
     cancelReason: null,
+  },
+];
+
+/* --------------------------------------------------- 부모→자녀 용돈 ---- */
+
+/**
+ * 부모가 자녀에게 보낸 용돈 내역.
+ * 아래 지갑 원장(MOCK_WALLETS)의 TRANSFER_OUT / TRANSFER_IN 쌍과 같은 사건이다.
+ * 금액·시각을 원장과 맞춰 두었으니 한쪽만 고치지 말 것.
+ */
+export const MOCK_TRANSFERS: TransferItem[] = [
+  {
+    transferId: 8001,
+    fromUserId: 1001,
+    fromUserName: '김민수',
+    toUserId: 2001,
+    toUserName: '김하은',
+    amount: 10000,
+    memo: '주간 용돈',
+    createdAt: hoursAgo(2),
+  },
+  {
+    transferId: 8002,
+    fromUserId: 1002,
+    fromUserName: '이서진',
+    toUserId: 2003,
+    toUserName: '이수아',
+    amount: 15000,
+    memo: null,
+    createdAt: daysAgo(1),
+  },
+  {
+    transferId: 8003,
+    fromUserId: 1004,
+    fromUserName: '최혜원',
+    toUserId: 2005,
+    toUserName: '최지호',
+    amount: 20000,
+    memo: '체험학습 준비',
+    createdAt: daysAgo(2),
+  },
+  {
+    transferId: 8004,
+    fromUserId: 1007,
+    fromUserName: '한상우',
+    toUserId: 2009,
+    toUserName: '한서준',
+    amount: 8000,
+    memo: '주간 용돈',
+    createdAt: daysAgo(3),
+  },
+  {
+    transferId: 8005,
+    fromUserId: 1009,
+    fromUserName: '권태민',
+    toUserId: 2012,
+    toUserName: '권다윤',
+    amount: 50000,
+    memo: '생일 용돈',
+    createdAt: daysAgo(4),
   },
 ];
 
