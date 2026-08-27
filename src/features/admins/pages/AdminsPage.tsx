@@ -25,6 +25,7 @@ import {
   formatDateTime,
   maskEmail,
   maskPhone,
+  memberRef,
 } from '@/shared/lib/format';
 import type { Role } from '@/shared/lib/types';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
@@ -128,7 +129,17 @@ export function AdminsPage() {
     {
       key: 'account',
       header: '관리자 계정',
-      render: (row) => <StackedCell primary={row.nickname || row.username} secondary={row.username} />,
+      /*
+       * 감사 로그는 권한 변경 대상을 `admin:5`(관리자 계정 #5)로 기록하고
+       * 이 목록으로 링크를 건다. 목록에 계정 ID 가 없으면 링크를 타고 와도
+       * 누구인지 찾을 수 없어 조사 동선이 끊긴다.
+       */
+      render: (row) => (
+        <StackedCell
+          primary={row.nickname || row.username}
+          secondary={`${memberRef(row.id, '관리자')} · ${row.username}`}
+        />
+      ),
     },
     {
       key: 'contact',
@@ -208,7 +219,11 @@ export function AdminsPage() {
         open={editing !== null}
         onClose={closeRoleModal}
         title="관리자 권한 변경"
-        description={editing ? `${editing.nickname || editing.username} (${editing.username})` : undefined}
+        description={
+          editing
+            ? `${editing.nickname || editing.username} (${memberRef(editing.id, '관리자')} · ${editing.username})`
+            : undefined
+        }
         size="sm"
         footer={
           <>
