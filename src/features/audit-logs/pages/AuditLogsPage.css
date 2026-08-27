@@ -19,11 +19,6 @@
   padding-bottom: 1px;
 }
 
-.audit-logs__id {
-  color: var(--accent-strong);
-  font-weight: 700;
-}
-
 .audit-logs__action {
   display: flex;
   flex-direction: column;
@@ -76,12 +71,3 @@
   min-width: 1040px;
 }
 
-/* 내용 칸 — 길어지면 두 줄까지만 보여주고 나머지는 말줄임한다. */
-.audit-logs__description {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  overflow: hidden;
-  line-height: var(--lh-body);
-}

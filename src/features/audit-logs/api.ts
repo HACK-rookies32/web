@@ -18,11 +18,15 @@ function endOfDay(value: string): number {
   return new Date(`${value}T23:59:59.999`).getTime();
 }
 
-/** GET /admin/audit-logs?adminId&action&from&to&page&size — SUPER_ADMIN */
+/** GET /admin/audit-logs?adminUsername&action&from&to&page&size — SUPER_ADMIN */
 export async function fetchAuditLogs(params: AuditLogListParams): Promise<Page<AuditLogItem>> {
   if (USE_MOCK) {
     const filtered = getAuditLogs()
-      .filter((log) => (params.adminId ? log.adminId === params.adminId : true))
+      .filter((log) =>
+        params.adminUsername
+          ? log.adminUsername.toLocaleLowerCase().includes(params.adminUsername.trim().toLocaleLowerCase())
+          : true,
+      )
       .filter((log) => (params.action ? log.action === params.action : true))
       .filter((log) => (params.from ? new Date(log.createdAt).getTime() >= startOfDay(params.from) : true))
       .filter((log) => (params.to ? new Date(log.createdAt).getTime() <= endOfDay(params.to) : true))

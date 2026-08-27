@@ -19,7 +19,12 @@ import {
 import { formatDateTime } from '@/shared/lib/format';
 import { useListParams } from '@/shared/hooks/useListParams';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
-import { AUDIT_ACTION_LABEL, type AuditAction, parseAuditTarget } from '@/shared/lib/audit';
+import {
+  AUDIT_ACTION_LABEL,
+  AUDIT_FILTER_ACTIONS,
+  type AuditAction,
+  parseAuditTarget,
+} from '@/shared/lib/audit';
 import { auditLogKeys, fetchAuditLogs } from '../api';
 import { AuditDatePicker } from '../components/AuditDatePicker';
 import type { AuditLogItem, AuditLogListParams } from '../types';
@@ -52,21 +57,21 @@ function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutr
 
 export function AuditLogsPage() {
   const { patchParams, resetParams, getParam, page } = useListParams();
-  const adminIdValue = getParam('adminId');
+  const adminUsernameValue = getParam('adminUsername');
   const actionValue = getParam('action');
   const from = getParam('from');
   const to = getParam('to');
 
   const params = useMemo<AuditLogListParams>(
     () => ({
-      adminId: adminIdValue ? Number(adminIdValue) : undefined,
+      adminUsername: adminUsernameValue || undefined,
       action: actionValue ? (actionValue as AuditAction) : undefined,
       from: from || undefined,
       to: to || undefined,
       page,
       size: DEFAULT_PAGE_SIZE,
     }),
-    [adminIdValue, actionValue, from, to, page],
+    [adminUsernameValue, actionValue, from, to, page],
   );
 
   const query = useQuery({
@@ -74,29 +79,26 @@ export function AuditLogsPage() {
     queryFn: () => fetchAuditLogs(params),
   });
 
-  const hasFilters = Boolean(adminIdValue || actionValue || from || to);
+  const hasFilters = Boolean(adminUsernameValue || actionValue || from || to);
   const invalidPeriod = Boolean(from && to && from > to);
   const maxAuditDate = getTodayDate();
 
+  /*
+   * 컬럼은 관리자 · 활동 · 대상 · 발생일시 넷이다.
+   * 대상만 폭을 비워 남는 공간을 흡수하게 두고, 나머지는 내용 길이에 맞춰 고정한다.
+   */
   const columns: Column<AuditLogItem>[] = [
-    {
-      key: 'id',
-      header: '로그 ID',
-      width: '92px',
-      numeric: true,
-      render: (row) => <span className="audit-logs__id">#{row.logId}</span>,
-    },
     {
       key: 'admin',
       header: '관리자',
-      width: '132px',
+      width: '200px',
       /* 계정명을 앞세우고 숫자 ID 는 보조로 내린다. */
       render: (row) => <StackedCell primary={row.adminUsername} secondary={`#${row.adminId}`} />,
     },
     {
       key: 'action',
       header: '활동',
-      width: '168px',
+      width: '260px',
       render: (row) => (
         <div className="audit-logs__action">
           <StatusPill tone={actionTone(row.action)}>{AUDIT_ACTION_LABEL[row.action]}</StatusPill>
@@ -107,7 +109,6 @@ export function AuditLogsPage() {
     {
       key: 'target',
       header: '대상',
-      width: '184px',
       /*
        * target 은 "member:1001" 같은 문자열이다. 종류를 우리말로 풀고,
        * 해당 관리 화면으로 바로 갈 수 있게 링크를 건다. 연결할 화면이
@@ -131,19 +132,9 @@ export function AuditLogsPage() {
       },
     },
     {
-      key: 'description',
-      header: '내용',
-      render: (row) =>
-        row.description ? (
-          <span className="audit-logs__description">{row.description}</span>
-        ) : (
-          <span className="muted">-</span>
-        ),
-    },
-    {
       key: 'createdAt',
       header: '발생일시',
-      width: '168px',
+      width: '200px',
       numeric: true,
       render: (row) => <span className="muted">{formatDateTime(row.createdAt)}</span>,
     },
@@ -153,16 +144,13 @@ export function AuditLogsPage() {
     <div className="audit-logs">
       <Card className="audit-logs__filters" title="조회 조건" description="관리자, 활동 유형, 발생 기간으로 기록을 좁혀볼 수 있습니다.">
         <div className="audit-logs__filter-grid">
-          <FormField label="관리자 ID">
+          <FormField label="관리자 아이디">
             {(props) => (
               <TextInput
                 {...props}
-                type="number"
-                min={1}
-                inputMode="numeric"
-                value={adminIdValue}
-                placeholder="전체 관리자"
-                onChange={(event) => patchParams({ adminId: event.target.value })}
+                value={adminUsernameValue}
+                placeholder="예: admin01, general_lee"
+                onChange={(event) => patchParams({ adminUsername: event.target.value })}
               />
             )}
           </FormField>
@@ -171,8 +159,8 @@ export function AuditLogsPage() {
             {(props) => (
               <Select {...props} value={actionValue} onChange={(event) => patchParams({ action: event.target.value })}>
                 <option value="">전체 활동</option>
-                {Object.entries(AUDIT_ACTION_LABEL).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                {AUDIT_FILTER_ACTIONS.map((value) => (
+                  <option key={value} value={value}>{AUDIT_ACTION_LABEL[value]}</option>
                 ))}
               </Select>
             )}

@@ -18,7 +18,8 @@ export interface AuditLogItem {
 }
 
 export interface AuditLogListParams extends PageParams {
-  adminId?: number;
+  /** 관리자 계정 아이디(부분 일치). 숫자 ID 가 아니라 admin01 같은 로그인 아이디다. */
+  adminUsername?: string;
   action?: AuditAction;
   /** ISO 날짜(yyyy-MM-dd) */
   from?: string;

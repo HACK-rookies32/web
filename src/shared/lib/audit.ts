@@ -33,6 +33,20 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
 };
 
 /**
+ * 감사 로그 화면의 활동 유형 필터에 노출할 값.
+ *
+ * 위 AUDIT_ACTION_LABEL 은 목록에 이미 쌓인 로그를 그리는 데 쓰므로 전체를
+ * 유지하고, 필터 드롭다운만 실제로 사용하는 유형으로 좁힌다. 둘을 같이 줄이면
+ * 과거 로그의 활동명이 코드값 그대로 노출된다.
+ */
+export const AUDIT_FILTER_ACTIONS: AuditAction[] = [
+  'MEMBER_DELETE',
+  'WALLET_ADJUST',
+  'PAYMENT_REFUND',
+  'POST_DELETE',
+];
+
+/**
  * 감사 로그 목록 쿼리 키.
  *
  * 감사 대상 활동은 회원·자금·공지·커뮤니티 등 여러 feature 에서 일어나는데,
