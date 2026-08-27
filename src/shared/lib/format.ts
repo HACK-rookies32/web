@@ -58,14 +58,6 @@ export function formatCurrency(n: number | null | undefined): string {
   return `${sign}₩${Math.abs(n).toLocaleString('ko-KR')}`;
 }
 
-/** 45.2K — KPI 카드처럼 좁은 칸에서 쓴다. */
-export function formatCompact(n: number | null | undefined): string {
-  if (n === null || n === undefined || Number.isNaN(n)) return '-';
-  if (Math.abs(n) < 1000) return String(n);
-  if (Math.abs(n) < 1_000_000) return `${(n / 1000).toFixed(1)}K`;
-  return `${(n / 1_000_000).toFixed(1)}M`;
-}
-
 /* -------------------------------------------------------------- 마스킹 ---- */
 
 /**
@@ -136,13 +128,6 @@ export function maskAddress(address: string): string {
   const parts = address.trim().split(/\s+/);
   if (parts.length <= 3) return address;
   return `${parts.slice(0, 3).join(' ')} ***`;
-}
-
-/** 192.168.0.14 → 192.168.*.* */
-export function maskIp(ip: string): string {
-  const parts = ip.split('.');
-  if (parts.length !== 4) return ip;
-  return `${parts[0]}.${parts[1]}.*.*`;
 }
 
 /* ---------------------------------------------------------------- CSV ---- */

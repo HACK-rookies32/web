@@ -20,11 +20,6 @@ export function mockResponse<T>(data: T, delayMs = randomDelay()): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), delayMs));
 }
 
-/** 지연 후 에러를 던지는 Promise. 에러 상태 화면 확인용. */
-export function mockFailure(message: string, delayMs = randomDelay()): Promise<never> {
-  return new Promise((_, reject) => setTimeout(() => reject(new Error(message)), delayMs));
-}
-
 /** 배열을 명세 3.5 의 페이징 응답 형태로 자른다. page 는 0-base. */
 export function paginate<T>(items: T[], params: PageParams = {}): Page<T> {
   const size = params.size ?? DEFAULT_PAGE_SIZE;
@@ -47,10 +42,4 @@ export function matchesKeyword<T>(item: T, keyword: string | undefined, fields: 
   if (!keyword?.trim()) return true;
   const needle = keyword.trim().toLowerCase();
   return fields.some((f) => String(item[f] ?? '').toLowerCase().includes(needle));
-}
-
-/** 목 데이터용 순번 id 생성기. */
-export function createIdFactory(start: number): () => number {
-  let next = start;
-  return () => next++;
 }

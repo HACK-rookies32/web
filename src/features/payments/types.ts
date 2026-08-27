@@ -141,15 +141,6 @@ export interface RefundResult {
 
 /* --------------------------------------------------------- 파라미터 ---- */
 
-export interface ChargeListParams extends PageParams {
-  userId?: number;
-  status?: ChargeStatus | 'ALL';
-}
-
-export interface TransferListParams extends PageParams {
-  keyword?: string;
-}
-
 /** 충전 탭(충전 + 용돈 이동) 조회 파라미터. */
 export interface FundsFlowParams extends PageParams {
   flow?: FundsFlowFilter;
@@ -166,8 +157,4 @@ export interface StorePaymentListParams extends PageParams {
 
 export interface WalletListParams extends PageParams {
   role?: 'PARENT' | 'CHILD' | 'ALL';
-}
-
-export interface WalletTxParams extends PageParams {
-  type?: WalletTxType | 'ALL';
 }

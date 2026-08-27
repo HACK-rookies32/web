@@ -26,29 +26,6 @@
   color: var(--accent-strong);
 }
 
-.members__children {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  min-width: 0;
-}
-
-.members__children-count {
-  font-size: var(--fs-label);
-  line-height: var(--lh-label);
-  font-weight: 500;
-  color: var(--text-strong);
-}
-
-.members__children-names {
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-  color: var(--text-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .members__danger:hover {
   color: var(--danger);
 }

@@ -52,16 +52,6 @@
   color: var(--text-strong);
 }
 
-.detail__confirm {
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  color: var(--text);
-}
-
-.detail__confirm strong {
-  color: var(--text-strong);
-}
-
 /* ---- 지갑 거래 요약 ---------------------------------------------------- */
 
 .detail__ledger {

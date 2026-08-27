@@ -204,27 +204,6 @@
   color: var(--text-muted);
 }
 
-/* ---- 하단 ------------------------------------------------------------- */
-
-.login__links {
-  display: flex;
-  justify-content: center;
-}
-
-.login__link {
-  border: 0;
-  background: transparent;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  color: var(--accent-strong);
-}
-
-.login__link:hover {
-  text-decoration: underline;
-}
-
 .login__badge {
   display: flex;
   align-items: center;
