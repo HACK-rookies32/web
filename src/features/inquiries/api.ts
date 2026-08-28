@@ -1,5 +1,6 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { mockResponse, paginate } from '@/shared/api/mock';
+import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { MOCK_INQUIRIES } from '@/mocks/inquiries';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { toCsv } from '@/shared/lib/format';
@@ -43,10 +44,16 @@ function toListItem(i: InquiryDetail): InquiryListItem {
 }
 
 /**
- * GET /admin/inquiries — 전체 문의 목록
+ * GET /admin/inquiries?page&size — 전체 문의 목록
  *
- * TODO(api): 명세상 응답이 배열이라 페이징 정보가 없다. 화면에서는 목록이 길어지므로
- *            클라이언트에서 잘라 쓰고, 백엔드에 page/size 지원을 요청해 두었다.
+ * 서버는 평평한 페이지 객체 `{ content, page, size, totalElements, totalPages }` 를
+ * 돌려준다. 공지·커뮤니티의 Spring Page 와 달리 현재 페이지가 `page` 라 그대로 쓴다.
+ *
+ * 예전 명세에는 응답이 배열로 적혀 있어 받아서 클라이언트에서 잘라 썼는데,
+ * 실서버는 페이지 객체를 준다. 배열로 알고 slice 를 부르면 터진다 —
+ * 실제로 홈 화면의 문의 칸이 이 때문에 "불러오지 못했습니다" 로 떴다.
+ *
+ * `answered` 필터는 서버 쿼리에 없어 받아온 페이지 안에서만 거른다.
  */
 export async function fetchInquiries(params: InquiryListParams): Promise<Page<InquiryListItem>> {
   if (USE_MOCK) {
@@ -61,8 +68,23 @@ export async function fetchInquiries(params: InquiryListParams): Promise<Page<In
     return mockResponse(paginate(filtered, params));
   }
 
-  const list = await request<InquiryListItem[]>({ url: '/admin/inquiries', method: 'GET' });
-  return paginate(list, params);
+  const data = await request<Page<InquiryListItem>>({
+    url: '/admin/inquiries',
+    method: 'GET',
+    params: { page: params.page ?? 0, size: params.size ?? DEFAULT_PAGE_SIZE },
+  });
+
+  const content = Array.isArray(data?.content) ? data.content : [];
+  return {
+    content:
+      !params.answered || params.answered === 'ALL'
+        ? content
+        : content.filter((i) => (params.answered === 'ANSWERED' ? i.answered : !i.answered)),
+    page: data?.page ?? 0,
+    size: data?.size ?? 0,
+    totalElements: data?.totalElements ?? 0,
+    totalPages: data?.totalPages ?? 0,
+  };
 }
 
 /** GET /admin/inquiries/{id} — 문의 상세 */
