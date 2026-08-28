@@ -95,8 +95,6 @@ export interface StorePayment {
   /** 결제 직후 자녀 지갑 잔액 */
   balanceAfter: number;
   paidAt: string;
-  refundedAt: string | null;
-  refundReason: string | null;
 }
 
 /* ------------------------------------------------------------- 통계 ---- */

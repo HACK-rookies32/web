@@ -165,10 +165,11 @@ export async function fetchInquiriesCsv(vars: { adminUsername: string }): Promis
     );
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'REPORT_DOWNLOAD',
-      target: 'report:inquiries',
-      description: `1:1 문의 내역 CSV 내려받기 — ${inquiryStore.length}건`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'REPORT_DOWNLOAD',
+      activityLabel: '리포트 다운로드',
+      targetType: 'INQUIRY_ANSWER',
+      targetId: 0,
     });
 
     return mockResponse(csv, 600);

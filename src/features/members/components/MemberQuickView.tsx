@@ -139,6 +139,8 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
               <div className="quickview__loading">
                 <Spinner size={18} />
               </div>
+            ) : wallet.isError ? (
+              <EmptyState tone="error" title="지갑 정보를 불러오지 못했습니다" />
             ) : wallet.data ? (
               <>
                 <DetailBox>

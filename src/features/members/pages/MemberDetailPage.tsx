@@ -241,6 +241,8 @@ export function MemberDetailPage() {
               >
                 {wallet.isPending ? (
                   <LoadingBlock label="지갑 정보를 불러오는 중" />
+                ) : wallet.isError ? (
+                  <EmptyState tone="error" title="지갑 정보를 불러오지 못했습니다" />
                 ) : wallet.data ? (
                   <>
                     <DetailBox>

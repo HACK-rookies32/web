@@ -25,7 +25,7 @@ interface WalletsTabProps {
   onAdjust: (wallet: WalletSummary) => void;
 }
 
-/** 회원 지갑 목록 (GET /admin/wallets/{userId} 를 목록으로 확장). */
+/** 회원 지갑 목록. 서버에 대응 엔드포인트가 없어 목으로만 동작한다(api.ts 참고). */
 export function WalletsTab({
   keyword,
   role,

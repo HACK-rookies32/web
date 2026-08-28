@@ -31,7 +31,12 @@ export interface WalletTransaction {
   createdAt: string;
 }
 
-/** GET /admin/wallets/{userId} 의 data. */
+/**
+ * 지갑 요약. 화면이 쓰는 모양이다.
+ *
+ * 서버 응답(AdminUserWalletResponse)은 userId · balance · recentTransactions 뿐이라
+ * 나머지는 채워지지 않는다. features/payments/api.ts 의 fetchWallet 주석 참고.
+ */
 export interface WalletSummary {
   walletId: number;
   userId: number;
@@ -65,12 +70,16 @@ export const CHARGE_STATUS: Record<ChargeStatus, { label: string; tone: Tone }> 
   CANCELED: { label: '취소', tone: 'neutral' },
 };
 
-/** 매장 결제 상태. */
-export type StorePaymentStatus = 'PAID' | 'REFUNDED' | 'CANCELLED';
+/**
+ * 매장 결제 상태.
+ *
+ * 환불(REFUNDED)은 두지 않는다. 관리자 강제 환불을 쓰지 않기로 하면서 웹에서
+ * 결제를 환불로 바꿀 경로가 없어졌다. 취소는 앱의 부모 결제 취소로 생긴다.
+ */
+export type StorePaymentStatus = 'PAID' | 'CANCELLED';
 
 export const STORE_PAYMENT_STATUS: Record<StorePaymentStatus, { label: string; tone: Tone }> = {
   PAID: { label: '결제 완료', tone: 'success' },
-  REFUNDED: { label: '환불', tone: 'warning' },
   CANCELLED: { label: '취소', tone: 'neutral' },
 };
 

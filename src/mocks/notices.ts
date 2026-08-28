@@ -27,7 +27,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     title: '용돈 지갑 기능 오픈 안내',
     content:
       '자녀에게 직접 용돈을 보낼 수 있는 지갑 기능이 추가되었습니다.\n\n· 부모: 카드로 지갑 충전 후 자녀에게 이체\n· 자녀: 매장에서 QR로 결제\n\n앱을 최신 버전으로 업데이트해 주세요.',
-    attachments: ['/uploads/notice/wallet-guide.pdf'],
+    attachments: ['/api/files/notice/9f2c_용돈지갑-이용안내.pdf'],
     links: ['https://careguard.example.com/guide/wallet'],
     authorName: '김슈퍼',
     attachmentCount: 1,
@@ -40,7 +40,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     title: '개인정보 처리방침 개정 안내 (2026-09-01 시행)',
     content:
       '개인정보 처리방침이 일부 개정되어 안내드립니다.\n\n· 변경 사항: 위치정보 보관 기간 명시(최근 3일)\n· 시행일: 2026년 9월 1일\n\n자세한 내용은 첨부된 문서를 확인해 주세요.',
-    attachments: ['/uploads/notice/privacy-2026-09.pdf'],
+    attachments: ['/api/files/notice/4b71_개인정보처리방침-개정본.pdf'],
     links: [],
     authorName: '김슈퍼',
     attachmentCount: 1,

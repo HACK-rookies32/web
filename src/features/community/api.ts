@@ -1,4 +1,5 @@
 import { USE_MOCK, request } from '@/shared/api/client';
+import { toPage, type SpringPage } from '@/shared/api/page';
 import { mockResponse, paginate } from '@/shared/api/mock';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_COMMUNITY_POSTS } from '@/mocks/community';
@@ -7,7 +8,6 @@ import type {
   CommunityPostDetail,
   CommunityPostListItem,
   CommunityPostListParams,
-  SpringPage,
 } from './types';
 
 export const communityKeys = {
@@ -41,13 +41,7 @@ export async function fetchCommunityPosts(
     params: { page: params.page ?? 0, size: params.size ?? 10, sort: 'id,desc' },
   });
 
-  return {
-    content: data.content,
-    page: data.number,
-    size: data.size,
-    totalElements: data.totalElements,
-    totalPages: data.totalPages,
-  };
+  return toPage(data);
 }
 
 /** GET /admin/community/posts/{id} */
@@ -68,10 +62,11 @@ export async function deleteCommunityPost(vars: {
   if (USE_MOCK) {
     postStore = postStore.filter((post) => post.id !== vars.postId);
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'POST_DELETE',
-      target: `post:${vars.postId}`,
-      description: '커뮤니티 게시글 삭제',
+      adminLoginId: vars.adminUsername,
+      activityType: 'POST_DELETE',
+      activityLabel: '게시글 삭제',
+      targetType: 'POST',
+      targetId: vars.postId,
     });
     return mockResponse(undefined, 500);
   }

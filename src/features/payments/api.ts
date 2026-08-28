@@ -99,7 +99,12 @@ export async function fetchStorePayments(
 /* ------------------------------------------------------------- 환불 ---- */
 
 /**
- * POST /admin/wallets/refund — 강제 환불 · 충전 취소 (SUPER_ADMIN)
+ * POST /admin/wallets/refund — 충전 취소 (SUPER_ADMIN)
+ *
+ * TODO(api): 이 경로는 서버에 없다(500). 관리자용 충전 취소 엔드포인트 자체가
+ *            없어서 신설 요청해 둔 상태다. 4장의 부모용
+ *            `POST /wallet/charge/{merchantUid}/refund` 는 인증이 PARENT 라
+ *            관리자가 쓰면 행위 주체가 사용자로 기록된다.
  *
  * 대상마다 경로를 따로 두지 않고 `targetType` + `targetId` 로 구분한다.
  * 어느 쪽이든 결국 하는 일은 같다 — 지갑 잔액을 되돌리고
@@ -144,10 +149,11 @@ export async function refund(
     });
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'PAYMENT_REFUND',
-      target: `charge:${target.chargeId}`,
-      description: `${target.userName} 회원의 ${target.method} 충전 ${target.amount.toLocaleString('ko-KR')}원 취소 — ${vars.reason}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'PAYMENT_REFUND',
+      activityLabel: '강제 환불',
+      targetType: 'PAYMENT',
+      targetId: target.chargeId,
     });
 
     return mockResponse(
@@ -215,8 +221,9 @@ function applyRefundToWallet(input: {
 
 /**
  * 회원 지갑 목록.
- * TODO(api): 명세에는 단건 조회(GET /admin/wallets/{userId})만 있고 목록이 없다.
- *            관리 화면에서는 전체를 훑어야 하므로 목록 엔드포인트가 필요하다.
+ * TODO(api): 서버에 지갑 목록 엔드포인트가 없다(`/admin/wallets` 는 500).
+ *            단건은 `/admin/members/customers/{id}/subscription` 으로 볼 수 있으나
+ *            전체 회원 잔액을 훑을 방법이 없다. 신설 요청해 둔 상태다.
  */
 export async function fetchWallets(params: WalletListParams): Promise<Page<WalletSummary>> {
   if (USE_MOCK) {
@@ -229,19 +236,42 @@ export async function fetchWallets(params: WalletListParams): Promise<Page<Walle
   return request<Page<WalletSummary>>({ url: '/admin/wallets', method: 'GET', params });
 }
 
-/** GET /admin/wallets/{userId} */
+/**
+ * GET /admin/members/customers/{userId}/subscription — 회원 지갑 요약
+ *
+ * 경로가 `/admin/wallets/{userId}` 가 아니다. 명세 5.9 에서 그 경로가 삭제되고
+ * 이 엔드포인트로 통합됐다(이름은 subscription 이지만 내용은 지갑 잔액 요약이다).
+ *
+ * ⚠️ 응답 모양이 우리 WalletSummary 와 다르다. 목 모드에서는 드러나지 않는다.
+ *    서버 AdminUserWalletResponse = { userId, balance, recentTransactions[] }
+ *    TxResponse = { id, type, amount, balanceAfter, refUid, createdAt }
+ *
+ *    서버가 주지 않는 것: walletId · userName · userEmail · role · updatedAt · relatedNames
+ *    이름이 다른 것: TxResponse.id → txId, refUid → refId (memo 는 없음)
+ *
+ *    WalletDetailPanel 과 회원 상세 지갑 요약이 위 필드를 읽으므로 실서버로 붙이기
+ *    전에 매핑 계층이 필요하다. 지금은 경로만 맞춰 둔 상태다.
+ */
 export async function fetchWallet(userId: number): Promise<WalletSummary> {
   if (USE_MOCK) {
     const found = walletStore.find((w) => w.userId === userId);
     if (!found) throw new Error('지갑을 찾을 수 없습니다.');
     return mockResponse(found);
   }
-  return request<WalletSummary>({ url: `/admin/wallets/${userId}`, method: 'GET' });
+  return request<WalletSummary>({
+    url: `/admin/members/customers/${userId}/subscription`,
+    method: 'GET',
+  });
 }
 
 /**
- * POST /admin/wallets/{userId}/adjust — 잔액 수동 조정 (SUPER_ADMIN)
+ * POST /admin/finance/users/{userId}/adjust — 잔액 수동 조정 (SUPER_ADMIN)
  * 사유 필수. wallet_transaction(ADJUST) + 감사 로그를 서버가 기록한다.
+ *
+ * ⚠️ 응답이 우리 WalletSummary 가 아니다.
+ *    서버 AdminActionResponse = { targetUserId, balance, transaction(TxResponse) }
+ *    화면은 성공 토스트에 result.userName · result.balance 를 쓰는데 userName 이 없다.
+ *    실서버 연동 시 호출부에서 이름을 넘기거나 매핑이 필요하다.
  */
 export async function adjustWallet(vars: {
   userId: number;
@@ -278,17 +308,18 @@ export async function adjustWallet(vars: {
     walletStore = walletStore.map((w, i) => (i === index ? next : w));
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'WALLET_ADJUST',
-      target: `wallet:${target.walletId}`,
-      description: `${target.userName} 지갑 잔액 ${vars.amount > 0 ? '+' : ''}${vars.amount.toLocaleString('ko-KR')}원 조정 — ${vars.reason}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'WALLET_BALANCE_ADJUST',
+      activityLabel: '지갑 잔액 수동 조정',
+      targetType: 'WALLET',
+      targetId: target.walletId,
     });
 
     return mockResponse(next, 600);
   }
 
   return request<WalletSummary>({
-    url: `/admin/wallets/${vars.userId}/adjust`,
+    url: `/admin/finance/users/${vars.userId}/adjust`,
     method: 'POST',
     data: { amount: vars.amount, reason: vars.reason },
   });

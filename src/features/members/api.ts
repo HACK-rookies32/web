@@ -11,6 +11,7 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
 import { toCsv } from '@/shared/lib/format';
+import { toPage, type SpringPage } from '@/shared/api/page';
 import type { Page } from '@/shared/lib/types';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members';
@@ -56,7 +57,13 @@ export async function fetchMembers(params: MemberListParams): Promise<Page<Membe
     return mockResponse(paginate(filtered, params));
   }
 
-  return request<Page<Member>>({ url: '/admin/members/customers', method: 'GET', params });
+  /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다. */
+  const data = await request<SpringPage<Member>>({
+    url: '/admin/members/customers',
+    method: 'GET',
+    params,
+  });
+  return toPage(data);
 }
 
 /** GET /admin/members/{id} */
@@ -76,15 +83,21 @@ export async function fetchMemberDevices(memberId: number): Promise<MemberDevice
 }
 
 /**
- * 회원 지갑 조회 (GET /admin/wallets/{userId}).
+ * 회원 지갑 요약 (GET /admin/members/customers/{id}/subscription).
  *
- * 구독 모델이 폐기되면서 회원 상세의 결제 요약은 지갑 잔액으로 대체되었다.
- * 명세 5.2 에 GET /admin/members/{id}/subscription 이 아직 남아 있으나
- * 구독 개념 자체가 사라졌으므로 사용하지 않는다.
+ * 이름은 subscription 이지만 내용은 지갑 잔액 요약이다. 구독 모델이 폐기된 뒤
+ * 서버가 기존 지갑 조회 로직을 이 경로에 그대로 위임하고 있다.
+ * `/admin/wallets/{userId}` 는 명세 5.9 에서 삭제됐다(서버에서 500).
+ *
+ * ⚠️ 응답이 우리 WalletSummary 보다 좁다 — userName · role · relatedNames ·
+ *    updatedAt 등이 오지 않는다. 자세한 차이는 payments/api.ts 의 fetchWallet 주석 참고.
  */
 export async function fetchMemberWallet(memberId: number): Promise<WalletSummary | null> {
   if (USE_MOCK) return mockResponse(MOCK_WALLETS.find((w) => w.userId === memberId) ?? null);
-  return request<WalletSummary>({ url: `/admin/wallets/${memberId}`, method: 'GET' });
+  return request<WalletSummary>({
+    url: `/admin/members/customers/${memberId}/subscription`,
+    method: 'GET',
+  });
 }
 
 /**
@@ -121,10 +134,11 @@ export async function updateMember(vars: {
     memberStore = memberStore.map((m, i) => (i === index ? next : m));
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'MEMBER_UPDATE',
-      target: `member:${vars.memberId}`,
-      description: `${before.username} 회원 정보 수정 — ${describeChanges(before, vars.body)}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'MEMBER_UPDATE',
+      activityLabel: '회원 정보 수정',
+      targetType: 'MEMBER',
+      targetId: vars.memberId,
     });
 
     return mockResponse(next);
@@ -134,21 +148,6 @@ export async function updateMember(vars: {
     method: 'PATCH',
     data: vars.body,
   });
-}
-
-/** 감사 로그 설명에 쓸 "무엇이 바뀌었는지". 값 자체는 개인정보라 항목명만 적는다. */
-const MEMBER_FIELD_LABEL: Record<keyof MemberUpdateRequest, string> = {
-  nickname: '닉네임',
-  email: '이메일',
-  phoneNumber: '휴대폰',
-  address: '주소',
-};
-
-function describeChanges(before: Member, body: MemberUpdateRequest): string {
-  const changed = (Object.keys(body) as (keyof MemberUpdateRequest)[]).filter(
-    (key) => body[key] !== undefined && body[key] !== before[key],
-  );
-  return changed.length > 0 ? changed.map((key) => MEMBER_FIELD_LABEL[key]).join(', ') : '변경 없음';
 }
 
 /** DELETE /admin/members/{id} — SUPER_ADMIN 전용 */
@@ -162,10 +161,11 @@ export async function deleteMember(vars: {
 
     memberStore = memberStore.filter((m) => m.id !== vars.memberId);
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'MEMBER_DELETE',
-      target: `member:${vars.memberId}`,
-      description: `${target.username}(${target.loginId}) 회원 삭제`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'MEMBER_DELETE',
+      activityLabel: '회원 삭제',
+      targetType: 'MEMBER',
+      targetId: vars.memberId,
     });
 
     return mockResponse(undefined);
@@ -206,10 +206,11 @@ export async function fetchMembersCsv(vars: { adminUsername: string }): Promise<
     );
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'REPORT_DOWNLOAD',
-      target: 'report:members',
-      description: `전체 회원 목록 CSV 내려받기 — ${memberStore.length}건`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'REPORT_DOWNLOAD',
+      activityLabel: '리포트 다운로드',
+      targetType: 'MEMBER',
+      targetId: 0,
     });
 
     return mockResponse(csv, 600);

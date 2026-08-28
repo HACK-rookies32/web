@@ -1,25 +1,34 @@
 import type { PageParams } from '@/shared/lib/types';
-import type { AuditAction } from '@/shared/lib/audit';
+import type { AuditActivityType } from '@/shared/lib/audit';
 
+/**
+ * GET /admin/audit-logs 의 content 원소 (서버 AuditLogResponse).
+ * 필드명은 서버 응답 그대로다.
+ */
 export interface AuditLogItem {
-  logId: number;
-  action: AuditAction;
-  /** `"member:1001"` 형태의 `종류:식별자`. 화면에서는 parseAuditTarget 으로 푼다. */
-  target: string;
-  createdAt: string;
-  /**
-   * 사람이 읽을 수 있는 활동 내용. 조치 사유가 여기에 들어간다.
-   * (`action` + `target` 만으로는 왜 그랬는지 알 수 없어 명세 5.8 에 추가했다)
-   */
-  description: string;
-  /** 실행한 관리자 계정명. 화면과 필터가 모두 이 값을 쓴다. */
-  adminUsername: string;
+  id: number;
+  /** 활동을 수행한 관리자의 숫자 id. 화면에서는 쓰지 않는다. */
+  adminId: number;
+  /** 관리자 로그인 아이디. 표와 필터가 모두 이 값을 쓴다. */
+  adminLoginId: string;
+  activityType: AuditActivityType;
+  /** 표시 문구. 서버가 확정해 내려준다. */
+  activityLabel: string;
+  targetType: string;
+  targetId: number;
+  occurredAt: string;
 }
 
-export interface AuditLogListParams extends PageParams {
-  /** 관리자 계정 아이디(부분 일치). 숫자 ID 가 아니라 admin01 같은 로그인 아이디다. */
-  adminUsername?: string;
-  action?: AuditAction;
+/**
+ * 조회 조건.
+ *
+ * 페이지 크기는 서버가 20 으로 고정한다(명세 5.8). `size` 를 보내도 무시되므로
+ * PageParams 를 그대로 쓰지 않고 필요한 것만 둔다.
+ */
+export interface AuditLogListParams extends Pick<PageParams, 'page'> {
+  /** 관리자 로그인 아이디 (부분 일치) */
+  adminLoginId?: string;
+  activityType?: AuditActivityType;
   /** ISO 날짜(yyyy-MM-dd) */
   from?: string;
   /** ISO 날짜(yyyy-MM-dd) */

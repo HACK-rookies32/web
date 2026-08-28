@@ -4,7 +4,7 @@ import { Card, EmptyState, Icon, Spinner, StatusPill } from '@/shared/ui';
 import { ROLE_LABEL } from '@/shared/lib/constants';
 import { formatRelative } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
-import { AUDIT_ACTION_LABEL, parseAuditTarget } from '@/shared/lib/audit';
+import { AUDIT_ACTIVITY_LABEL, parseAuditTarget } from '@/shared/lib/audit';
 import { useAuth } from '@/shared/auth/AuthContext';
 import type { Role } from '@/shared/lib/types';
 import { fetchNotices, noticeKeys } from '@/features/notices/api';
@@ -98,16 +98,17 @@ export function HomePage() {
           <HomePanel title="감사 로그" to="/audit-logs" query={audits} emptyText="기록된 활동이 없습니다">
             {(rows: NonNullable<typeof audits.data>) =>
               rows.content.map((log) => {
-                const target = parseAuditTarget(log.target);
+                const target = parseAuditTarget(log.targetType, log.targetId);
                 return (
-                  <li key={log.logId} className="home__row">
+                  <li key={log.id} className="home__row">
                     <span className="home__row-main">
-                      <strong>{log.adminUsername}</strong> · {AUDIT_ACTION_LABEL[log.action] ?? log.action}
+                      <strong>{log.adminLoginId}</strong> ·{' '}
+                      {log.activityLabel || AUDIT_ACTIVITY_LABEL[log.activityType] || log.activityType}
                       <span className="home__row-sub">
-                        {target.id ? `${target.label} #${target.id}` : target.label}
+                        {log.targetId ? `${target.label} #${log.targetId}` : target.label}
                       </span>
                     </span>
-                    <time className="home__row-time">{formatRelative(log.createdAt)}</time>
+                    <time className="home__row-time">{formatRelative(log.occurredAt)}</time>
                   </li>
                 );
               })
@@ -178,7 +179,20 @@ function HomePanel<T>({
   emptyText: string;
   children: (data: T) => React.ReactNode;
 }) {
-  const rows = query.data ? children(query.data) : null;
+  /*
+   * 응답 모양이 예상과 다르면 children 안에서 터진다. 그대로 두면 라우트 전체가
+   * 오류 화면으로 바뀌어 "데이터가 없다" 와 구분이 안 된다 — 실제로 감사 로그
+   * 필드명이 바뀌었을 때 홈 화면 전체가 죽었다. 여기서 잡아 이 칸만 오류로 둔다.
+   */
+  let rows: React.ReactNode = null;
+  let renderFailed = false;
+  if (query.data) {
+    try {
+      rows = children(query.data);
+    } catch {
+      renderFailed = true;
+    }
+  }
   const isEmpty = Array.isArray(rows) && rows.length === 0;
 
   return (
@@ -196,8 +210,8 @@ function HomePanel<T>({
         <div className="home__loading">
           <Spinner size={18} />
         </div>
-      ) : query.isError ? (
-        <EmptyState tone="error" title="불러오지 못했습니다" />
+      ) : query.isError || renderFailed ? (
+        <EmptyState tone="error" title="목록을 불러오지 못했습니다" />
       ) : isEmpty ? (
         <EmptyState title={emptyText} />
       ) : (

@@ -215,3 +215,28 @@ export function josa(word: string, form: '이' | '을' | '은' | '와' | '으로
       return withFinal ? '으로' : '로';
   }
 }
+
+/* ------------------------------------------------------------- 첨부 ---- */
+
+/**
+ * 첨부 URL 에서 사람이 읽을 파일명만 꺼낸다.
+ *
+ *   /api/files/notice/9f2c_안내문.pdf → 안내문.pdf
+ *
+ * 서버는 이름 충돌을 피하려고 앞에 임의 접두어를 붙인다(명세 5.3 예시).
+ * 화면에는 접두어를 떼고 보여주되, 원본에 밑줄이 들어 있을 수 있으므로
+ * **첫 번째** 밑줄만 잘라낸다.
+ */
+export function attachmentName(url: string): string {
+  const last = url.split('/').pop() ?? url;
+  const decoded = (() => {
+    try {
+      return decodeURIComponent(last);
+    } catch {
+      /* 잘못 인코딩된 이름이면 원문을 그대로 쓴다 */
+      return last;
+    }
+  })();
+  const cut = decoded.indexOf('_');
+  return cut > 0 ? decoded.slice(cut + 1) : decoded;
+}
