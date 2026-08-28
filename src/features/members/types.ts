@@ -1,53 +1,44 @@
-import type { MemberStatus } from '@/shared/lib/status';
 import type { PageParams } from '@/shared/lib/types';
 
-/** 회원 목록 행에 딸려 오는 자녀 요약 (명세 5.2 — 부모 검색 시 자녀도 함께 반환). */
-export interface ChildSummary {
-  childId: number;
-  name: string;
-}
-
-/** GET /admin/members 의 content 원소. */
-export interface MemberListItem {
-  memberId: number;
-  /** 로그인 아이디. 마스킹 대상이 아니다. */
-  username: string;
-  name: string;
-  email: string;
-  phoneNumber: string;
-  /** 목록에도 표시하므로 상세가 아니라 여기에 둔다. 화면에서는 maskAddress 를 거친다. */
-  address: string;
-  role: 'PARENT' | 'CHILD';
-  status: MemberStatus;
-  children: ChildSummary[];
-  /** 등록 기기 수 */
-  deviceCount: number;
-  createdAt: string;
-}
-
 /**
- * GET /admin/members/{id} 의 data. 목록 항목에 상세 필드를 더한 형태.
+ * 회원 (명세 5.2 GET /admin/members/customers).
  *
- * 생년월일은 두지 않는다. 명세 5.2 의 목록·상세 응답 어디에도 없고
- * (등장하는 곳은 회원가입 요청 본문뿐이다) 관리 화면에서 쓸 일도 없다.
- * 받지 않는 항목은 화면에 두지 않는 것이 개인정보 최소 수집에 맞다.
+ * 필드명은 명세 응답을 그대로 따른다. 특히 `username` 은 **실명**이고
+ * 로그인 아이디는 `loginId` 다. 둘을 바꿔 쓰면 마스킹 대상이 뒤집히므로
+ * 값을 꺼낼 때 주의할 것.
+ *
+ * 상세 조회(GET .../{id})는 명세상 "목록의 content[] 항목과 동일" 이라
+ * 별도 타입을 두지 않는다.
  */
-export interface MemberDetail extends MemberListItem {
+export interface Member {
+  id: number;
+  /** 로그인 아이디. 마스킹 대상이 아니다. */
+  loginId: string;
+  /** 실명. 화면에서는 maskName 을 거친다. */
+  username: string;
   nickname: string;
+  email: string | null;
+  phoneNumber: string;
+  address: string | null;
+  role: 'PARENT' | 'CHILD';
+  /** 자녀면 보호자 회원 id, 부모면 null */
+  parentId: number | null;
+  /** 탈퇴 여부. 목록에서는 탈퇴 회원을 걸러낸다. */
+  isDeleted: boolean;
+  createdAt: string;
   updatedAt: string;
 }
 
-/** GET /admin/members/{id}/devices 의 원소. */
+/**
+ * GET /admin/members/customers/{id}/devices 의 원소.
+ *
+ * DeviceEvent(전원·GPS 이벤트) 로그를 기기별로 묶어 가장 최근 1건만 돌려준다.
+ * 모델명·OS·앱 버전은 응답에 없다.
+ */
 export interface MemberDevice {
-  deviceId: number;
-  /** 이 기기를 쓰는 자녀. 부모 본인 기기면 null */
-  childId: number | null;
-  childName: string | null;
-  model: string;
-  os: string;
-  appVersion: string;
-  status: 'ONLINE' | 'OFFLINE' | 'BLOCKED';
-  lastSeenAt: string;
+  deviceId: string;
+  lastEventType: 'POWER_OFF' | 'GPS_OFF';
+  lastEventAt: string;
 }
 
 /** 회원 상세의 "1:1 문의 기록" 탭에 쓰는 요약. */
@@ -60,11 +51,15 @@ export interface MemberInquiry {
 }
 
 /** 회원 목록 조회 파라미터 (명세 5.2 — keyword/role/page/size). */
-export type MemberListParams = PageParams;
+export interface MemberListParams extends PageParams {
+  role?: 'PARENT' | 'CHILD';
+}
 
-/** PATCH /admin/members/{id} 요청 본문. */
+/**
+ * PATCH /admin/members/customers/{id} 요청 본문.
+ * 명세가 허용하는 항목은 넷뿐이다. 실명과 로그인 아이디는 수정할 수 없다.
+ */
 export interface MemberUpdateRequest {
-  name?: string;
   nickname?: string;
   email?: string;
   phoneNumber?: string;

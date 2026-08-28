@@ -22,12 +22,18 @@ import {
 } from '@/shared/lib/format';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
 import { fetchMemberDevices, fetchMemberWallet, memberKeys } from '../api';
-import type { MemberListItem } from '../types';
+import type { Member } from '../types';
 import { DeviceGlyph } from './Glyphs';
 import './MemberQuickView.css';
 
+/** 기기 최근 이벤트 표시 문구 (명세 5.2 — POWER_OFF | GPS_OFF). */
+const DEVICE_EVENT: Record<'POWER_OFF' | 'GPS_OFF', string> = {
+  POWER_OFF: '전원 꺼짐',
+  GPS_OFF: '위치 꺼짐',
+};
+
 interface MemberQuickViewProps {
-  member: MemberListItem | null;
+  member: Member | null;
   onClose: () => void;
 }
 
@@ -39,7 +45,7 @@ interface MemberQuickViewProps {
  * 어느 쪽이 맞는지 확인하러 화면을 옮겨다니게 된다.
  */
 export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
-  const memberId = member?.memberId ?? 0;
+  const memberId = member?.id ?? 0;
 
   const devices = useQuery({
     queryKey: memberKeys.devices(memberId),
@@ -57,8 +63,12 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
     <SlideOver
       open={member !== null}
       onClose={onClose}
-      title={member ? maskName(member.name) : ''}
-      subtitle={member ? `${memberRef(member.memberId)} · ${maskEmail(member.email)}` : undefined}
+      title={member ? maskName(member.username) : ''}
+      subtitle={
+        member
+          ? `${memberRef(member.id)} · ${member.email ? maskEmail(member.email) : '이메일 없음'}`
+          : undefined
+      }
       footer={
         member ? (
           <>
@@ -66,7 +76,7 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
             {/* Link 는 Button 컴포넌트로 감쌀 수 없어 클래스만 가져다 쓴다. */}
             <Link
               className={buttonClass({ variant: 'primary', className: 'quickview__cta' })}
-              to={`/members/${member.memberId}`}
+              to={`/members/${member.id}`}
             >
               회원 상세 보기
             </Link>
@@ -80,18 +90,19 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
           <section className="quickview__section">
             <h3 className="quickview__heading">계정 정보</h3>
             <DetailBox>
-              <DetailRow label="로그인 ID" value={member.username} />
+              <DetailRow label="로그인 ID" value={member.loginId} />
+              <DetailRow label="닉네임" value={member.nickname} />
               <DetailRow
                 label="전화번호"
                 value={<span className="tabular">{maskPhone(member.phoneNumber)}</span>}
               />
-              <DetailRow label="주소" value={maskAddress(member.address)} />
-              <DetailRow label="등록 기기" value={`${member.deviceCount}대`} />
+              <DetailRow label="주소" value={member.address ? maskAddress(member.address) : '-'} />
+              <DetailRow label="구분" value={member.role === 'PARENT' ? '보호자' : '자녀'} />
               <DetailRow label="가입일" value={formatDate(member.createdAt)} />
             </DetailBox>
           </section>
 
-          {/* ---- 연결 기기 (회원 상세 탭과 동일하게 기기·OS 만) ---- */}
+          {/* ---- 연결 기기 (명세 5.2 — 기기 식별자와 최근 이벤트만 온다) ---- */}
           <section className="quickview__section">
             <h3 className="quickview__heading">연결 기기</h3>
 
@@ -107,8 +118,10 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
                       <DeviceGlyph />
                     </span>
                     <span className="quickview__device-body">
-                      <span className="quickview__device-name">{d.model}</span>
-                      <span className="quickview__device-meta">{d.os}</span>
+                      <span className="quickview__device-name tabular">{d.deviceId}</span>
+                      <span className="quickview__device-meta">
+                        {DEVICE_EVENT[d.lastEventType]} · {formatRelative(d.lastEventAt)}
+                      </span>
                     </span>
                   </li>
                 ))}
@@ -159,7 +172,7 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
                   </ul>
                 ) : null}
 
-                <Link className="quickview__link" to={`/payments?tab=wallets&keyword=${encodeURIComponent(member.name)}`}>
+                <Link className="quickview__link" to={`/payments?tab=wallets&keyword=${encodeURIComponent(member.username)}`}>
                   자금·결제 내역 전체 보기
                 </Link>
               </>

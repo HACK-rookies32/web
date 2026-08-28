@@ -5,12 +5,8 @@
  * `DELETE /admin/members/{id}` · `GET /admin/members/{id}/devices` 처럼 적혀
  * 있으나 각 절 본문의 Request 예시는 모두 `/customers` 를 포함한다.
  *
- * TODO(api): 응답 필드명이 우리 타입과 다르다. 연동 시 이 계층에서 매핑해야 한다.
- *   명세 id → memberId, loginId → username, username(실명) → name
- *   그리고 명세 응답에 없는 항목을 화면이 쓰고 있다 —
- *   lastLoginAt(최근 접속), deviceCount(등록 기기), children[](연결 자녀).
- *   회원 상태도 명세는 isDeleted(boolean) 뿐이라 정지 상태를 표현할 수 없다.
- *   백엔드 확인 대기.
+ * 타입은 명세 응답 필드명을 그대로 쓴다. `username` 이 실명이고 로그인 아이디는
+ * `loginId` 라는 점만 주의하면 된다.
  */
 import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
@@ -21,10 +17,9 @@ import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members'
 import { MOCK_WALLETS } from '@/mocks/payments';
 import type { WalletSummary } from '@/shared/lib/wallet';
 import type {
-  MemberDetail,
+  Member,
   MemberDevice,
   MemberInquiry,
-  MemberListItem,
   MemberListParams,
   MemberUpdateRequest,
 } from './types';
@@ -40,38 +35,38 @@ export const memberKeys = {
 };
 
 /* 목 모드에서 수정·삭제 결과를 세션 동안 유지하기 위한 작업 사본. */
-let memberStore: MemberDetail[] = [...MOCK_MEMBERS];
+let memberStore: Member[] = [...MOCK_MEMBERS];
 
 /**
  * GET /admin/members — 목록/검색
  *
- * 검색 대상은 명세 5.2 가 정한 `loginId`/`username`(실명)/`nickname` 만이다.
- * 이메일·전화번호를 검색 대상에 넣으면, 화면에서 마스킹한 구간을 검색 결과의
- * 참/거짓으로 되짚을 수 있어(가운데 번호 4자리를 조회로 확인 가능) 마스킹이
- * 무력화된다. 목록 응답에 nickname 이 없어 지금은 실명·아이디만 대상으로 둔다.
+ * 검색 대상은 명세 5.2 가 정한 `loginId`/`username`(실명)/`nickname` 이다.
+ * 이메일·전화번호는 넣지 않는다. 화면에서 마스킹한 구간을 검색 결과의 참/거짓으로
+ * 되짚을 수 있어(가운데 번호 4자리를 조회로 확인 가능) 마스킹이 무력해진다.
  */
-export async function fetchMembers(params: MemberListParams): Promise<Page<MemberListItem>> {
+export async function fetchMembers(params: MemberListParams): Promise<Page<Member>> {
   if (USE_MOCK) {
     /* 탈퇴 회원은 목록에 두지 않는다. 탈퇴는 되돌리지 않는 상태이고,
        섞어 두면 목록에서 활성 회원과 구분할 방법이 없다. */
     const filtered = memberStore
-      .filter((m) => m.status !== 'WITHDRAWN')
-      .filter((m) => matchesKeyword(m, params.keyword, ['name', 'username']));
+      .filter((m) => !m.isDeleted)
+      .filter((m) => (params.role ? m.role === params.role : true))
+      .filter((m) => matchesKeyword(m, params.keyword, ['loginId', 'username', 'nickname']));
 
     return mockResponse(paginate(filtered, params));
   }
 
-  return request<Page<MemberListItem>>({ url: '/admin/members/customers', method: 'GET', params });
+  return request<Page<Member>>({ url: '/admin/members/customers', method: 'GET', params });
 }
 
 /** GET /admin/members/{id} */
-export async function fetchMember(memberId: number): Promise<MemberDetail> {
+export async function fetchMember(memberId: number): Promise<Member> {
   if (USE_MOCK) {
-    const found = memberStore.find((m) => m.memberId === memberId);
+    const found = memberStore.find((m) => m.id === memberId);
     if (!found) throw new Error('회원을 찾을 수 없습니다.');
     return mockResponse(found);
   }
-  return request<MemberDetail>({ url: `/admin/members/customers/${memberId}`, method: 'GET' });
+  return request<Member>({ url: `/admin/members/customers/${memberId}`, method: 'GET' });
 }
 
 /** GET /admin/members/{id}/devices */
@@ -116,9 +111,9 @@ export async function updateMember(vars: {
   memberId: number;
   body: MemberUpdateRequest;
   adminUsername: string;
-}): Promise<MemberDetail> {
+}): Promise<Member> {
   if (USE_MOCK) {
-    const index = memberStore.findIndex((m) => m.memberId === vars.memberId);
+    const index = memberStore.findIndex((m) => m.id === vars.memberId);
     if (index < 0) throw new Error('회원을 찾을 수 없습니다.');
 
     const before = memberStore[index];
@@ -129,12 +124,12 @@ export async function updateMember(vars: {
       adminUsername: vars.adminUsername,
       action: 'MEMBER_UPDATE',
       target: `member:${vars.memberId}`,
-      description: `${before.name} 회원 정보 수정 — ${describeChanges(before, vars.body)}`,
+      description: `${before.username} 회원 정보 수정 — ${describeChanges(before, vars.body)}`,
     });
 
     return mockResponse(next);
   }
-  return request<MemberDetail>({
+  return request<Member>({
     url: `/admin/members/customers/${vars.memberId}`,
     method: 'PATCH',
     data: vars.body,
@@ -143,14 +138,13 @@ export async function updateMember(vars: {
 
 /** 감사 로그 설명에 쓸 "무엇이 바뀌었는지". 값 자체는 개인정보라 항목명만 적는다. */
 const MEMBER_FIELD_LABEL: Record<keyof MemberUpdateRequest, string> = {
-  name: '이름',
   nickname: '닉네임',
   email: '이메일',
   phoneNumber: '휴대폰',
   address: '주소',
 };
 
-function describeChanges(before: MemberDetail, body: MemberUpdateRequest): string {
+function describeChanges(before: Member, body: MemberUpdateRequest): string {
   const changed = (Object.keys(body) as (keyof MemberUpdateRequest)[]).filter(
     (key) => body[key] !== undefined && body[key] !== before[key],
   );
@@ -163,15 +157,15 @@ export async function deleteMember(vars: {
   adminUsername: string;
 }): Promise<void> {
   if (USE_MOCK) {
-    const target = memberStore.find((m) => m.memberId === vars.memberId);
+    const target = memberStore.find((m) => m.id === vars.memberId);
     if (!target) throw new Error('회원을 찾을 수 없습니다.');
 
-    memberStore = memberStore.filter((m) => m.memberId !== vars.memberId);
+    memberStore = memberStore.filter((m) => m.id !== vars.memberId);
     appendAuditLog({
       adminUsername: vars.adminUsername,
       action: 'MEMBER_DELETE',
       target: `member:${vars.memberId}`,
-      description: `${target.name}(${target.username}) 회원 삭제`,
+      description: `${target.username}(${target.loginId}) 회원 삭제`,
     });
 
     return mockResponse(undefined);
@@ -196,16 +190,16 @@ export async function fetchMembersCsv(vars: { adminUsername: string }): Promise<
         '주소', '권한', '부모ID', '탈퇴여부', '가입일', '수정일',
       ],
       memberStore.map((m) => [
-        m.memberId,
+        m.id,
+        m.loginId,
         m.username,
-        m.name,
         m.nickname,
-        m.email,
+        m.email ?? '',
         m.phoneNumber,
-        m.address,
+        m.address ?? '',
         m.role,
-        '',
-        m.status === 'WITHDRAWN' ? 'Y' : 'N',
+        m.parentId ?? '',
+        m.isDeleted ? 'Y' : 'N',
         m.createdAt,
         m.updatedAt,
       ]),

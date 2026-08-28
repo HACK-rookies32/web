@@ -22,8 +22,9 @@ import {
   maskEmail,
   maskName,
   maskPhone,
+  memberRef,
 } from '@/shared/lib/format';
-import { MEMBER_STATUS, inquiryStatus } from '@/shared/lib/status';
+import { inquiryStatus } from '@/shared/lib/status';
 import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
 import {
   fetchMember,
@@ -34,6 +35,12 @@ import {
 } from '../api';
 import type { MemberDevice, MemberInquiry } from '../types';
 import './MemberDetailPage.css';
+
+/** 기기 최근 이벤트 표시 문구 (명세 5.2 — POWER_OFF | GPS_OFF). */
+const DEVICE_EVENT: Record<'POWER_OFF' | 'GPS_OFF', string> = {
+  POWER_OFF: '전원 꺼짐',
+  GPS_OFF: '위치 꺼짐',
+};
 
 type TabKey = 'basic' | 'devices' | 'inquiries';
 const TAB_KEYS: TabKey[] = ['basic', 'devices', 'inquiries'];
@@ -101,12 +108,33 @@ export function MemberDetailPage() {
   const m = member.data;
 
   /*
-   * 이 탭은 회원 본인이 접속한 기기 목록이다. 자녀 기기 관리 화면이 아니다.
-   * 기기명과 OS 만 보여준다.
+   * 명세 5.2 의 등록 기기 응답은 기기 식별자와 "가장 최근 이벤트 1건" 뿐이다.
+   * 모델명·OS·앱 버전은 오지 않으므로 화면에도 두지 않는다.
    */
   const deviceColumns: Column<MemberDevice>[] = [
-    { key: 'model', header: '기기', render: (d) => <span className="detail__strong">{d.model}</span> },
-    { key: 'os', header: 'OS', render: (d) => d.os },
+    {
+      key: 'deviceId',
+      header: '기기 식별자',
+      render: (d) => <span className="detail__strong tabular">{d.deviceId}</span>,
+    },
+    {
+      key: 'lastEventType',
+      header: '최근 이벤트',
+      width: '140px',
+      render: (d) => (
+        <StatusPill tone={d.lastEventType === 'POWER_OFF' ? 'danger' : 'warning'}>
+          {DEVICE_EVENT[d.lastEventType]}
+        </StatusPill>
+      ),
+    },
+    {
+      key: 'lastEventAt',
+      header: '발생 시각',
+      numeric: true,
+      width: '180px',
+      align: 'right',
+      render: (d) => formatDateTime(d.lastEventAt),
+    },
   ];
 
   const inquiryColumns: Column<MemberInquiry>[] = [
@@ -146,16 +174,15 @@ export function MemberDetailPage() {
             회원 관리
           </Link>
         }
-        title={maskName(m.name)}
+        title={maskName(m.username)}
         badge={
-          <StatusPill tone={MEMBER_STATUS[m.status].tone} shape="pill">
-            {MEMBER_STATUS[m.status].label}
+          <StatusPill tone={m.role === 'PARENT' ? 'accent' : 'neutral'} shape="pill">
+            {m.role === 'PARENT' ? '보호자' : '자녀'}
           </StatusPill>
         }
         description={
           <>
-            연결 자녀 <strong className="tabular">{m.children.length}</strong>명 · 등록 기기{' '}
-            <strong className="tabular">{devices.data?.length ?? m.deviceCount}</strong>대 · 가입{' '}
+            등록 기기 <strong className="tabular">{devices.data?.length ?? 0}</strong>대 · 가입{' '}
             {formatDate(m.createdAt)}
           </>
         }
@@ -176,13 +203,19 @@ export function MemberDetailPage() {
           <div className="detail__grid">
             <Card title="계정 정보">
               <DetailBox>
-                <DetailRow label="회원 ID" value={<span className="tabular">{m.memberId}</span>} />
-                <DetailRow label="아이디" value={m.username} />
-                <DetailRow label="이름" value={maskName(m.name)} />
+                <DetailRow label="회원 ID" value={<span className="tabular">{m.id}</span>} />
+                <DetailRow label="로그인 ID" value={m.loginId} />
+                <DetailRow label="이름" value={maskName(m.username)} />
                 <DetailRow label="닉네임" value={m.nickname} />
-                <DetailRow label="이메일" value={maskEmail(m.email)} />
+                <DetailRow label="이메일" value={m.email ? maskEmail(m.email) : '-'} />
                 <DetailRow label="휴대폰" value={<span className="tabular">{maskPhone(m.phoneNumber)}</span>} />
-                <DetailRow label="주소" value={maskAddress(m.address)} />
+                <DetailRow label="주소" value={m.address ? maskAddress(m.address) : '-'} />
+                {m.parentId !== null ? (
+                  <DetailRow
+                    label="보호자"
+                    value={<Link to={`/members/${m.parentId}`}>{memberRef(m.parentId)}</Link>}
+                  />
+                ) : null}
               </DetailBox>
 
               <p className="detail__note">
@@ -201,7 +234,7 @@ export function MemberDetailPage() {
               <Card
                 title="지갑 요약"
                 action={
-                  <Link className="detail__link" to={`/payments?tab=wallets&keyword=${encodeURIComponent(m.name)}`}>
+                  <Link className="detail__link" to={`/payments?tab=wallets&keyword=${encodeURIComponent(m.username)}`}>
                     자금·결제 내역 보기
                   </Link>
                 }
@@ -251,7 +284,7 @@ export function MemberDetailPage() {
         {tab === 'devices' ? (
           <Card
             title="연결 기기"
-            description="이 회원이 접속한 기기 목록입니다."
+            description="회원 기기의 전원·위치 이벤트 중 가장 최근 1건입니다."
             flush
           >
             <Table
@@ -264,7 +297,7 @@ export function MemberDetailPage() {
               emptyState={
                 <EmptyState
                   title="등록된 기기가 없습니다"
-                  description="이 회원은 아직 자녀 기기를 연결하지 않았습니다."
+                  description="이 회원 앞으로 기록된 기기 이벤트가 없습니다."
                 />
               }
             />

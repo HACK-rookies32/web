@@ -1,17 +1,17 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button, FormField, Modal, TextInput } from '@/shared/ui';
-import type { MemberDetail, MemberUpdateRequest } from '../types';
+import type { Member, MemberUpdateRequest } from '../types';
 
 interface MemberFormModalProps {
   open: boolean;
   /** 수정 대상. 모달을 열기 전에는 null 이다. */
-  member: MemberDetail | null;
+  member: Member | null;
   submitting: boolean;
   onClose: () => void;
   onSubmit: (values: MemberUpdateRequest) => void;
 }
 
-const EMPTY = { name: '', nickname: '', email: '', phoneNumber: '', address: '' };
+const EMPTY = { nickname: '', email: '', phoneNumber: '', address: '' };
 
 /**
  * 회원 정보 수정 폼.
@@ -30,11 +30,10 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
     setError(null);
     if (member) {
       setValues({
-        name: member.name,
         nickname: member.nickname,
-        email: member.email,
+        email: member.email ?? '',
         phoneNumber: member.phoneNumber,
-        address: member.address,
+        address: member.address ?? '',
       });
     } else {
       setValues(EMPTY);
@@ -48,10 +47,6 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!values.name.trim()) {
-      setError('이름을 입력해 주세요.');
-      return;
-    }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) {
       setError('이메일 형식이 올바르지 않습니다.');
       return;
@@ -81,12 +76,7 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
         onSubmit={handleSubmit}
         style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
       >
-        <FormField label="이름" required>
-          {(p) => (
-            <TextInput {...p} value={values.name} onChange={(e) => set('name', e.target.value)} />
-          )}
-        </FormField>
-
+        {/* 실명과 로그인 아이디는 명세 5.2 의 PATCH 대상이 아니라 폼에 두지 않는다. */}
         <FormField label="닉네임">
           {(p) => (
             <TextInput {...p} value={values.nickname} onChange={(e) => set('nickname', e.target.value)} />
