@@ -11,7 +11,7 @@ interface AdjustBalanceModalProps {
 }
 
 /**
- * 잔액 수동 조정 모달 (POST /admin/wallets/{userId}/adjust).
+ * 잔액 수동 조정 모달 (POST /admin/finance/users/{userId}/adjust).
  *
  * 명세상 amount 는 +/- 모두 허용되지만 화면에서는 **증액만** 제공한다.
  * 차감은 충전 취소(환불) 경로로 처리하며, 여기서는 항상 양수를 보낸다.

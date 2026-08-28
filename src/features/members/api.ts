@@ -76,15 +76,21 @@ export async function fetchMemberDevices(memberId: number): Promise<MemberDevice
 }
 
 /**
- * 회원 지갑 조회 (GET /admin/wallets/{userId}).
+ * 회원 지갑 요약 (GET /admin/members/customers/{id}/subscription).
  *
- * 구독 모델이 폐기되면서 회원 상세의 결제 요약은 지갑 잔액으로 대체되었다.
- * 명세 5.2 에 GET /admin/members/{id}/subscription 이 아직 남아 있으나
- * 구독 개념 자체가 사라졌으므로 사용하지 않는다.
+ * 이름은 subscription 이지만 내용은 지갑 잔액 요약이다. 구독 모델이 폐기된 뒤
+ * 서버가 기존 지갑 조회 로직을 이 경로에 그대로 위임하고 있다.
+ * `/admin/wallets/{userId}` 는 명세 5.9 에서 삭제됐다(서버에서 500).
+ *
+ * ⚠️ 응답이 우리 WalletSummary 보다 좁다 — userName · role · relatedNames ·
+ *    updatedAt 등이 오지 않는다. 자세한 차이는 payments/api.ts 의 fetchWallet 주석 참고.
  */
 export async function fetchMemberWallet(memberId: number): Promise<WalletSummary | null> {
   if (USE_MOCK) return mockResponse(MOCK_WALLETS.find((w) => w.userId === memberId) ?? null);
-  return request<WalletSummary>({ url: `/admin/wallets/${memberId}`, method: 'GET' });
+  return request<WalletSummary>({
+    url: `/admin/members/customers/${memberId}/subscription`,
+    method: 'GET',
+  });
 }
 
 /**

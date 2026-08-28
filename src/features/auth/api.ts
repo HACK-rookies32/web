@@ -28,12 +28,18 @@ export async function login(body: MockLoginRequest): Promise<LoginResult> {
   return request<LoginResult>({ url: '/admin/auth/login', method: 'POST', data: payload });
 }
 
-/**
- * 로그아웃.
- * 명세 4.1 의 POST /auth/logout 은 모바일용이며 관리자 전용 엔드포인트는 아직 없다.
- * 지금은 클라이언트에서 토큰만 폐기한다.
+/*
+ * 로그아웃 API 는 두지 않는다.
+ *
+ * 서버에 관리자 로그아웃 엔드포인트가 없다 —
+ *   POST /api/admin/auth/logout   → 500 (라우트 없음)
+ *   POST /api/auth/logout         → 존재하지만 **PARENT 전용**
+ *                                   ("PARENT 만 호출 가능", 명세 4.1)
+ * 관리자 토큰으로 모바일 것을 부르면 403 이다.
+ *
+ * 그래서 AuthContext 의 signOut 이 localStorage 의 토큰만 지운다.
+ *
+ * ⚠️ 서버 세션(refresh token)은 그대로 살아 있다. 토큰이 유출되면 로그아웃 뒤에도
+ *    갱신이 가능하다. 백엔드에 관리자 로그아웃 신설을 요청해 둔 상태이고,
+ *    생기면 여기에 붙이고 signOut 에서 호출한다.
  */
-export async function logout(): Promise<void> {
-  if (USE_MOCK) return mockResponse(undefined, 120);
-  return request<void>({ url: '/auth/logout', method: 'POST' });
-}

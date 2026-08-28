@@ -31,7 +31,12 @@ export interface WalletTransaction {
   createdAt: string;
 }
 
-/** GET /admin/wallets/{userId} 의 data. */
+/**
+ * 지갑 요약. 화면이 쓰는 모양이다.
+ *
+ * 서버 응답(AdminUserWalletResponse)은 userId · balance · recentTransactions 뿐이라
+ * 나머지는 채워지지 않는다. features/payments/api.ts 의 fetchWallet 주석 참고.
+ */
 export interface WalletSummary {
   walletId: number;
   userId: number;
