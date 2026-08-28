@@ -31,16 +31,15 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
 /**
  * 감사 로그 화면의 활동 유형 필터에 노출할 값.
  *
- * 위 AUDIT_ACTION_LABEL 은 목록에 이미 쌓인 로그를 그리는 데 쓰므로 전체를
- * 유지하고, 필터 드롭다운만 실제로 사용하는 유형으로 좁힌다. 둘을 같이 줄이면
- * 과거 로그의 활동명이 코드값 그대로 노출된다.
+ * 위 AUDIT_ACTION_LABEL 의 키를 그대로 쓴다. 이 목록이 곧 "지금 이 빌드에서
+ * 실제로 남길 수 있는 활동" 이다. 손으로 추린 별도 배열을 두면 기능을 넣고 뺄
+ * 때마다 어긋난다 — 실제로 밴을 없앤 뒤에도 필터에는 남아 있었고, 반대로
+ * 공지·키워드·권한 변경은 로그에 쌓이는데 골라낼 수단이 없었다.
+ *
+ * 활동을 새로 추가하거나 없앨 때는 AuditAction 과 AUDIT_ACTION_LABEL 만
+ * 고치면 드롭다운이 따라온다.
  */
-export const AUDIT_FILTER_ACTIONS: AuditAction[] = [
-  'MEMBER_DELETE',
-  'WALLET_ADJUST',
-  'PAYMENT_REFUND',
-  'POST_DELETE',
-];
+export const AUDIT_FILTER_ACTIONS = Object.keys(AUDIT_ACTION_LABEL) as AuditAction[];
 
 /**
  * 감사 로그 목록 쿼리 키.

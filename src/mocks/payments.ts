@@ -233,8 +233,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 9000,
     paidAt: hoursAgo(2),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8802,
@@ -247,8 +245,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 15500,
     paidAt: hoursAgo(5),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8803,
@@ -258,11 +254,9 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     parentName: '이서진',
     merchantName: '이디야커피 서현점',
     amount: 5800,
-    status: 'REFUNDED',
+    status: 'CANCELLED',
     balanceAfter: 8200,
     paidAt: hoursAgo(30),
-    refundedAt: hoursAgo(28),
-    refundReason: '오결제 민원 처리',
   },
   {
     paymentId: 8804,
@@ -275,8 +269,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 3000,
     paidAt: daysAgo(2),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8805,
@@ -289,8 +281,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 7500,
     paidAt: daysAgo(2, 18),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8806,
@@ -303,8 +293,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 12200,
     paidAt: daysAgo(3),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8807,
@@ -317,8 +305,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'CANCELLED',
     balanceAfter: 50000,
     paidAt: daysAgo(4),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8808,
@@ -331,8 +317,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 16600,
     paidAt: daysAgo(5),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8809,
@@ -345,8 +329,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 3800,
     paidAt: daysAgo(6),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8810,
@@ -359,8 +341,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 6000,
     paidAt: daysAgo(7),
-    refundedAt: null,
-    refundReason: null,
   },
   {
     paymentId: 8811,
@@ -370,11 +350,9 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     parentName: '김민수',
     merchantName: '문구나라 역삼점',
     amount: 4800,
-    status: 'REFUNDED',
+    status: 'CANCELLED',
     balanceAfter: 12000,
     paidAt: daysAgo(9),
-    refundedAt: daysAgo(8),
-    refundReason: '중복 결제',
   },
   {
     paymentId: 8812,
@@ -387,8 +365,6 @@ export const MOCK_STORE_PAYMENTS: StorePayment[] = [
     status: 'PAID',
     balanceAfter: 8500,
     paidAt: daysAgo(11),
-    refundedAt: null,
-    refundReason: null,
   },
 ];
 

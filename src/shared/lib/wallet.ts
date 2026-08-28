@@ -65,12 +65,16 @@ export const CHARGE_STATUS: Record<ChargeStatus, { label: string; tone: Tone }> 
   CANCELED: { label: '취소', tone: 'neutral' },
 };
 
-/** 매장 결제 상태. */
-export type StorePaymentStatus = 'PAID' | 'REFUNDED' | 'CANCELLED';
+/**
+ * 매장 결제 상태.
+ *
+ * 환불(REFUNDED)은 두지 않는다. 관리자 강제 환불을 쓰지 않기로 하면서 웹에서
+ * 결제를 환불로 바꿀 경로가 없어졌다. 취소는 앱의 부모 결제 취소로 생긴다.
+ */
+export type StorePaymentStatus = 'PAID' | 'CANCELLED';
 
 export const STORE_PAYMENT_STATUS: Record<StorePaymentStatus, { label: string; tone: Tone }> = {
   PAID: { label: '결제 완료', tone: 'success' },
-  REFUNDED: { label: '환불', tone: 'warning' },
   CANCELLED: { label: '취소', tone: 'neutral' },
 };
 

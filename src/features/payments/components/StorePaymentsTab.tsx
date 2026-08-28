@@ -12,7 +12,6 @@ import type { StorePayment } from '../types';
 const STATUS_FILTERS: { value: StorePaymentStatus | 'ALL'; label: string }[] = [
   { value: 'ALL', label: '결제 상태: 전체' },
   { value: 'PAID', label: '결제 완료' },
-  { value: 'REFUNDED', label: '환불' },
   { value: 'CANCELLED', label: '취소' },
 ];
 
