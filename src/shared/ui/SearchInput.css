@@ -4,15 +4,8 @@
   align-items: center;
   background: var(--surface-subtle);
   min-width: 0;
-}
-
-.search--pill {
-  border-radius: var(--radius-pill);
-}
-
-.search--rounded {
-  border-radius: var(--radius);
   border: 1px solid var(--border-subtle);
+  border-radius: var(--radius);
 }
 
 .search__icon {

@@ -6,8 +6,6 @@ interface SearchInputProps {
   value: string;
   onSearch: (keyword: string) => void;
   placeholder?: string;
-  /** 상단바용 알약 모양 / 목록 필터용 둥근 사각형 */
-  shape?: 'pill' | 'rounded';
   /** 입력 후 자동 검색까지의 지연(ms). 0 이면 Enter 로만 검색한다. */
   debounceMs?: number;
   className?: string;
@@ -15,14 +13,13 @@ interface SearchInputProps {
 }
 
 /**
- * 검색 입력.
- * Figma 상단바 검색창(131:3779): bg surface-subtle, radius pill, 왼쪽 아이콘 12px.
+ * 검색 입력. 목록 필터용 둥근 사각형 한 가지만 쓴다.
+ * (상단바 검색창을 없애면서 알약 모양 변형은 쓸 곳이 사라졌다.)
  */
 export function SearchInput({
   value,
   onSearch,
   placeholder = '검색어를 입력하세요...',
-  shape = 'rounded',
   debounceMs = 300,
   className,
   'aria-label': ariaLabel = '검색',
@@ -46,7 +43,7 @@ export function SearchInput({
 
   return (
     <form
-      className={['search', `search--${shape}`, className ?? ''].filter(Boolean).join(' ')}
+      className={['search', className ?? ''].filter(Boolean).join(' ')}
       role="search"
       onSubmit={handleSubmit}
     >

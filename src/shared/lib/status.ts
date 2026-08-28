@@ -17,16 +17,7 @@ export function inquiryStatus(answered: boolean): { label: string; tone: Tone } 
     : { label: '답변 대기', tone: 'danger' };
 }
 
-/** 회원 계정 상태. */
-/**
- * 회원 상태.
- *
- * 명세 5.2 의 회원 응답은 `isDeleted`(boolean) 뿐이고 백엔드도 이 값만 쓰기로
- * 확정했다(8/27). 그래서 정지 상태는 두지 않고 활성/탈퇴 두 가지만 표현한다.
+/*
+ * 회원 상태 enum 은 두지 않는다. 명세 5.2 의 회원 응답은 `isDeleted`(boolean)
+ * 뿐이고, 탈퇴 회원은 목록에서 아예 걸러내므로 화면에 표시할 상태가 없다.
  */
-export type MemberStatus = 'ACTIVE' | 'WITHDRAWN';
-
-export const MEMBER_STATUS: Record<MemberStatus, { label: string; tone: Tone }> = {
-  ACTIVE: { label: '활성', tone: 'success' },
-  WITHDRAWN: { label: '탈퇴', tone: 'neutral' },
-};

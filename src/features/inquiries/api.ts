@@ -1,5 +1,5 @@
 import { USE_MOCK, request } from '@/shared/api/client';
-import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
+import { mockResponse, paginate } from '@/shared/api/mock';
 import { MOCK_INQUIRIES } from '@/mocks/inquiries';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { toCsv } from '@/shared/lib/format';
@@ -55,7 +55,6 @@ export async function fetchInquiries(params: InquiryListParams): Promise<Page<In
         if (!params.answered || params.answered === 'ALL') return true;
         return params.answered === 'ANSWERED' ? i.answered : !i.answered;
       })
-      .filter((i) => matchesKeyword(i, params.keyword, ['title', 'content', 'memberNickname']))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
       .map(toListItem);
 

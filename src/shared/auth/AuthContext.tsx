@@ -81,8 +81,3 @@ export function useAuth(): AuthContextValue {
   if (!ctx) throw new Error('useAuth 는 AuthProvider 안에서만 사용할 수 있습니다.');
   return ctx;
 }
-
-/** 역할 검사만 필요할 때 쓰는 얇은 훅. */
-export function useRole(roles?: Role[]): boolean {
-  return useAuth().hasRole(roles);
-}

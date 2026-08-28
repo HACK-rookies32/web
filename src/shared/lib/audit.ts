@@ -2,14 +2,12 @@
 export type AuditAction =
   | 'MEMBER_UPDATE'
   | 'MEMBER_DELETE'
-  | 'MEMBER_SUSPEND'
   | 'PAYMENT_REFUND'
   | 'WALLET_ADJUST'
   | 'NOTICE_CREATE'
   | 'NOTICE_UPDATE'
   | 'NOTICE_DELETE'
   | 'POST_DELETE'
-  | 'MEMBER_BAN'
   | 'KEYWORD_CREATE'
   | 'KEYWORD_DELETE'
   | 'ADMIN_ROLE_UPDATE'
@@ -18,14 +16,12 @@ export type AuditAction =
 export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   MEMBER_UPDATE: '회원 정보 수정',
   MEMBER_DELETE: '회원 삭제',
-  MEMBER_SUSPEND: '계정 정지',
   PAYMENT_REFUND: '환불 처리',
   WALLET_ADJUST: '지갑 잔액 수동 조정',
   NOTICE_CREATE: '공지 작성',
   NOTICE_UPDATE: '공지 수정',
   NOTICE_DELETE: '공지 삭제',
   POST_DELETE: '게시글 삭제',
-  MEMBER_BAN: '사용자 밴',
   KEYWORD_CREATE: '차단 키워드 추가',
   KEYWORD_DELETE: '차단 키워드 제외',
   ADMIN_ROLE_UPDATE: '관리자 권한 변경',

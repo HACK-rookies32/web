@@ -4,52 +4,42 @@ import { THEME_STORAGE_KEY } from './constants';
  * 화면 테마 설정.
  *
  * 실제 색 전환은 전부 CSS 가 한다 (`shared/styles/tokens.css`).
- *   - `<html>` 에 속성 없음        → OS 설정을 따른다 (`prefers-color-scheme`)
- *   - `<html data-theme="dark">`  → 무조건 다크
- *   - `<html data-theme="light">` → OS 가 다크여도 라이트 고정
+ *   - `<html data-theme="light">` → 라이트
+ *   - `<html data-theme="dark">`  → 다크
  *
- * 그래서 여기서는 `data-theme` 속성을 붙이거나 떼는 일만 한다.
- * `system` 은 값을 저장하지 않고 키를 지운다 — 저장돼 있지 않은 상태가 곧 "OS 따름" 이다.
+ * OS 설정을 따라가는 선택지는 두지 않는다. 관리자가 고른 값만 반영하므로
+ * `data-theme` 는 항상 붙어 있고, 저장값이 없으면 라이트로 시작한다.
  */
-export type ThemePreference = 'light' | 'dark' | 'system';
+export type ThemePreference = 'light' | 'dark';
+
+export const DEFAULT_THEME: ThemePreference = 'light';
 
 export const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: 'light', label: '라이트' },
   { value: 'dark', label: '다크' },
-  { value: 'system', label: '시스템 설정' },
 ];
 
 function isThemePreference(value: unknown): value is ThemePreference {
-  return value === 'light' || value === 'dark' || value === 'system';
+  return value === 'light' || value === 'dark';
 }
 
-/** 저장된 설정을 읽는다. 없거나 값이 이상하면 `system`. */
+/** 저장된 설정을 읽는다. 없거나 값이 이상하면 라이트. */
 export function readThemePreference(): ThemePreference {
   try {
     const raw = localStorage.getItem(THEME_STORAGE_KEY);
-    return isThemePreference(raw) ? raw : 'system';
+    return isThemePreference(raw) ? raw : DEFAULT_THEME;
   } catch {
     /* 시크릿 모드 등 localStorage 접근이 막힌 환경 */
-    return 'system';
+    return DEFAULT_THEME;
   }
 }
 
 /** `<html>` 에 반영하고 저장한다. */
 export function applyThemePreference(preference: ThemePreference): void {
-  const root = document.documentElement;
-
-  if (preference === 'system') {
-    root.removeAttribute('data-theme');
-  } else {
-    root.setAttribute('data-theme', preference);
-  }
+  document.documentElement.setAttribute('data-theme', preference);
 
   try {
-    if (preference === 'system') {
-      localStorage.removeItem(THEME_STORAGE_KEY);
-    } else {
-      localStorage.setItem(THEME_STORAGE_KEY, preference);
-    }
+    localStorage.setItem(THEME_STORAGE_KEY, preference);
   } catch {
     /* 저장에 실패해도 화면 전환은 이미 끝났으므로 그대로 둔다 (새로고침하면 초기화됨). */
   }

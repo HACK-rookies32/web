@@ -1,29 +1,27 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Button, FormField, Modal, Select, TextInput } from '@/shared/ui';
-import type { MemberStatus } from '@/shared/lib/status';
-import type { MemberDetail, MemberUpdateRequest } from '../types';
+import { Button, FormField, Modal, TextInput } from '@/shared/ui';
+import type { Member, MemberUpdateRequest } from '../types';
 
 interface MemberFormModalProps {
   open: boolean;
-  /** 수정 대상. null 이면 신규 등록. */
-  member: MemberDetail | null;
+  /** 수정 대상. 모달을 열기 전에는 null 이다. */
+  member: Member | null;
   submitting: boolean;
   onClose: () => void;
   onSubmit: (values: MemberUpdateRequest) => void;
 }
 
-const EMPTY = { name: '', nickname: '', email: '', phoneNumber: '', address: '' };
+const EMPTY = { nickname: '', email: '', phoneNumber: '', address: '' };
 
 /**
- * 회원 등록 / 수정 폼.
+ * 회원 정보 수정 폼.
  *
- * NOTE: 신규 등록은 명세상 POST /auth/signup 을 쓰게 되어 있으나, 그 엔드포인트는
- *       인증이 필요 없고 role 을 임의로 지정할 수 있어 관리자 화면에서 쓰기에 부적절하다.
- *       관리자 전용 생성 엔드포인트가 생기면 연결한다. 지금은 목에서만 동작한다.
+ * 신규 등록은 다루지 않는다. 명세상 POST /auth/signup 은 인증이 필요 없고
+ * role 을 임의로 지정할 수 있어 관리자 화면에서 쓸 수 없고, 관리자 전용 생성
+ * 엔드포인트도 아직 없다. 목록에 「회원 추가」 진입점을 두지 않은 이유다.
  */
 export function MemberFormModal({ open, member, submitting, onClose, onSubmit }: MemberFormModalProps) {
   const [values, setValues] = useState(EMPTY);
-  const [status, setStatus] = useState<MemberStatus>('ACTIVE');
   const [error, setError] = useState<string | null>(null);
 
   // 모달이 열릴 때마다 대상 회원 값으로 초기화한다.
@@ -32,16 +30,13 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
     setError(null);
     if (member) {
       setValues({
-        name: member.name,
         nickname: member.nickname,
-        email: member.email,
+        email: member.email ?? '',
         phoneNumber: member.phoneNumber,
-        address: member.address,
+        address: member.address ?? '',
       });
-      setStatus(member.status);
     } else {
       setValues(EMPTY);
-      setStatus('ACTIVE');
     }
   }, [open, member]);
 
@@ -52,35 +47,27 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!values.name.trim()) {
-      setError('이름을 입력해 주세요.');
-      return;
-    }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) {
       setError('이메일 형식이 올바르지 않습니다.');
       return;
     }
 
-    onSubmit({ ...values, status });
+    onSubmit(values);
   }
 
   return (
     <Modal
       open={open}
       onClose={onClose}
-      title={member ? '회원 정보 수정' : '회원 추가'}
-      description={
-        member
-          ? '수정 내용은 감사 로그에 기록됩니다.'
-          : '관리자가 직접 회원을 등록합니다. 필수 항목만 입력하세요.'
-      }
+      title="회원 정보 수정"
+      description="수정 내용은 감사 로그에 기록됩니다."
       footer={
         <>
           <Button onClick={onClose} disabled={submitting}>
             취소
           </Button>
           <Button variant="primary" onClick={handleSubmit} loading={submitting}>
-            {member ? '저장' : '추가'}
+            저장
           </Button>
         </>
       }
@@ -89,12 +76,7 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
         onSubmit={handleSubmit}
         style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}
       >
-        <FormField label="이름" required>
-          {(p) => (
-            <TextInput {...p} value={values.name} onChange={(e) => set('name', e.target.value)} />
-          )}
-        </FormField>
-
+        {/* 실명과 로그인 아이디는 명세 5.2 의 PATCH 대상이 아니라 폼에 두지 않는다. */}
         <FormField label="닉네임">
           {(p) => (
             <TextInput {...p} value={values.nickname} onChange={(e) => set('nickname', e.target.value)} />
@@ -125,15 +107,6 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
         <FormField label="주소">
           {(p) => (
             <TextInput {...p} value={values.address} onChange={(e) => set('address', e.target.value)} />
-          )}
-        </FormField>
-
-        <FormField label="계정 상태">
-          {(p) => (
-            <Select {...p} value={status} onChange={(e) => setStatus(e.target.value as MemberStatus)}>
-              <option value="ACTIVE">활성</option>
-              <option value="WITHDRAWN">탈퇴</option>
-            </Select>
           )}
         </FormField>
 

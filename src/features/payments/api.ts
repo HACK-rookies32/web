@@ -10,19 +10,14 @@ import {
 import type { Page } from '@/shared/lib/types';
 import type {
   ChargeItem,
-  ChargeListParams,
   FundsFlowParams,
   FundsFlowRow,
   RefundRequest,
   RefundResult,
   StorePayment,
   StorePaymentListParams,
-  TransferItem,
-  TransferListParams,
   WalletListParams,
   WalletSummary,
-  WalletTransaction,
-  WalletTxParams,
 } from './types';
 
 /**
@@ -34,12 +29,10 @@ import type {
 
 export const fundKeys = {
   all: ['funds'] as const,
-  charges: (p: ChargeListParams) => ['funds', 'charges', p] as const,
   flow: (p: FundsFlowParams) => ['funds', 'flow', p] as const,
   payments: (p: StorePaymentListParams) => ['funds', 'payments', p] as const,
   wallets: (p: WalletListParams) => ['funds', 'wallets', p] as const,
   wallet: (userId: number) => ['funds', 'wallet', userId] as const,
-  walletTx: (userId: number, p: WalletTxParams) => ['funds', 'wallet', userId, 'tx', p] as const,
 };
 
 /* 목 모드에서 환불·조정 결과를 세션 동안 유지하기 위한 작업 사본. */
@@ -47,39 +40,6 @@ let chargeStore: ChargeItem[] = [...MOCK_CHARGES];
 let paymentStore: StorePayment[] = [...MOCK_STORE_PAYMENTS];
 let walletStore: WalletSummary[] = MOCK_WALLETS.map((w) => ({ ...w }));
 let nextTxId = 91000;
-
-/* ------------------------------------------------------------- 충전 ---- */
-
-/** GET /admin/charges */
-export async function fetchCharges(params: ChargeListParams): Promise<Page<ChargeItem>> {
-  if (USE_MOCK) {
-    const filtered = chargeStore
-      .filter((c) => (params.userId ? c.userId === params.userId : true))
-      .filter((c) => (params.status && params.status !== 'ALL' ? c.status === params.status : true))
-      .filter((c) => matchesKeyword(c, params.keyword, ['userName', 'userEmail', 'method']));
-
-    return mockResponse(paginate(filtered, params));
-  }
-  return request<Page<ChargeItem>>({ url: '/admin/charges', method: 'GET', params });
-}
-
-/* --------------------------------------------------- 부모→자녀 용돈 ---- */
-
-/**
- * 부모가 자녀에게 보낸 용돈 이동 내역.
- *
- * 지갑 원장에는 보내는 쪽·받는 쪽 두 줄로 남지만, 관리자 화면에서는
- * "누가 누구에게 얼마를" 이 한 줄로 보여야 해서 합쳐서 돌려준다.
- *
- * TODO(api): 명세 5.9 확정 후 `GET /finance/transactions?type=TRANSFER_OUT` 으로
- *            옮긴다. 지금은 5.9 회신 대기 중이라 목 전용이다.
- */
-export async function fetchTransfers(params: TransferListParams): Promise<Page<TransferItem>> {
-  const filtered = MOCK_TRANSFERS.filter((t) =>
-    matchesKeyword(t, params.keyword, ['fromUserName', 'toUserName', 'memo']),
-  );
-  return mockResponse(paginate(filtered, params));
-}
 
 /**
  * 충전 탭 목록 — 충전과 부모→자녀 용돈 이동을 한 흐름으로 합쳐 돌려준다.
@@ -277,25 +237,6 @@ export async function fetchWallet(userId: number): Promise<WalletSummary> {
     return mockResponse(found);
   }
   return request<WalletSummary>({ url: `/admin/wallets/${userId}`, method: 'GET' });
-}
-
-/** GET /admin/wallets/{userId}/transactions */
-export async function fetchWalletTransactions(
-  userId: number,
-  params: WalletTxParams,
-): Promise<Page<WalletTransaction>> {
-  if (USE_MOCK) {
-    const wallet = walletStore.find((w) => w.userId === userId);
-    const items = (wallet?.recentTransactions ?? []).filter((t) =>
-      params.type && params.type !== 'ALL' ? t.type === params.type : true,
-    );
-    return mockResponse(paginate(items, params));
-  }
-  return request<Page<WalletTransaction>>({
-    url: `/admin/wallets/${userId}/transactions`,
-    method: 'GET',
-    params,
-  });
 }
 
 /**

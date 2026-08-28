@@ -7,7 +7,6 @@ import type {
   CommunityPostDetail,
   CommunityPostListItem,
   CommunityPostListParams,
-  MemberBanRequest,
   SpringPage,
 } from './types';
 
@@ -27,7 +26,7 @@ function toListItem(post: CommunityPostDetail): CommunityPostListItem {
   return item;
 }
 
-/** GET /admin/community/posts?page&size&sort */
+/** GET /admin/community/posts — 최신순 고정 (화면에 정렬 선택이 없다) */
 export async function fetchCommunityPosts(
   params: CommunityPostListParams,
 ): Promise<Page<CommunityPostListItem>> {
@@ -39,7 +38,7 @@ export async function fetchCommunityPosts(
   const data = await request<SpringPage<CommunityPostListItem>>({
     url: '/admin/community/posts',
     method: 'GET',
-    params: { page: params.page ?? 0, size: params.size ?? 10, sort: params.sort ?? 'id,desc' },
+    params: { page: params.page ?? 0, size: params.size ?? 10, sort: 'id,desc' },
   });
 
   return {
@@ -77,41 +76,4 @@ export async function deleteCommunityPost(vars: {
     return mockResponse(undefined, 500);
   }
   return request<void>({ url: `/admin/community/posts/${vars.postId}`, method: 'DELETE' });
-}
-
-/**
- * 커뮤니티 사용자 밴.
- *
- * TODO(api): 명세 5.5 가 갱신되어 대상 식별자가 정해졌으나 아직 연동할 수 없다.
- *   명세: POST /admin/community/members/ban, body = { loginId, reason, durationDays }
- *         응답 = { memberId, loginId, banned, reason, bannedUntil }
- *   문제: 밴 대상을 `loginId` 로 지정해야 하는데, 게시글 목록·상세 응답
- *         (5.5 의 CommunityPostListItem)에는 `memberId` 만 있고 loginId 가 없다.
- *         화면에서 loginId 를 알 방법이 없어 명세대로 호출이 불가능하다.
- *   요청 대기: 커뮤니티 응답에 loginId 추가 또는 밴 API 가 memberId 도 수용.
- *   그때까지 임시 경로를 유지한다.
- */
-/** 임시 연동 경로: POST /admin/community/members/{memberId}/ban */
-export async function banCommunityMember(vars: {
-  memberId: number;
-  body: MemberBanRequest;
-  adminUsername: string;
-}): Promise<void> {
-  if (USE_MOCK) {
-    appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'MEMBER_BAN',
-      target: `member:${vars.memberId}`,
-      description:
-        vars.body.durationDays === 0
-          ? `커뮤니티 밴 해제 — ${vars.body.reason}`
-          : `커뮤니티 ${vars.body.durationDays}일 밴 — ${vars.body.reason}`,
-    });
-    return mockResponse(undefined, 650);
-  }
-  return request<void>({
-    url: `/admin/community/members/${vars.memberId}/ban`,
-    method: 'POST',
-    data: vars.body,
-  });
 }

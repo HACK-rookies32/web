@@ -163,48 +163,6 @@
   --shadow-aside: 4px 0 6px rgba(0, 0, 0, 0.25);
 }
 
-/* 사용자가 테마를 고르지 않았다면 OS 설정을 따른다. */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --accent-hover: #ff9640;
-    --accent-active-bg: #a95515;
-    --accent-active-fg: #ffe6d2;
-    --accent-strong: #ffab63;
-
-    --bg: #1a120d;
-    --bg-header: rgba(26, 18, 13, 0.9);
-    --surface: #241913;
-    --surface-subtle: #2f211a;
-    --surface-tint: #3a2820;
-    --surface-tint-strong: #4a3226;
-
-    --text-strong: #fff8f5;
-    --text: #e4d3c7;
-    --text-muted: rgba(228, 211, 199, 0.7);
-    --text-placeholder: #8b7566;
-    --text-on-accent: #241913;
-    --text-on-solid: #241913;
-
-    --border: #4a3226;
-    --border-subtle: rgba(74, 50, 38, 0.6);
-
-    /* 화살표도 다크용 --text(#e4d3c7) 로 다시 그린다. */
-    --select-arrow: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23e4d3c7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-
-    --success: #4ade80;  --success-bg: #14311f;
-    --warning: #fbbf24;  --warning-bg: #3a2a0c;
-    --danger: #f87171;   --danger-bg: #3a1616;
-    --info: #60a5fa;     --info-bg: #16253f;
-    --neutral: #b9a394;  --neutral-bg: #322620;
-    --tag-accent: #ffab63; --tag-accent-bg: #3f2410;
-    --accent-on-fill: #2b1608;
-
-    --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.5);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -4px rgba(0, 0, 0, 0.6);
-    --shadow-aside: 4px 0 6px rgba(0, 0, 0, 0.25);
-  }
-}
-
 /* =============================================================================
    전역 리셋 & 기본 타이포
    ============================================================================= */

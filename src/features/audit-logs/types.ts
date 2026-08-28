@@ -3,7 +3,6 @@ import type { AuditAction } from '@/shared/lib/audit';
 
 export interface AuditLogItem {
   logId: number;
-  adminId: number;
   action: AuditAction;
   /** `"member:1001"` 형태의 `종류:식별자`. 화면에서는 parseAuditTarget 으로 푼다. */
   target: string;
@@ -13,7 +12,7 @@ export interface AuditLogItem {
    * (`action` + `target` 만으로는 왜 그랬는지 알 수 없어 명세 5.8 에 추가했다)
    */
   description: string;
-  /** 실행한 관리자 계정명. adminId 숫자만으로는 누구인지 알 수 없다. */
+  /** 실행한 관리자 계정명. 화면과 필터가 모두 이 값을 쓴다. */
   adminUsername: string;
 }
 

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Button, EmptyState, LoadingBlock, StatusPill } from '@/shared/ui';
+import { Button, EmptyState, LoadingBlock } from '@/shared/ui';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
 import { communityKeys, fetchCommunityPost } from '../api';
 import type { CommunityPostDetail } from '../types';
@@ -7,19 +7,11 @@ import './CommunityDetailPanel.css';
 
 interface CommunityDetailPanelProps {
   postId: number;
-  canModerateMember: boolean;
   deleting: boolean;
   onDelete: (post: CommunityPostDetail) => void;
-  onBan: (post: CommunityPostDetail) => void;
 }
 
-export function CommunityDetailPanel({
-  postId,
-  canModerateMember,
-  deleting,
-  onDelete,
-  onBan,
-}: CommunityDetailPanelProps) {
+export function CommunityDetailPanel({ postId, deleting, onDelete }: CommunityDetailPanelProps) {
   const { data, isPending, isError } = useQuery({
     queryKey: communityKeys.detail(postId),
     queryFn: () => fetchCommunityPost(postId),
@@ -36,12 +28,11 @@ export function CommunityDetailPanel({
           <span>{formatDateTime(data.createdAt)}</span>
         </div>
         <h3 className="community-detail__title">{data.title}</h3>
-        <p className="community-detail__author">작성 회원 #{data.memberId}</p>
+        <p className="community-detail__author">
+          {data.authorNickname} · 회원 #{data.memberId}
+        </p>
         <p className="community-detail__content">{data.content}</p>
         <div className="community-detail__status">
-          <StatusPill tone={data.reportCount > 0 ? 'danger' : 'neutral'} shape="pill">
-            신고 {formatNumber(data.reportCount)}건
-          </StatusPill>
           <span>댓글 {formatNumber(data.comments.length)}개</span>
         </div>
       </section>
@@ -53,13 +44,12 @@ export function CommunityDetailPanel({
             {data.comments.map((comment) => (
               <li key={comment.id} className="community-detail__comment">
                 <div className="community-detail__comment-head">
-                  <strong>회원 #{comment.memberId}</strong>
+                  <strong>
+                    {comment.authorNickname} · 회원 #{comment.memberId}
+                  </strong>
                   <span>{formatDateTime(comment.createdAt)}</span>
                 </div>
                 <p>{comment.content}</p>
-                {comment.reportCount > 0 ? (
-                  <span className="community-detail__reported">신고 {comment.reportCount}건</span>
-                ) : null}
               </li>
             ))}
           </ul>
@@ -69,9 +59,6 @@ export function CommunityDetailPanel({
       </section>
 
       <div className="community-detail__actions">
-        {canModerateMember ? (
-          <Button variant="dark" onClick={() => onBan(data)}>작성자 밴</Button>
-        ) : null}
         <Button variant="danger" loading={deleting} onClick={() => onDelete(data)}>게시글 삭제</Button>
       </div>
     </div>
