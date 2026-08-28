@@ -123,13 +123,9 @@ export function HomePage() {
                 <li key={p.id} className="home__row">
                   <span className="home__row-main">
                     {p.title}
-                    <span className="home__row-sub">회원 #{p.memberId}</span>
+                    <span className="home__row-sub">{p.authorNickname}</span>
                   </span>
                   <span className="home__row-side">
-                    {/* 신고가 있는 글은 먼저 눈에 띄어야 한다. */}
-                    {p.reportCount > 0 ? (
-                      <StatusPill tone="danger">신고 {p.reportCount}</StatusPill>
-                    ) : null}
                     <time className="home__row-time">{formatRelative(p.createdAt)}</time>
                   </span>
                 </li>

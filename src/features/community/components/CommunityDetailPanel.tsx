@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { Button, EmptyState, LoadingBlock, StatusPill } from '@/shared/ui';
+import { Button, EmptyState, LoadingBlock } from '@/shared/ui';
 import { formatDateTime, formatNumber } from '@/shared/lib/format';
 import { communityKeys, fetchCommunityPost } from '../api';
 import type { CommunityPostDetail } from '../types';
@@ -28,12 +28,11 @@ export function CommunityDetailPanel({ postId, deleting, onDelete }: CommunityDe
           <span>{formatDateTime(data.createdAt)}</span>
         </div>
         <h3 className="community-detail__title">{data.title}</h3>
-        <p className="community-detail__author">작성 회원 #{data.memberId}</p>
+        <p className="community-detail__author">
+          {data.authorNickname} · 회원 #{data.memberId}
+        </p>
         <p className="community-detail__content">{data.content}</p>
         <div className="community-detail__status">
-          <StatusPill tone={data.reportCount > 0 ? 'danger' : 'neutral'} shape="pill">
-            신고 {formatNumber(data.reportCount)}건
-          </StatusPill>
           <span>댓글 {formatNumber(data.comments.length)}개</span>
         </div>
       </section>
@@ -45,13 +44,12 @@ export function CommunityDetailPanel({ postId, deleting, onDelete }: CommunityDe
             {data.comments.map((comment) => (
               <li key={comment.id} className="community-detail__comment">
                 <div className="community-detail__comment-head">
-                  <strong>회원 #{comment.memberId}</strong>
+                  <strong>
+                    {comment.authorNickname} · 회원 #{comment.memberId}
+                  </strong>
                   <span>{formatDateTime(comment.createdAt)}</span>
                 </div>
                 <p>{comment.content}</p>
-                {comment.reportCount > 0 ? (
-                  <span className="community-detail__reported">신고 {comment.reportCount}건</span>
-                ) : null}
               </li>
             ))}
           </ul>

@@ -11,6 +11,7 @@ import {
   RowActions,
   Select,
   SlideOver,
+  StackedCell,
   Table,
   useToast,
 } from '@/shared/ui';
@@ -92,8 +93,12 @@ export function CommunityPage() {
     {
       key: 'member',
       header: '작성자',
-      width: '140px',
-      render: (row) => <span className="muted community__muted">회원 #{row.memberId}</span>,
+      width: '160px',
+      /* 닉네임은 마스킹하지 않는다. 서비스 안에서 다른 사용자에게 그대로 보이는
+         표시명이고, 응대에서는 이게 주 식별 수단이다(문의 화면과 같은 기준). */
+      render: (row) => (
+        <StackedCell primary={row.authorNickname} secondary={`회원 #${row.memberId}`} />
+      ),
     },
     {
       key: 'createdAt',

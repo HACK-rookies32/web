@@ -80,12 +80,6 @@
   line-height: var(--lh-label);
 }
 
-.community-detail__reported {
-  color: var(--danger);
-  font-size: var(--fs-caption);
-  line-height: var(--lh-caption);
-}
-
 .community-detail__actions {
   display: flex;
   justify-content: flex-end;

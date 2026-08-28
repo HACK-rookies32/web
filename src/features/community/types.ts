@@ -5,15 +5,16 @@ export interface CommunityPostListItem {
   title: string;
   content: string;
   memberId: number;
-  reportCount: number;
+  /** 작성자 닉네임. 서비스 안에서 서로에게 보이는 표시명이라 마스킹하지 않는다. */
+  authorNickname: string;
   createdAt: string;
 }
 
 export interface CommunityComment {
   id: number;
   memberId: number;
+  authorNickname: string;
   content: string;
-  reportCount: number;
   createdAt: string;
 }
 
