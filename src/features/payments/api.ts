@@ -1,6 +1,7 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
 import { appendAuditLog } from '@/mocks/auditLogs';
+import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import {
   MOCK_CHARGES,
   MOCK_STORE_PAYMENTS,
@@ -47,10 +48,14 @@ let nextTxId = 91000;
  * 부모가 카드로 넣은 돈과 그 돈이 자녀에게 건너간 것은 이어지는 하나의 흐름이라
  * 관리자가 한 화면에서 따라갈 수 있어야 한다. `flow` 로 한쪽만 볼 수도 있다.
  *
- * TODO(api): 명세 5.9 가 확정되면 `GET /finance/transactions?type=CHARGE|TRANSFER_OUT`
- *            한 번으로 대체된다. 그때 이 합치기는 서버로 넘어간다.
+ * 실서버에서는 `GET /admin/finance/transactions` 하나로 받는다. 다만 응답
+ * content[] 가 id·type·amount·balanceAfter·refUid·createdAt 뿐이라 **누구의
+ * 거래인지 알 수 없다.** 회원·결제수단 컬럼은 채울 값이 없어 비워 둔다.
+ * userId·회원명·결제수단 추가를 요청해 둔 상태다.
  */
 export async function fetchFundsFlow(params: FundsFlowParams): Promise<Page<FundsFlowRow>> {
+  if (!USE_MOCK) return fetchFundsFlowFromServer(params);
+
   const flow = params.flow ?? 'ALL';
 
   const charges: FundsFlowRow[] =
@@ -74,6 +79,81 @@ export async function fetchFundsFlow(params: FundsFlowParams): Promise<Page<Fund
 
   const merged = [...charges, ...transfers].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
   return mockResponse(paginate(merged, params));
+}
+
+/** 서버 거래 원장(TxResponse). 명세 5.9 GET /finance/transactions 의 content 원소. */
+interface TxResponse {
+  id: number;
+  type: string;
+  amount: number;
+  balanceAfter: number;
+  refUid: string | null;
+  createdAt: string;
+}
+
+/**
+ * 실서버 충전·용돈 조회.
+ *
+ * 화면의 「거래 종류」 필터를 서버 type 으로 옮긴다.
+ *   충전   → CHARGE   (되돌린 건 REFUND 로 따로 남는다)
+ *   용돈   → TRANSFER_OUT
+ *   전체   → 서버 필터 없이 받아 두 종류만 남긴다
+ *
+ * 회원 정보가 응답에 없어 이름·이메일·결제수단은 빈 값으로 둔다.
+ * 목 데이터로 채우지 않는다 — 실서버 화면에 가상 회원이 뜨면 실제 거래로 오해한다.
+ */
+async function fetchFundsFlowFromServer(params: FundsFlowParams): Promise<Page<FundsFlowRow>> {
+  const flow = params.flow ?? 'ALL';
+  const type = flow === 'CHARGE' ? 'CHARGE' : flow === 'TRANSFER' ? 'TRANSFER_OUT' : undefined;
+
+  const data = await request<Page<TxResponse>>({
+    url: '/admin/finance/transactions',
+    method: 'GET',
+    params: {
+      type,
+      userId: params.userId,
+      page: params.page ?? 0,
+      size: params.size ?? DEFAULT_PAGE_SIZE,
+    },
+  });
+
+  const rows = (Array.isArray(data?.content) ? data.content : [])
+    .filter((tx) => tx.type === 'CHARGE' || tx.type === 'TRANSFER_OUT')
+    .map<FundsFlowRow>((tx) =>
+      tx.type === 'CHARGE'
+        ? {
+            kind: 'CHARGE',
+            chargeId: tx.id,
+            userId: 0,
+            userName: '',
+            userEmail: '',
+            amount: Math.abs(tx.amount),
+            status: 'PAID',
+            method: '',
+            createdAt: tx.createdAt,
+            canceledAt: null,
+            cancelReason: null,
+          }
+        : {
+            kind: 'TRANSFER',
+            transferId: tx.id,
+            fromUserId: 0,
+            fromUserName: '',
+            toUserId: 0,
+            toUserName: '',
+            amount: Math.abs(tx.amount),
+            memo: null,
+            createdAt: tx.createdAt,
+          },
+    );
+
+  return {
+    content: rows,
+    page: data?.page ?? 0,
+    size: data?.size ?? 0,
+    totalElements: data?.totalElements ?? 0,
+    totalPages: data?.totalPages ?? 0,
+  };
 }
 
 /* --------------------------------------------------------- 매장 결제 ---- */

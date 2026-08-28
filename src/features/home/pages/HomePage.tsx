@@ -15,6 +15,10 @@ import './HomePage.css';
 
 /**
  * 각 칸에 몇 건까지 보여줄지.
+ *
+ * 쿼리에도 size 로 넘기지만 서버가 지켜준다는 보장이 없어 화면에서 한 번 더 자른다.
+ * 실제로 감사 로그는 서버가 페이지 크기를 20 으로 고정해서, size=3 을 보내도
+ * 20건이 와 홈 화면이 세로로 길어졌다.
  * 네 칸이 2x2 로 놓이므로 3건이면 스크롤 없이 한 화면에 들어온다.
  * 더 보려면 각 칸의 바로가기로 넘어가면 된다.
  */
@@ -81,7 +85,7 @@ export function HomePage() {
         {canNotice ? (
           <HomePanel title="공지 내역" to="/notices" query={notices} emptyText="등록된 공지가 없습니다">
             {(rows: NonNullable<typeof notices.data>) =>
-              rows.content.map((n) => (
+              rows.content.slice(0, PREVIEW_SIZE).map((n) => (
                 <li key={n.noticeId} className="home__row">
                   <span className="home__row-main">{n.title}</span>
                   <span className="home__row-side">
@@ -97,7 +101,7 @@ export function HomePage() {
         {canAudit ? (
           <HomePanel title="감사 로그" to="/audit-logs" query={audits} emptyText="기록된 활동이 없습니다">
             {(rows: NonNullable<typeof audits.data>) =>
-              rows.content.map((log) => {
+              rows.content.slice(0, PREVIEW_SIZE).map((log) => {
                 const target = parseAuditTarget(log.targetType, log.targetId);
                 return (
                   <li key={log.id} className="home__row">
@@ -120,7 +124,7 @@ export function HomePage() {
         {canCommunity ? (
           <HomePanel title="커뮤니티 글" to="/community" query={posts} emptyText="등록된 게시글이 없습니다">
             {(rows: NonNullable<typeof posts.data>) =>
-              rows.content.map((p) => (
+              rows.content.slice(0, PREVIEW_SIZE).map((p) => (
                 <li key={p.id} className="home__row">
                   <span className="home__row-main">
                     {p.title}
@@ -139,7 +143,7 @@ export function HomePage() {
         {canInquiry ? (
           <HomePanel title="1:1 문의" to="/inquiries" query={inquiries} emptyText="접수된 문의가 없습니다">
             {(rows: NonNullable<typeof inquiries.data>) =>
-              rows.content.map((q) => {
+              rows.content.slice(0, PREVIEW_SIZE).map((q) => {
                 const status = inquiryStatus(q.answered);
                 return (
                   <li key={q.id} className="home__row">
