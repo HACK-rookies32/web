@@ -43,7 +43,10 @@ function getTodayDate(): string {
   return `${year}-${month}-${day}`;
 }
 
-function activityTone(type: string): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
+function activityTone(
+  type: string | null | undefined,
+): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
+  if (!type) return 'neutral';
   if (type.includes('DELETE')) return 'danger';
   if (type === 'PAYMENT_REFUND' || type === 'WALLET_BALANCE_ADJUST') return 'warning';
   // 권한 변경은 되돌리기 어려운 영향이 커서 수정 계열과 구분해 경고로 둔다.

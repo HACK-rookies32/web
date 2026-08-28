@@ -111,10 +111,14 @@ export interface AuditTarget {
   href: string | null;
 }
 
-export function parseAuditTarget(targetType: string, targetId: number): AuditTarget {
+export function parseAuditTarget(
+  targetType: string | null | undefined,
+  targetId: number | null | undefined,
+): AuditTarget {
+  if (!targetType) return { label: '-', href: null };
   const known = TARGET_KINDS[targetType];
   return {
     label: known?.label ?? targetType,
-    href: known ? known.href(targetId) : null,
+    href: known && targetId != null ? known.href(targetId) : null,
   };
 }

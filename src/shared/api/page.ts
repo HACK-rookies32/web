@@ -21,13 +21,19 @@ export interface SpringPage<T> {
   totalPages: number;
 }
 
-/** Spring Page 를 화면이 쓰는 모양으로 바꾼다. */
-export function toPage<T>(data: SpringPage<T>): Page<T> {
+/**
+ * Spring Page 를 화면이 쓰는 모양으로 바꾼다.
+ *
+ * 응답 모양이 예상과 달라도 화면이 죽지 않도록 기본값을 채운다. 서버 필드명이
+ * 바뀌었을 때 `content` 가 undefined 로 넘어가 `.map` 에서 크래시한 적이 있다 —
+ * 그때는 "데이터 없음" 이 아니라 오류 화면이 떠서 원인을 찾기 어려웠다.
+ */
+export function toPage<T>(data: SpringPage<T> | undefined | null): Page<T> {
   return {
-    content: data.content,
-    page: data.number,
-    size: data.size,
-    totalElements: data.totalElements,
-    totalPages: data.totalPages,
+    content: Array.isArray(data?.content) ? data.content : [],
+    page: data?.number ?? 0,
+    size: data?.size ?? 0,
+    totalElements: data?.totalElements ?? 0,
+    totalPages: data?.totalPages ?? 0,
   };
 }
