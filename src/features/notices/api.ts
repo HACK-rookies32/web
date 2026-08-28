@@ -1,5 +1,6 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { mockResponse, paginate } from '@/shared/api/mock';
+import { toPage, type SpringPage } from '@/shared/api/page';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_NOTICES } from '@/mocks/notices';
 import type { Page } from '@/shared/lib/types';
@@ -40,7 +41,13 @@ export async function fetchNotices(params: NoticeListParams): Promise<Page<Notic
 
     return mockResponse(paginate(filtered, params));
   }
-  return request<Page<NoticeListItem>>({ url: '/admin/notices', method: 'GET', params });
+  /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다. */
+  const data = await request<SpringPage<NoticeListItem>>({
+    url: '/admin/notices',
+    method: 'GET',
+    params,
+  });
+  return toPage(data);
 }
 
 /** GET /admin/notices/{id} */
@@ -75,10 +82,11 @@ export async function createNotice(vars: {
     noticeStore = [created, ...noticeStore];
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'NOTICE_CREATE',
-      target: `notice:${created.noticeId}`,
-      description: `공지 작성 — ${created.title}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'NOTICE_CREATE',
+      activityLabel: '공지사항 등록',
+      targetType: 'NOTICE',
+      targetId: created.noticeId,
     });
 
     return mockResponse(created, 500);
@@ -108,10 +116,11 @@ export async function updateNotice(vars: {
     noticeStore = noticeStore.map((n, i) => (i === index ? next : n));
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'NOTICE_UPDATE',
-      target: `notice:${vars.noticeId}`,
-      description: `공지 수정 — ${next.title}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'NOTICE_UPDATE',
+      activityLabel: '공지사항 수정',
+      targetType: 'NOTICE',
+      targetId: vars.noticeId,
     });
 
     return mockResponse(next, 500);
@@ -132,10 +141,11 @@ export async function deleteNotice(vars: {
   if (USE_MOCK) {
     noticeStore = noticeStore.filter((n) => n.noticeId !== vars.noticeId);
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'NOTICE_DELETE',
-      target: `notice:${vars.noticeId}`,
-      description: `공지 삭제 — ${vars.title}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'NOTICE_DELETE',
+      activityLabel: '공지사항 삭제',
+      targetType: 'NOTICE',
+      targetId: vars.noticeId,
     });
     return mockResponse(undefined);
   }
@@ -151,11 +161,13 @@ export async function broadcastNotification(vars: {
   adminUsername: string;
 }): Promise<void> {
   if (USE_MOCK) {
+    /* 알림 발송은 공지 작성과 다른 활동이다(명세 5.8 NOTIFICATION_BROADCAST). */
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'NOTICE_CREATE',
-      target: `broadcast:${vars.body.type}`,
-      description: `전체 알림 발송 — ${vars.body.title}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'NOTIFICATION_BROADCAST',
+      activityLabel: '전체 알림 발송',
+      targetType: 'NOTIFICATION',
+      targetId: 0,
     });
     return mockResponse(undefined, 800);
   }

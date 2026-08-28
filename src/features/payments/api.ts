@@ -149,10 +149,11 @@ export async function refund(
     });
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'PAYMENT_REFUND',
-      target: `charge:${target.chargeId}`,
-      description: `${target.userName} 회원의 ${target.method} 충전 ${target.amount.toLocaleString('ko-KR')}원 취소 — ${vars.reason}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'PAYMENT_REFUND',
+      activityLabel: '강제 환불',
+      targetType: 'PAYMENT',
+      targetId: target.chargeId,
     });
 
     return mockResponse(
@@ -307,10 +308,11 @@ export async function adjustWallet(vars: {
     walletStore = walletStore.map((w, i) => (i === index ? next : w));
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'WALLET_ADJUST',
-      target: `wallet:${target.walletId}`,
-      description: `${target.userName} 지갑 잔액 ${vars.amount > 0 ? '+' : ''}${vars.amount.toLocaleString('ko-KR')}원 조정 — ${vars.reason}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'WALLET_BALANCE_ADJUST',
+      activityLabel: '지갑 잔액 수동 조정',
+      targetType: 'WALLET',
+      targetId: target.walletId,
     });
 
     return mockResponse(next, 600);

@@ -71,7 +71,7 @@ export function MembersPage() {
 
   const params = useMemo(() => ({ keyword, page, size: DEFAULT_PAGE_SIZE }), [keyword, page]);
 
-  const { data, isPending, isError, error } = useQuery({
+  const { data, isPending, isError } = useQuery({
     queryKey: memberKeys.list(params),
     queryFn: () => fetchMembers(params),
   });
@@ -231,7 +231,7 @@ export function MembersPage() {
           rows={data?.content ?? []}
           rowKey={(r) => r.id}
           loading={isPending}
-          error={isError ? (error instanceof Error ? error.message : '알 수 없는 오류') : undefined}
+          error={isError ? '회원 목록을 불러오지 못했습니다.' : undefined}
           onRowClick={(row) => navigate(`/members/${row.id}`)}
           emptyState={
             <EmptyState

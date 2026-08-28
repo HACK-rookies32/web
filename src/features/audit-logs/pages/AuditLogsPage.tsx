@@ -17,11 +17,10 @@ import {
 } from '@/shared/ui';
 import { formatDateTime } from '@/shared/lib/format';
 import { useListParams } from '@/shared/hooks/useListParams';
-import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import {
-  AUDIT_ACTION_LABEL,
-  AUDIT_FILTER_ACTIONS,
-  type AuditAction,
+  AUDIT_ACTIVITY_LABEL,
+  AUDIT_FILTER_ACTIVITIES,
+  type AuditActivityType,
   parseAuditTarget,
 } from '@/shared/lib/audit';
 import { auditLogKeys, fetchAuditLogs } from '../api';
@@ -44,33 +43,32 @@ function getTodayDate(): string {
   return `${year}-${month}-${day}`;
 }
 
-function actionTone(action: AuditAction): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
-  if (action.includes('DELETE')) return 'danger';
-  if (action === 'PAYMENT_REFUND' || action === 'WALLET_ADJUST') return 'warning';
+function activityTone(type: string): 'danger' | 'warning' | 'info' | 'neutral' | 'accent' {
+  if (type.includes('DELETE')) return 'danger';
+  if (type === 'PAYMENT_REFUND' || type === 'WALLET_BALANCE_ADJUST') return 'warning';
   // 권한 변경은 되돌리기 어려운 영향이 커서 수정 계열과 구분해 경고로 둔다.
-  if (action === 'ADMIN_ROLE_UPDATE') return 'warning';
-  if (action.includes('UPDATE')) return 'info';
-  if (action.includes('CREATE')) return 'accent';
+  if (type === 'MEMBER_ROLE_UPDATE') return 'warning';
+  if (type.includes('UPDATE')) return 'info';
+  if (type.includes('CREATE') || type.includes('ADD')) return 'accent';
   return 'neutral';
 }
 
 export function AuditLogsPage() {
   const { patchParams, resetParams, getParam, page } = useListParams();
-  const adminUsernameValue = getParam('adminUsername');
-  const actionValue = getParam('action');
+  const adminLoginIdValue = getParam('adminLoginId');
+  const activityTypeValue = getParam('activityType');
   const from = getParam('from');
   const to = getParam('to');
 
   const params = useMemo<AuditLogListParams>(
     () => ({
-      adminUsername: adminUsernameValue || undefined,
-      action: actionValue ? (actionValue as AuditAction) : undefined,
+      adminLoginId: adminLoginIdValue || undefined,
+      activityType: activityTypeValue ? (activityTypeValue as AuditActivityType) : undefined,
       from: from || undefined,
       to: to || undefined,
       page,
-      size: DEFAULT_PAGE_SIZE,
     }),
-    [adminUsernameValue, actionValue, from, to, page],
+    [adminLoginIdValue, activityTypeValue, from, to, page],
   );
 
   const query = useQuery({
@@ -78,7 +76,7 @@ export function AuditLogsPage() {
     queryFn: () => fetchAuditLogs(params),
   });
 
-  const hasFilters = Boolean(adminUsernameValue || actionValue || from || to);
+  const hasFilters = Boolean(adminLoginIdValue || activityTypeValue || from || to);
   const invalidPeriod = Boolean(from && to && from > to);
   const maxAuditDate = getTodayDate();
 
@@ -91,16 +89,17 @@ export function AuditLogsPage() {
       key: 'admin',
       header: '관리자',
       width: '200px',
-      /* 계정 아이디만 보여준다. 숫자 ID 는 화면에서 쓸 일이 없다. */
-      render: (row) => row.adminUsername,
+      /* 계정 아이디만 보여준다. 숫자 adminId 는 화면에서 쓸 일이 없다. */
+      render: (row) => row.adminLoginId,
     },
     {
       key: 'action',
       header: '활동',
       width: '260px',
+      /* 표시 문구는 서버가 확정해 내려준다(activityLabel). */
       render: (row) => (
-        <StatusPill tone={actionTone(row.action)}>
-          {AUDIT_ACTION_LABEL[row.action] ?? row.action}
+        <StatusPill tone={activityTone(row.activityType)}>
+          {row.activityLabel || AUDIT_ACTIVITY_LABEL[row.activityType] || row.activityType}
         </StatusPill>
       ),
     },
@@ -108,13 +107,13 @@ export function AuditLogsPage() {
       key: 'target',
       header: '대상',
       /*
-       * target 은 "member:1001" 같은 문자열이다. 종류를 우리말로 풀어 한 줄로
+       * 대상은 targetType + targetId 두 값으로 온다. 종류를 우리말로 풀어 한 줄로
        * 보여주고, 해당 관리 화면으로 바로 갈 수 있게 링크를 건다. 연결할 화면이
-       * 없는 종류(리포트 등)는 링크 없이 값만 보여준다.
+       * 없는 종류는 링크 없이 값만 보여준다.
        */
       render: (row) => {
-        const target = parseAuditTarget(row.target);
-        const label = target.id ? `${target.label} #${target.id}` : target.label;
+        const target = parseAuditTarget(row.targetType, row.targetId);
+        const label = row.targetId ? `${target.label} #${row.targetId}` : target.label;
         return target.href ? (
           <Link className="audit-logs__target-link" to={target.href}>
             {label}
@@ -129,7 +128,7 @@ export function AuditLogsPage() {
       header: '발생일시',
       width: '200px',
       numeric: true,
-      render: (row) => <span className="muted">{formatDateTime(row.createdAt)}</span>,
+      render: (row) => <span className="muted">{formatDateTime(row.occurredAt)}</span>,
     },
   ];
 
@@ -141,19 +140,23 @@ export function AuditLogsPage() {
             {(props) => (
               <TextInput
                 {...props}
-                value={adminUsernameValue}
+                value={adminLoginIdValue}
                 placeholder="예: admin01, general_lee"
-                onChange={(event) => patchParams({ adminUsername: event.target.value })}
+                onChange={(event) => patchParams({ adminLoginId: event.target.value })}
               />
             )}
           </FormField>
 
           <FormField label="활동 유형">
             {(props) => (
-              <Select {...props} value={actionValue} onChange={(event) => patchParams({ action: event.target.value })}>
+              <Select
+                {...props}
+                value={activityTypeValue}
+                onChange={(event) => patchParams({ activityType: event.target.value })}
+              >
                 <option value="">전체 활동</option>
-                {AUDIT_FILTER_ACTIONS.map((value) => (
-                  <option key={value} value={value}>{AUDIT_ACTION_LABEL[value]}</option>
+                {AUDIT_FILTER_ACTIVITIES.map((value: AuditActivityType) => (
+                  <option key={value} value={value}>{AUDIT_ACTIVITY_LABEL[value]}</option>
                 ))}
               </Select>
             )}
@@ -200,7 +203,7 @@ export function AuditLogsPage() {
           caption="관리자 감사 로그 목록"
           columns={columns}
           rows={invalidPeriod ? [] : query.data?.content ?? []}
-          rowKey={(row) => row.logId}
+          rowKey={(row) => row.id}
           loading={!invalidPeriod && query.isPending}
           error={query.isError ? '감사 로그를 불러오지 못했습니다.' : undefined}
           emptyState={

@@ -7,20 +7,23 @@
  * 목 단계에서는 프론트에서 어떤 활동이 로그로 남는지 눈으로 확인할 수 있도록
  * 여기에 항목을 쌓아 둔다. 백엔드가 붙으면 이 파일은 조회 전용 목으로만 남는다.
  *
+ * 필드는 서버 AuditLogResponse 를 그대로 따른다. `description`(조치 사유)은
+ * 서버 응답에 없어 두지 않는다 — 추가를 요청해 둔 상태다.
+ *
  * feature 끼리 직접 import 할 수 없으므로 여러 화면이 공유하는 목은 mocks 에 둔다.
  */
 
-import type { AuditAction } from '@/shared/lib/audit';
+import type { AuditActivityType } from '@/shared/lib/audit';
 
 export interface AuditLog {
-  logId: number;
-  adminUsername: string;
-  action: AuditAction;
-  /** 대상 식별자. 예: "member:1001", "payment:7001" */
-  target: string;
-  /** 사람이 읽을 수 있는 설명 */
-  description: string;
-  createdAt: string;
+  id: number;
+  adminId: number;
+  adminLoginId: string;
+  activityType: AuditActivityType;
+  activityLabel: string;
+  targetType: string;
+  targetId: number;
+  occurredAt: string;
 }
 
 function hoursAgo(n: number): string {
@@ -31,44 +34,54 @@ let nextLogId = 40010;
 
 const seed: AuditLog[] = [
   {
-    logId: 40001,
-    adminUsername: 'admin01',
-    action: 'MEMBER_DELETE',
-    target: 'member:1099',
-    description: '탈퇴 요청 회원 삭제',
-    createdAt: hoursAgo(3),
+    id: 40001,
+    adminId: 1,
+    adminLoginId: 'admin01',
+    activityType: 'MEMBER_DELETE',
+    activityLabel: '회원 삭제',
+    targetType: 'MEMBER',
+    targetId: 1099,
+    occurredAt: hoursAgo(3),
   },
   {
-    logId: 40002,
-    adminUsername: 'general_lee',
-    action: 'MEMBER_UPDATE',
-    target: 'member:1003',
-    description: '회원 연락처 정정 요청 처리',
-    createdAt: hoursAgo(9),
+    id: 40002,
+    adminId: 2,
+    adminLoginId: 'general_lee',
+    activityType: 'MEMBER_UPDATE',
+    activityLabel: '회원 정보 수정',
+    targetType: 'MEMBER',
+    targetId: 1003,
+    occurredAt: hoursAgo(9),
   },
   {
-    logId: 40003,
-    adminUsername: 'admin01',
-    action: 'WALLET_ADJUST',
-    target: 'wallet:509',
-    description: '결제 취소 건 잔액 보정 (+2,000원)',
-    createdAt: hoursAgo(26),
+    id: 40003,
+    adminId: 1,
+    adminLoginId: 'admin01',
+    activityType: 'WALLET_BALANCE_ADJUST',
+    activityLabel: '지갑 잔액 수동 조정',
+    targetType: 'WALLET',
+    targetId: 509,
+    occurredAt: hoursAgo(26),
   },
   {
-    logId: 40004,
-    adminUsername: 'minho_park',
-    action: 'POST_DELETE',
-    target: 'post:5521',
-    description: '광고성 게시글 삭제',
-    createdAt: hoursAgo(31),
+    id: 40004,
+    adminId: 3,
+    adminLoginId: 'minho_park',
+    activityType: 'POST_DELETE',
+    activityLabel: '게시글 삭제',
+    targetType: 'POST',
+    targetId: 5521,
+    occurredAt: hoursAgo(31),
   },
   {
-    logId: 40005,
-    adminUsername: 'admin01',
-    action: 'PAYMENT_REFUND',
-    target: 'payment:7002',
-    description: '중복 결제 환불',
-    createdAt: hoursAgo(52),
+    id: 40005,
+    adminId: 1,
+    adminLoginId: 'admin01',
+    activityType: 'NOTICE_CREATE',
+    activityLabel: '공지사항 등록',
+    targetType: 'NOTICE',
+    targetId: 9001,
+    occurredAt: hoursAgo(52),
   },
 ];
 
@@ -77,7 +90,7 @@ let logs: AuditLog[] = [...seed];
 /** 최신순 감사 로그. */
 export function getAuditLogs(): AuditLog[] {
   return [...logs].sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
   );
 }
 
@@ -86,14 +99,16 @@ export function getAuditLogs(): AuditLog[] {
  * 실제로는 서버가 기록하므로, 프론트에서 이 함수를 호출하는 것은 목 전용 동작이다.
  */
 export function appendAuditLog(entry: {
-  adminUsername: string;
-  action: AuditAction;
-  target: string;
-  description: string;
+  adminLoginId: string;
+  activityType: AuditActivityType;
+  activityLabel: string;
+  targetType: string;
+  targetId: number;
 }): AuditLog {
   const log: AuditLog = {
-    logId: (nextLogId += 1),
-    createdAt: new Date().toISOString(),
+    id: (nextLogId += 1),
+    adminId: 0,
+    occurredAt: new Date().toISOString(),
     ...entry,
   };
   logs = [log, ...logs];

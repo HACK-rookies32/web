@@ -11,6 +11,7 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { matchesKeyword, mockResponse, paginate } from '@/shared/api/mock';
 import { toCsv } from '@/shared/lib/format';
+import { toPage, type SpringPage } from '@/shared/api/page';
 import type { Page } from '@/shared/lib/types';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members';
@@ -56,7 +57,13 @@ export async function fetchMembers(params: MemberListParams): Promise<Page<Membe
     return mockResponse(paginate(filtered, params));
   }
 
-  return request<Page<Member>>({ url: '/admin/members/customers', method: 'GET', params });
+  /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다. */
+  const data = await request<SpringPage<Member>>({
+    url: '/admin/members/customers',
+    method: 'GET',
+    params,
+  });
+  return toPage(data);
 }
 
 /** GET /admin/members/{id} */
@@ -127,10 +134,11 @@ export async function updateMember(vars: {
     memberStore = memberStore.map((m, i) => (i === index ? next : m));
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'MEMBER_UPDATE',
-      target: `member:${vars.memberId}`,
-      description: `${before.username} 회원 정보 수정 — ${describeChanges(before, vars.body)}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'MEMBER_UPDATE',
+      activityLabel: '회원 정보 수정',
+      targetType: 'MEMBER',
+      targetId: vars.memberId,
     });
 
     return mockResponse(next);
@@ -140,21 +148,6 @@ export async function updateMember(vars: {
     method: 'PATCH',
     data: vars.body,
   });
-}
-
-/** 감사 로그 설명에 쓸 "무엇이 바뀌었는지". 값 자체는 개인정보라 항목명만 적는다. */
-const MEMBER_FIELD_LABEL: Record<keyof MemberUpdateRequest, string> = {
-  nickname: '닉네임',
-  email: '이메일',
-  phoneNumber: '휴대폰',
-  address: '주소',
-};
-
-function describeChanges(before: Member, body: MemberUpdateRequest): string {
-  const changed = (Object.keys(body) as (keyof MemberUpdateRequest)[]).filter(
-    (key) => body[key] !== undefined && body[key] !== before[key],
-  );
-  return changed.length > 0 ? changed.map((key) => MEMBER_FIELD_LABEL[key]).join(', ') : '변경 없음';
 }
 
 /** DELETE /admin/members/{id} — SUPER_ADMIN 전용 */
@@ -168,10 +161,11 @@ export async function deleteMember(vars: {
 
     memberStore = memberStore.filter((m) => m.id !== vars.memberId);
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'MEMBER_DELETE',
-      target: `member:${vars.memberId}`,
-      description: `${target.username}(${target.loginId}) 회원 삭제`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'MEMBER_DELETE',
+      activityLabel: '회원 삭제',
+      targetType: 'MEMBER',
+      targetId: vars.memberId,
     });
 
     return mockResponse(undefined);
@@ -212,10 +206,11 @@ export async function fetchMembersCsv(vars: { adminUsername: string }): Promise<
     );
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'REPORT_DOWNLOAD',
-      target: 'report:members',
-      description: `전체 회원 목록 CSV 내려받기 — ${memberStore.length}건`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'REPORT_DOWNLOAD',
+      activityLabel: '리포트 다운로드',
+      targetType: 'MEMBER',
+      targetId: 0,
     });
 
     return mockResponse(csv, 600);

@@ -2,7 +2,6 @@ import { USE_MOCK, request } from '@/shared/api/client';
 import { mockResponse } from '@/shared/api/mock';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_ADMINS } from '@/mocks/admins';
-import { ROLE_LABEL } from '@/shared/lib/constants';
 import type { AdminAccount, AdminRoleUpdateRequest } from './types';
 
 export const adminKeys = {
@@ -54,10 +53,11 @@ export async function updateAdminRole(vars: {
     adminStore = adminStore.map((admin, current) => (current === index ? updated : admin));
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'ADMIN_ROLE_UPDATE',
-      target: `admin:${vars.id}`,
-      description: `${updated.loginId} 권한 ${ROLE_LABEL[before.role]} → ${ROLE_LABEL[vars.body.role]}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'MEMBER_ROLE_UPDATE',
+      activityLabel: '관리자 권한 변경',
+      targetType: 'MEMBER',
+      targetId: vars.id,
     });
 
     return mockResponse(updated, 550);

@@ -45,10 +45,11 @@ export async function createHarmfulKeyword(vars: {
     keywordStore = [created, ...keywordStore];
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'KEYWORD_CREATE',
-      target: `keyword:${created.id}`,
-      description: `차단 키워드 추가 — ${created.keyword}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'HARMFUL_KEYWORD_ADD',
+      activityLabel: '차단 키워드 추가',
+      targetType: 'HARMFUL_KEYWORD',
+      targetId: created.id,
     });
 
     return mockResponse(created, 450);
@@ -67,14 +68,14 @@ export async function deleteHarmfulKeyword(vars: {
   adminUsername: string;
 }): Promise<void> {
   if (USE_MOCK) {
-    const target = keywordStore.find((item) => item.id === vars.id);
     keywordStore = keywordStore.filter((item) => item.id !== vars.id);
 
     appendAuditLog({
-      adminUsername: vars.adminUsername,
-      action: 'KEYWORD_DELETE',
-      target: `keyword:${vars.id}`,
-      description: `차단 키워드 제외 — ${target?.keyword ?? vars.id}`,
+      adminLoginId: vars.adminUsername,
+      activityType: 'HARMFUL_KEYWORD_DELETE',
+      activityLabel: '차단 키워드 제외',
+      targetType: 'HARMFUL_KEYWORD',
+      targetId: vars.id,
     });
 
     return mockResponse(undefined, 400);

@@ -23,30 +23,3 @@ export interface CommunityPostDetail extends CommunityPostListItem {
 }
 
 export type CommunityPostListParams = PageParams;
-
-export interface SpringSort {
-  empty: boolean;
-  sorted: boolean;
-  unsorted: boolean;
-}
-
-export interface SpringPage<T> {
-  content: T[];
-  pageable: {
-    pageNumber: number;
-    pageSize: number;
-    offset: number;
-    paged: boolean;
-    unpaged: boolean;
-    sort: SpringSort;
-  };
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  numberOfElements: number;
-  first: boolean;
-  last: boolean;
-  empty: boolean;
-  sort: SpringSort;
-}
