@@ -25,7 +25,7 @@ import {
   memberRef,
 } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
-import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
+import { formatSignedAmount, walletTxMeta } from '@/shared/lib/wallet';
 import {
   fetchMember,
   fetchMemberDevices,
@@ -258,7 +258,7 @@ export function MemberDetailPage() {
                       <ul className="detail__ledger">
                         {wallet.data.recentTransactions.slice(0, 4).map((t) => (
                           <li key={t.txId} className="detail__tx">
-                            <StatusPill tone={WALLET_TX[t.type].tone}>{WALLET_TX[t.type].label}</StatusPill>
+                            <StatusPill tone={walletTxMeta(t.type).tone}>{walletTxMeta(t.type).label}</StatusPill>
                             <span className="detail__tx-time">{formatDateTime(t.createdAt)}</span>
                             <span
                               className={

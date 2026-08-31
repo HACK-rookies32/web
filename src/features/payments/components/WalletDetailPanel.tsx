@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { DetailBox, DetailRow, EmptyState, LoadingBlock, StatusPill } from '@/shared/ui';
 import { formatCurrency, formatDateTime, maskEmail, maskName, memberRef } from '@/shared/lib/format';
-import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
+import { formatSignedAmount, walletTxMeta } from '@/shared/lib/wallet';
 import { fetchWallet, fundKeys } from '../api';
 import './WalletDetailPanel.css';
 
@@ -60,7 +60,7 @@ export function WalletDetailPanel({ userId }: { userId: number }) {
             {data.recentTransactions.map((t) => (
               <li key={t.txId} className="wallet-panel__tx">
                 <span className="wallet-panel__tx-top">
-                  <StatusPill tone={WALLET_TX[t.type].tone}>{WALLET_TX[t.type].label}</StatusPill>
+                  <StatusPill tone={walletTxMeta(t.type).tone}>{walletTxMeta(t.type).label}</StatusPill>
                   <span
                     className={
                       t.amount >= 0

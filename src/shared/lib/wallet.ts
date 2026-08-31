@@ -97,6 +97,25 @@ export const STORE_PAYMENT_STATUS: Record<StorePaymentStatus, { label: string; t
   CANCELLED: { label: '취소', tone: 'neutral' },
 };
 
+/*
+ * 상수맵 안전 조회.
+ *
+ * 위 세 맵은 서버가 주는 문자열(type·status)로 인덱싱한다. 서버가 맵에 없는 값을
+ * 보내면 `MAP[값]` 이 undefined 가 되고, 화면에서 `.tone`·`.label` 을 읽는 순간
+ * 페이지가 통째로 크래시한다(감사 로그·지갑에서 겪은 것과 같은 유형). 서버가 새
+ * 상태·거래 유형을 추가해도 화면이 죽지 않도록, 모르는 값은 값 그대로를 라벨로
+ * 보여주고 tone 은 중립으로 떨어뜨린다.
+ */
+export function walletTxMeta(type: string): { label: string; tone: Tone } {
+  return WALLET_TX[type as WalletTxType] ?? { label: type || '기타', tone: 'neutral' };
+}
+export function chargeStatusMeta(status: string): { label: string; tone: Tone } {
+  return CHARGE_STATUS[status as ChargeStatus] ?? { label: status || '기타', tone: 'neutral' };
+}
+export function storePaymentStatusMeta(status: string): { label: string; tone: Tone } {
+  return STORE_PAYMENT_STATUS[status as StorePaymentStatus] ?? { label: status || '기타', tone: 'neutral' };
+}
+
 /** 부호를 붙인 금액 표시. 증가는 +, 차감은 -. */
 export function formatSignedAmount(amount: number): string {
   const sign = amount > 0 ? '+' : amount < 0 ? '−' : '';
