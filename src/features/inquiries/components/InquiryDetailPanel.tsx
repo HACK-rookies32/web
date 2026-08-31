@@ -107,9 +107,11 @@ export function InquiryDetailPanel({
 
         <p className="inquiry-panel__body">{data.content}</p>
 
-        {data.attachmentUrl || data.linkUrl ? (
+        {data.attachments.length > 0 || data.linkUrl ? (
           <ul className="inquiry-panel__attachments">
-            {data.attachmentUrl ? <li>첨부: {data.attachmentUrl}</li> : null}
+            {data.attachments.map((url) => (
+              <li key={url}>첨부: {url}</li>
+            ))}
             {data.linkUrl ? (
               <li>
                 링크:{' '}

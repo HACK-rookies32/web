@@ -16,6 +16,12 @@ export interface AuditLogItem {
   activityLabel: string;
   targetType: string;
   targetId: number;
+  /**
+   * 조치 사유. 3일차에 "누가 무엇을 했는지는 알아도 왜 했는지 알 수 없다" 는
+   * 문제로 신설을 요청했던 필드이고, 이후 서버 응답에 반영됐다.
+   * 사유 없이 남는 활동(로그인 등)도 있어 비어 있을 수 있다.
+   */
+  description: string | null;
   occurredAt: string;
 }
 

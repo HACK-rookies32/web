@@ -10,15 +10,18 @@ import {
 } from '@/mocks/payments';
 import type { Page } from '@/shared/lib/types';
 import type {
+  AdjustResult,
+  ChargeCancelRequest,
+  ChargeCancelResult,
   ChargeItem,
+  ChargeStatus,
   FundsFlowParams,
   FundsFlowRow,
-  RefundRequest,
-  RefundResult,
   StorePayment,
   StorePaymentListParams,
   WalletListParams,
   WalletSummary,
+  WalletTransaction,
 } from './types';
 
 /**
@@ -48,10 +51,9 @@ let nextTxId = 91000;
  * 부모가 카드로 넣은 돈과 그 돈이 자녀에게 건너간 것은 이어지는 하나의 흐름이라
  * 관리자가 한 화면에서 따라갈 수 있어야 한다. `flow` 로 한쪽만 볼 수도 있다.
  *
- * 실서버에서는 `GET /admin/finance/transactions` 하나로 받는다. 다만 응답
- * content[] 가 id·type·amount·balanceAfter·refUid·createdAt 뿐이라 **누구의
- * 거래인지 알 수 없다.** 회원·결제수단 컬럼은 채울 값이 없어 비워 둔다.
- * userId·회원명·결제수단 추가를 요청해 둔 상태다.
+ * 실서버에서는 `GET /admin/finance/transactions` 하나로 받는다. 요청해 둔
+ * `userId` · `userName` · `method` 가 응답에 반영되어 회원·결제수단 컬럼을
+ * 실제 값으로 채운다.
  */
 export async function fetchFundsFlow(params: FundsFlowParams): Promise<Page<FundsFlowRow>> {
   if (!USE_MOCK) return fetchFundsFlowFromServer(params);
@@ -81,13 +83,25 @@ export async function fetchFundsFlow(params: FundsFlowParams): Promise<Page<Fund
   return mockResponse(paginate(merged, params));
 }
 
-/** 서버 거래 원장(TxResponse). 명세 5.9 GET /finance/transactions 의 content 원소. */
-interface TxResponse {
+/**
+ * 서버 거래 원장. `GET /admin/finance/transactions` 의 content 원소다.
+ *
+ * `userId` · `userName` · `method` 는 2일차에 신설을 요청해 이후 서버에 반영된
+ * 필드다. 그 전에는 누구의 거래인지 알 수 없어 회원·결제수단 컬럼을 비워 뒀다.
+ *
+ * `storeName` 은 매장 결제(PAYMENT) 원장에만 값이 있다. 이 화면은 충전과 용돈
+ * 이동만 다루므로 쓰지 않는다 — 매장 결제는 별도 탭에서 본다.
+ */
+interface AdminTxResponse {
   id: number;
+  userId: number;
+  userName: string;
   type: string;
   amount: number;
   balanceAfter: number;
   refUid: string | null;
+  storeName: string | null;
+  method: string | null;
   createdAt: string;
 }
 
@@ -99,14 +113,26 @@ interface TxResponse {
  *   용돈   → TRANSFER_OUT
  *   전체   → 서버 필터 없이 받아 두 종류만 남긴다
  *
- * 회원 정보가 응답에 없어 이름·이메일·결제수단은 빈 값으로 둔다.
- * 목 데이터로 채우지 않는다 — 실서버 화면에 가상 회원이 뜨면 실제 거래로 오해한다.
+ * 이메일은 응답에 없다. 목 데이터로 채우지 않고 빈 값으로 둔다 —
+ * 실서버 화면에 가상 회원이 뜨면 실제 거래로 오해한다.
+ *
+ * 용돈 이동(TRANSFER_OUT)은 보내는 쪽 원장이라 `userId`·`userName` 이 **보낸 사람**이다.
+ * 받는 쪽은 `refUid` 에 **상대 회원 id 가 문자열로** 들어 있다(백엔드 회신 2026-08-29).
+ * 이름까지는 없어 식별자만 채운다.
  */
 async function fetchFundsFlowFromServer(params: FundsFlowParams): Promise<Page<FundsFlowRow>> {
   const flow = params.flow ?? 'ALL';
-  const type = flow === 'CHARGE' ? 'CHARGE' : flow === 'TRANSFER' ? 'TRANSFER_OUT' : undefined;
 
-  const data = await request<Page<TxResponse>>({
+  /*
+   * 「충전」만 볼 때는 충전 목록에서 받는다. 원장과 달리 PG 주문번호·이메일·상태·
+   * 취소 사유가 모두 들어 있어 화면을 온전히 채울 수 있고, 취소도 여기서만 된다.
+   * 「전체」·「용돈 이동」은 두 종류를 한 흐름으로 봐야 하므로 원장을 쓴다.
+   */
+  if (flow === 'CHARGE') return fetchChargesFromServer(params);
+
+  const type = flow === 'TRANSFER' ? 'TRANSFER_OUT' : undefined;
+
+  const data = await request<Page<AdminTxResponse>>({
     url: '/admin/finance/transactions',
     method: 'GET',
     params: {
@@ -124,22 +150,25 @@ async function fetchFundsFlowFromServer(params: FundsFlowParams): Promise<Page<F
         ? {
             kind: 'CHARGE',
             chargeId: tx.id,
-            userId: 0,
-            userName: '',
+            /* 원장에는 PG 주문번호가 없다 → 이 행에서는 취소할 수 없다. */
+            merchantUid: null,
+            userId: tx.userId,
+            userName: tx.userName ?? '',
             userEmail: '',
             amount: Math.abs(tx.amount),
             status: 'PAID',
-            method: '',
+            method: tx.method ?? '',
             createdAt: tx.createdAt,
             canceledAt: null,
             cancelReason: null,
+            refundedBy: null,
           }
         : {
             kind: 'TRANSFER',
             transferId: tx.id,
-            fromUserId: 0,
-            fromUserName: '',
-            toUserId: 0,
+            fromUserId: tx.userId,
+            fromUserName: tx.userName ?? '',
+            toUserId: toMemberId(tx.refUid),
             toUserName: '',
             amount: Math.abs(tx.amount),
             memo: null,
@@ -156,9 +185,81 @@ async function fetchFundsFlowFromServer(params: FundsFlowParams): Promise<Page<F
   };
 }
 
+/**
+ * 용돈 이동 원장의 `refUid` 에서 상대 회원 id 를 꺼낸다.
+ *
+ * 이 값은 유형마다 의미가 다르다 — 충전·환불은 merchantUid, 매장 결제는 qrToken,
+ * 조정은 사유 텍스트다. 숫자로 읽히지 않으면 0 을 돌려 "미상" 으로 표시하게 둔다.
+ */
+function toMemberId(refUid: string | null): number {
+  const parsed = Number(refUid);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : 0;
+}
+
+/** `GET /admin/finance/charges` 의 content 원소. */
+interface AdminChargeResponse {
+  id: number;
+  merchantUid: string;
+  userId: number;
+  /** 탈퇴 회원이면 null 이다. 충전 이력 자체는 남는다. */
+  userName: string | null;
+  userEmail: string | null;
+  amount: number;
+  status: ChargeStatus;
+  /** MockPG 라 서버가 결제수단을 저장하지 않는다 — 현재는 고정 "카드". */
+  method: string | null;
+  pgTransactionId: string | null;
+  createdAt: string;
+  refundedAt: string | null;
+  refundReason: string | null;
+}
+
+/**
+ * 실서버 충전 목록. `GET /admin/finance/charges`
+ *
+ * 상태·검색어·회원 필터를 서버에 그대로 넘긴다. 되돌린 건은 `refundedAt` ·
+ * `refundReason` 으로 오는데 화면은 `canceledAt` · `cancelReason` 으로 부른다.
+ */
+async function fetchChargesFromServer(params: FundsFlowParams): Promise<Page<FundsFlowRow>> {
+  const data = await request<Page<AdminChargeResponse>>({
+    url: '/admin/finance/charges',
+    method: 'GET',
+    params: {
+      userId: params.userId,
+      status: params.status && params.status !== 'ALL' ? params.status : undefined,
+      keyword: params.keyword || undefined,
+      page: params.page ?? 0,
+      size: params.size ?? DEFAULT_PAGE_SIZE,
+    },
+  });
+
+  return {
+    content: (Array.isArray(data?.content) ? data.content : []).map<FundsFlowRow>((c) => ({
+      kind: 'CHARGE',
+      chargeId: c.id,
+      merchantUid: c.merchantUid,
+      userId: c.userId,
+      userName: c.userName ?? '',
+      userEmail: c.userEmail ?? '',
+      amount: Math.abs(c.amount),
+      status: c.status,
+      method: c.method ?? '',
+      createdAt: c.createdAt,
+      canceledAt: c.refundedAt,
+      cancelReason: c.refundReason,
+      /* 사유가 있으면 관리자 취소, 되돌렸는데 사유가 없으면 부모 본인 환불이다. */
+      refundedBy: c.refundReason ? 'ADMIN' : c.refundedAt ? 'MEMBER' : null,
+    })),
+    page: data?.page ?? 0,
+    size: data?.size ?? 0,
+    totalElements: data?.totalElements ?? 0,
+    totalPages: data?.totalPages ?? 0,
+  };
+}
+
 /* --------------------------------------------------------- 매장 결제 ---- */
 
-/** GET /admin/payments */
+/** GET /admin/finance/payments — 매장 결제 목록 */
 export async function fetchStorePayments(
   params: StorePaymentListParams,
 ): Promise<Page<StorePayment>> {
@@ -167,41 +268,41 @@ export async function fetchStorePayments(
       .filter((p) => (params.childId ? p.childId === params.childId : true))
       .filter((p) => (params.status && params.status !== 'ALL' ? p.status === params.status : true))
       .filter((p) =>
-        params.merchant ? p.merchantName.toLowerCase().includes(params.merchant.toLowerCase()) : true,
+        params.merchant ? p.storeName.toLowerCase().includes(params.merchant.toLowerCase()) : true,
       )
-      .filter((p) => matchesKeyword(p, params.keyword, ['childName', 'parentName', 'merchantName']));
+      .filter((p) => matchesKeyword(p, params.keyword, ['childName', 'parentName', 'storeName']));
 
     return mockResponse(paginate(filtered, params));
   }
-  return request<Page<StorePayment>>({ url: '/admin/payments', method: 'GET', params });
+  return request<Page<StorePayment>>({ url: '/admin/finance/payments', method: 'GET', params });
 }
 
 /* ------------------------------------------------------------- 환불 ---- */
 
 /**
- * POST /admin/wallets/refund — 충전 취소 (SUPER_ADMIN)
+ * 충전 취소. `POST /admin/finance/charges/{merchantUid}/cancel` (SUPER_ADMIN)
  *
- * TODO(api): 이 경로는 서버에 없다(500). 관리자용 충전 취소 엔드포인트 자체가
- *            없어서 신설 요청해 둔 상태다. 4장의 부모용
- *            `POST /wallet/charge/{merchantUid}/refund` 는 인증이 PARENT 라
- *            관리자가 쓰면 행위 주체가 사용자로 기록된다.
+ * 오래 비어 있던 관리자용 충전 취소 경로가 서버에 신설됐다. 이전에는 부모용
+ * `POST /wallet/charge/{merchantUid}/refund` 밖에 없었는데, 그건 인증이 PARENT 라
+ * 관리자가 쓰면 **행위 주체가 사용자로 기록**된다.
  *
- * 대상마다 경로를 따로 두지 않고 `targetType` + `targetId` 로 구분한다.
- * 어느 쪽이든 결국 하는 일은 같다 — 지갑 잔액을 되돌리고
- * `wallet_transaction(REFUND)` 과 감사 로그를 남긴다. 다만 **방향이 반대**다.
+ * 대상은 숫자 id 가 아니라 PG 주문번호(merchantUid)다. 그래서 취소는 그 값을 주는
+ * 충전 목록(`/finance/charges`)에서 온 행에서만 할 수 있다 — 거래 원장에는
+ * merchantUid 가 없다.
  *
- *   CHARGE — 부모 카드로 충전액이 되돌아간다 → 부모 지갑 **차감**
+ * 방향에 주의한다. 매장 결제 환불은 자녀 지갑이 **증가**하지만, 충전 취소는
+ * 부모 카드로 돈이 되돌아가므로 부모 지갑이 **차감**된다. 이미 써버려 잔액이
+ * 모자라면 서버가 409 로 막는다.
  *
- * 이미 써버려 잔액이 모자라면 취소할 수 없다(명세상 409 CONFLICT).
- * 명세의 PAYMENT(매장 결제 강제 환불)는 관리자 웹에서 쓰지 않는다.
+ * 사유는 필수이며 감사 로그에 그대로 남는다.
  */
-export async function refund(
-  vars: RefundRequest & { adminUsername: string },
-): Promise<RefundResult> {
+export async function cancelCharge(
+  vars: ChargeCancelRequest & { adminUsername: string },
+): Promise<ChargeCancelResult> {
   if (USE_MOCK) {
     const now = new Date().toISOString();
 
-    const index = chargeStore.findIndex((c) => c.chargeId === vars.targetId);
+    const index = chargeStore.findIndex((c) => c.merchantUid === vars.merchantUid);
     if (index < 0) throw new Error('존재하지 않는 충전 건입니다.');
 
     const target = chargeStore[index];
@@ -217,7 +318,16 @@ export async function refund(
     }
 
     chargeStore = chargeStore.map((c, i) =>
-      i === index ? { ...c, status: 'CANCELED', canceledAt: now, cancelReason: vars.reason } : c,
+      i === index
+        ? {
+            ...c,
+            /* 관리자 취소는 결제된 건을 되돌리는 것이라 REFUNDED 다(CANCELLED 는 결제 전 취소). */
+            status: 'REFUNDED',
+            canceledAt: now,
+            cancelReason: vars.reason,
+            refundedBy: 'ADMIN',
+          }
+        : c,
     );
 
     const wallet = applyRefundToWallet({
@@ -230,33 +340,27 @@ export async function refund(
 
     appendAuditLog({
       adminLoginId: vars.adminUsername,
-      activityType: 'PAYMENT_REFUND',
-      activityLabel: '강제 환불',
-      targetType: 'PAYMENT',
-      targetId: target.chargeId,
+      activityType: 'CHARGE_CANCEL',
+      activityLabel: '충전 취소',
+      targetType: 'WALLET',
+      targetId: wallet?.walletId ?? 0,
+      description: vars.reason,
     });
 
     return mockResponse(
       {
-        targetType: 'CHARGE',
-        targetId: target.chargeId,
-        userId: target.userId,
-        userName: wallet?.userName ?? target.userName,
-        walletId: wallet?.walletId ?? 0,
-        amount: target.amount,
-        delta: -target.amount,
-        balanceAfter: wallet?.balance ?? 0,
-        refundedAt: now,
-        reason: vars.reason,
+        merchantUid: vars.merchantUid,
+        refundedAmount: target.amount,
+        balance: wallet?.balance ?? 0,
       },
       700,
     );
   }
 
-  return request<RefundResult>({
-    url: '/admin/wallets/refund',
+  return request<ChargeCancelResult>({
+    url: `/admin/finance/charges/${encodeURIComponent(vars.merchantUid)}/cancel`,
     method: 'POST',
-    data: { targetType: vars.targetType, targetId: vars.targetId, reason: vars.reason },
+    data: { reason: vars.reason },
   });
 }
 
@@ -299,11 +403,26 @@ function applyRefundToWallet(input: {
 
 /* ------------------------------------------------------------- 지갑 ---- */
 
+/** `GET /admin/finance/wallets` 의 content 원소. */
+interface AdminWalletResponse {
+  userId: number;
+  userName: string | null;
+  role: 'PARENT' | 'CHILD';
+  balance: number;
+  /** 지갑이 아직 없는 회원(충전·이체 이력 0)은 null 이다. 잔액은 0 으로 온다. */
+  updatedAt: string | null;
+}
+
 /**
- * 회원 지갑 목록.
- * TODO(api): 서버에 지갑 목록 엔드포인트가 없다(`/admin/wallets` 는 500).
- *            단건은 `/admin/members/customers/{id}/subscription` 으로 볼 수 있으나
- *            전체 회원 잔액을 훑을 방법이 없다. 신설 요청해 둔 상태다.
+ * 회원 지갑 목록. `GET /admin/finance/wallets` (신설 요청분이 반영된 엔드포인트)
+ *
+ * 응답이 화면의 WalletSummary 보다 좁다. 서버가 주지 않는 것은 **빈 값으로 둔다** —
+ * 목으로 채우면 실서버 화면에 가상 정보가 뜬다.
+ *
+ *   walletId          없음 → 0. 목록 key 는 userId 를 쓴다(지갑은 회원당 하나)
+ *   userEmail         없음 → '' (이메일 칸은 표시하지 않음)
+ *   relatedNames      없음 → [] ("연결" 칸은 '-')
+ *   recentTransactions 없음 → [] (상세는 fetchWallet 이 따로 가져온다)
  */
 export async function fetchWallets(params: WalletListParams): Promise<Page<WalletSummary>> {
   if (USE_MOCK) {
@@ -313,7 +432,35 @@ export async function fetchWallets(params: WalletListParams): Promise<Page<Walle
 
     return mockResponse(paginate(filtered, params));
   }
-  return request<Page<WalletSummary>>({ url: '/admin/wallets', method: 'GET', params });
+
+  const data = await request<Page<AdminWalletResponse>>({
+    url: '/admin/finance/wallets',
+    method: 'GET',
+    params: {
+      role: params.role && params.role !== 'ALL' ? params.role : undefined,
+      keyword: params.keyword || undefined,
+      page: params.page ?? 0,
+      size: params.size ?? DEFAULT_PAGE_SIZE,
+    },
+  });
+
+  return {
+    content: (Array.isArray(data?.content) ? data.content : []).map<WalletSummary>((w) => ({
+      walletId: 0,
+      userId: w.userId,
+      userName: w.userName ?? '',
+      userEmail: '',
+      role: w.role,
+      balance: w.balance,
+      updatedAt: w.updatedAt ?? '',
+      relatedNames: [],
+      recentTransactions: [],
+    })),
+    page: data?.page ?? 0,
+    size: data?.size ?? 0,
+    totalElements: data?.totalElements ?? 0,
+    totalPages: data?.totalPages ?? 0,
+  };
 }
 
 /**
@@ -322,43 +469,88 @@ export async function fetchWallets(params: WalletListParams): Promise<Page<Walle
  * 경로가 `/admin/wallets/{userId}` 가 아니다. 명세 5.9 에서 그 경로가 삭제되고
  * 이 엔드포인트로 통합됐다(이름은 subscription 이지만 내용은 지갑 잔액 요약이다).
  *
- * ⚠️ 응답 모양이 우리 WalletSummary 와 다르다. 목 모드에서는 드러나지 않는다.
- *    서버 AdminUserWalletResponse = { userId, balance, recentTransactions[] }
- *    TxResponse = { id, type, amount, balanceAfter, refUid, createdAt }
+ * 응답 모양이 화면의 WalletSummary 와 달라 매핑 계층을 둔다. 목 모드에서는
+ * 드러나지 않던 차이다.
  *
- *    서버가 주지 않는 것: walletId · userName · userEmail · role · updatedAt · relatedNames
- *    이름이 다른 것: TxResponse.id → txId, refUid → refId (memo 는 없음)
+ *   서버 = { userId, balance, recentTransactions[] }
+ *   원장 = { id, type, amount, balanceAfter, refUid, createdAt }
+ *          → txId · refId 로 이름이 다르고 memo 는 없다
  *
- *    WalletDetailPanel 과 회원 상세 지갑 요약이 위 필드를 읽으므로 실서버로 붙이기
- *    전에 매핑 계층이 필요하다. 지금은 경로만 맞춰 둔 상태다.
+ * 회원 이름·구분은 지갑 응답에 없어 **회원 상세를 함께 조회해 채운다.** 목 값으로
+ * 채우면 실서버 화면에 가상 회원이 뜬다. 회원 조회가 실패해도 잔액·원장은 보여야
+ * 하므로 이름 쪽만 비우고 넘어간다.
+ *
+ * walletId 와 relatedNames 는 어느 응답에도 없어 빈 값으로 둔다.
  */
+interface AdminUserWalletResponse {
+  userId: number;
+  balance: number;
+  recentTransactions: AdminTxResponse[] | null;
+}
+
+/** 회원 상세 응답 중 지갑 화면이 쓰는 부분. */
+interface MemberBrief {
+  username: string;
+  email: string | null;
+  role: 'PARENT' | 'CHILD';
+}
+
 export async function fetchWallet(userId: number): Promise<WalletSummary> {
   if (USE_MOCK) {
     const found = walletStore.find((w) => w.userId === userId);
     if (!found) throw new Error('지갑을 찾을 수 없습니다.');
     return mockResponse(found);
   }
-  return request<WalletSummary>({
-    url: `/admin/members/customers/${userId}/subscription`,
-    method: 'GET',
-  });
+
+  const [wallet, member] = await Promise.all([
+    request<AdminUserWalletResponse>({
+      url: `/admin/members/customers/${userId}/subscription`,
+      method: 'GET',
+    }),
+    request<MemberBrief>({ url: `/admin/members/customers/${userId}`, method: 'GET' }).catch(
+      () => null,
+    ),
+  ]);
+
+  const transactions = (Array.isArray(wallet?.recentTransactions) ? wallet.recentTransactions : [])
+    .map<WalletTransaction>((tx) => ({
+      txId: tx.id,
+      type: tx.type as WalletTransaction['type'],
+      amount: tx.amount,
+      balanceAfter: tx.balanceAfter,
+      refId: tx.refUid,
+      memo: null,
+      createdAt: tx.createdAt,
+    }));
+
+  return {
+    walletId: 0,
+    userId: wallet?.userId ?? userId,
+    userName: member?.username ?? '',
+    userEmail: member?.email ?? '',
+    role: member?.role ?? 'PARENT',
+    balance: wallet?.balance ?? 0,
+    /* 지갑에 갱신 시각이 없어 가장 최근 원장의 시각을 쓴다. */
+    updatedAt: transactions[0]?.createdAt ?? '',
+    relatedNames: [],
+    recentTransactions: transactions,
+  };
 }
 
 /**
  * POST /admin/finance/users/{userId}/adjust — 잔액 수동 조정 (SUPER_ADMIN)
  * 사유 필수. wallet_transaction(ADJUST) + 감사 로그를 서버가 기록한다.
  *
- * ⚠️ 응답이 우리 WalletSummary 가 아니다.
- *    서버 AdminActionResponse = { targetUserId, balance, transaction(TxResponse) }
- *    화면은 성공 토스트에 result.userName · result.balance 를 쓰는데 userName 이 없다.
- *    실서버 연동 시 호출부에서 이름을 넘기거나 매핑이 필요하다.
+ * 서버는 `{ targetUserId, balance, transaction }` 만 준다 — 회원 이름이 없다.
+ * 그래서 지갑 전체가 아니라 조정 결과만 돌려주고, 안내 문구에 쓸 이름은 화면이
+ * 이미 들고 있는 대상에서 가져온다. 목 값으로 이름을 지어내지 않는다.
  */
 export async function adjustWallet(vars: {
   userId: number;
   amount: number;
   reason: string;
   adminUsername: string;
-}): Promise<WalletSummary> {
+}): Promise<AdjustResult> {
   if (USE_MOCK) {
     const index = walletStore.findIndex((w) => w.userId === vars.userId);
     if (index < 0) throw new Error('지갑을 찾을 수 없습니다.');
@@ -393,12 +585,13 @@ export async function adjustWallet(vars: {
       activityLabel: '지갑 잔액 수동 조정',
       targetType: 'WALLET',
       targetId: target.walletId,
+      description: vars.reason,
     });
 
-    return mockResponse(next, 600);
+    return mockResponse({ targetUserId: vars.userId, balance }, 600);
   }
 
-  return request<WalletSummary>({
+  return request<AdjustResult>({
     url: `/admin/finance/users/${vars.userId}/adjust`,
     method: 'POST',
     data: { amount: vars.amount, reason: vars.reason },

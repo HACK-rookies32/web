@@ -23,6 +23,8 @@ export interface AuditLog {
   activityLabel: string;
   targetType: string;
   targetId: number;
+  /** 조치 사유. 서버가 신설한 필드다. 사유 없이 남는 활동도 있어 비어 있을 수 있다. */
+  description: string | null;
   occurredAt: string;
 }
 
@@ -41,6 +43,7 @@ const seed: AuditLog[] = [
     activityLabel: '회원 삭제',
     targetType: 'MEMBER',
     targetId: 1099,
+    description: '휴면 계정 정리 요청',
     occurredAt: hoursAgo(3),
   },
   {
@@ -51,6 +54,7 @@ const seed: AuditLog[] = [
     activityLabel: '회원 정보 수정',
     targetType: 'MEMBER',
     targetId: 1003,
+    description: '연락처 오기 정정',
     occurredAt: hoursAgo(9),
   },
   {
@@ -61,6 +65,7 @@ const seed: AuditLog[] = [
     activityLabel: '지갑 잔액 수동 조정',
     targetType: 'WALLET',
     targetId: 509,
+    description: '결제 실패 건 보정',
     occurredAt: hoursAgo(26),
   },
   {
@@ -71,6 +76,7 @@ const seed: AuditLog[] = [
     activityLabel: '게시글 삭제',
     targetType: 'POST',
     targetId: 5521,
+    description: '커뮤니티 운영정책 위반',
     occurredAt: hoursAgo(31),
   },
   {
@@ -81,6 +87,7 @@ const seed: AuditLog[] = [
     activityLabel: '공지사항 등록',
     targetType: 'NOTICE',
     targetId: 9001,
+    description: null,
     occurredAt: hoursAgo(52),
   },
 ];
@@ -104,10 +111,12 @@ export function appendAuditLog(entry: {
   activityLabel: string;
   targetType: string;
   targetId: number;
+  description?: string | null;
 }): AuditLog {
   const log: AuditLog = {
     id: (nextLogId += 1),
     adminId: 0,
+    description: null,
     occurredAt: new Date().toISOString(),
     ...entry,
   };

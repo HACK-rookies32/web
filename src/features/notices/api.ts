@@ -1,6 +1,6 @@
 import { USE_MOCK, request } from '@/shared/api/client';
 import { mockResponse, paginate } from '@/shared/api/mock';
-import { toPage, type SpringPage } from '@/shared/api/page';
+import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_NOTICES } from '@/mocks/notices';
 import type { Page } from '@/shared/lib/types';
@@ -41,23 +41,37 @@ export async function fetchNotices(params: NoticeListParams): Promise<Page<Notic
 
     return mockResponse(paginate(filtered, params));
   }
-  /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다. */
-  const data = await request<SpringPage<NoticeListItem>>({
+  /*
+   * 평평한 페이지 객체로 온다. 이전에는 Spring Page(현재 페이지가 number)였는데
+   * 서버가 평평한 형태로 바꿨다 — `number` 를 계속 읽으면 항상 1페이지로 보인다.
+   */
+  const data = await request<Page<NoticeListItem>>({
     url: '/admin/notices',
     method: 'GET',
-    params,
+    params: {
+      keyword: params.keyword || undefined,
+      page: params.page ?? 0,
+      size: params.size ?? DEFAULT_PAGE_SIZE,
+    },
   });
-  return toPage(data);
+
+  return {
+    content: Array.isArray(data?.content) ? data.content : [],
+    page: data?.page ?? 0,
+    size: data?.size ?? 0,
+    totalElements: data?.totalElements ?? 0,
+    totalPages: data?.totalPages ?? 0,
+  };
 }
 
 /** GET /admin/notices/{id} */
-export async function fetchNotice(noticeId: number): Promise<NoticeDetail> {
+export async function fetchNotice(id: number): Promise<NoticeDetail> {
   if (USE_MOCK) {
-    const found = noticeStore.find((n) => n.noticeId === noticeId);
+    const found = noticeStore.find((n) => n.id === id);
     if (!found) throw new Error('존재하지 않는 공지입니다.');
     return mockResponse(found);
   }
-  return request<NoticeDetail>({ url: `/admin/notices/${noticeId}`, method: 'GET' });
+  return request<NoticeDetail>({ url: `/admin/notices/${id}`, method: 'GET' });
 }
 
 /** POST /admin/notices — SUPER_ADMIN */
@@ -68,7 +82,7 @@ export async function createNotice(vars: {
   if (USE_MOCK) {
     const now = new Date().toISOString();
     const created: NoticeDetail = {
-      noticeId: (nextNoticeId += 1),
+      id: (nextNoticeId += 1),
       title: vars.body.title,
       content: vars.body.content,
       attachments: vars.body.attachments ?? [],
@@ -86,7 +100,7 @@ export async function createNotice(vars: {
       activityType: 'NOTICE_CREATE',
       activityLabel: '공지사항 등록',
       targetType: 'NOTICE',
-      targetId: created.noticeId,
+      targetId: created.id,
     });
 
     return mockResponse(created, 500);
@@ -96,12 +110,12 @@ export async function createNotice(vars: {
 
 /** PATCH /admin/notices/{id} — SUPER_ADMIN */
 export async function updateNotice(vars: {
-  noticeId: number;
+  id: number;
   body: NoticeRequest;
   adminUsername: string;
 }): Promise<NoticeDetail> {
   if (USE_MOCK) {
-    const index = noticeStore.findIndex((n) => n.noticeId === vars.noticeId);
+    const index = noticeStore.findIndex((n) => n.id === vars.id);
     if (index < 0) throw new Error('존재하지 않는 공지입니다.');
 
     const next: NoticeDetail = {
@@ -120,13 +134,13 @@ export async function updateNotice(vars: {
       activityType: 'NOTICE_UPDATE',
       activityLabel: '공지사항 수정',
       targetType: 'NOTICE',
-      targetId: vars.noticeId,
+      targetId: vars.id,
     });
 
     return mockResponse(next, 500);
   }
   return request<NoticeDetail>({
-    url: `/admin/notices/${vars.noticeId}`,
+    url: `/admin/notices/${vars.id}`,
     method: 'PATCH',
     data: vars.body,
   });
@@ -134,22 +148,22 @@ export async function updateNotice(vars: {
 
 /** DELETE /admin/notices/{id} — SUPER_ADMIN */
 export async function deleteNotice(vars: {
-  noticeId: number;
+  id: number;
   title: string;
   adminUsername: string;
 }): Promise<void> {
   if (USE_MOCK) {
-    noticeStore = noticeStore.filter((n) => n.noticeId !== vars.noticeId);
+    noticeStore = noticeStore.filter((n) => n.id !== vars.id);
     appendAuditLog({
       adminLoginId: vars.adminUsername,
       activityType: 'NOTICE_DELETE',
       activityLabel: '공지사항 삭제',
       targetType: 'NOTICE',
-      targetId: vars.noticeId,
+      targetId: vars.id,
     });
     return mockResponse(undefined);
   }
-  return request<void>({ url: `/admin/notices/${vars.noticeId}`, method: 'DELETE' });
+  return request<void>({ url: `/admin/notices/${vars.id}`, method: 'DELETE' });
 }
 
 /**

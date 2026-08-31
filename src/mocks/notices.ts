@@ -10,7 +10,7 @@ function daysAgo(n: number, hour = 11, minute = 30): string {
 /** 공지 목 데이터. */
 export const MOCK_NOTICES: NoticeDetail[] = [
   {
-    noticeId: 9001,
+    id: 9001,
     title: '[점검] 8월 27일 새벽 서버 정기 점검 안내',
     content:
       '안녕하세요, 케어가드입니다.\n\n서비스 안정화를 위한 정기 점검이 진행됩니다.\n\n· 일시: 2026년 8월 27일(목) 02:00 ~ 05:00 (3시간)\n· 영향: 위치 조회, 용돈 이체, 매장 결제 일시 중단\n\n점검 시간 동안 자녀 기기의 유해 사이트 차단 기능은 정상 동작합니다.\n이용에 불편을 드려 죄송합니다.',
@@ -23,7 +23,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(0, 9, 12),
   },
   {
-    noticeId: 9002,
+    id: 9002,
     title: '용돈 지갑 기능 오픈 안내',
     content:
       '자녀에게 직접 용돈을 보낼 수 있는 지갑 기능이 추가되었습니다.\n\n· 부모: 카드로 지갑 충전 후 자녀에게 이체\n· 자녀: 매장에서 QR로 결제\n\n앱을 최신 버전으로 업데이트해 주세요.',
@@ -36,7 +36,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(1, 15),
   },
   {
-    noticeId: 9003,
+    id: 9003,
     title: '개인정보 처리방침 개정 안내 (2026-09-01 시행)',
     content:
       '개인정보 처리방침이 일부 개정되어 안내드립니다.\n\n· 변경 사항: 위치정보 보관 기간 명시(최근 3일)\n· 시행일: 2026년 9월 1일\n\n자세한 내용은 첨부된 문서를 확인해 주세요.',
@@ -49,7 +49,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(5),
   },
   {
-    noticeId: 9004,
+    id: 9004,
     title: '[내부] 관리자 콘솔 권한 정책 변경',
     content:
       '관리자 콘솔의 파트별 권한이 조정되었습니다.\n\n· 1:1 문의: 슈퍼 관리자 / 문의 관리자만 접근\n· 강제 환불, 잔액 조정: 슈퍼 관리자 전용\n\n담당 파트 외 메뉴는 화면에 표시되지 않습니다.',
@@ -62,7 +62,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(7),
   },
   {
-    noticeId: 9005,
+    id: 9005,
     title: '유해 사이트 차단 목록 업데이트',
     content: '신규 차단 키워드 42건이 추가되었습니다. 자녀 기기에서 자동으로 적용됩니다.',
     attachments: [],
@@ -74,7 +74,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(11),
   },
   {
-    noticeId: 9006,
+    id: 9006,
     title: '앱 v1.4.0 업데이트 안내',
     content:
       '· 자녀 화면 캡처 주기 조정 기능 추가\n· 위치 알림 지연 문제 개선\n· 다크 모드 지원',
@@ -87,7 +87,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(16),
   },
   {
-    noticeId: 9007,
+    id: 9007,
     title: '[내부] 감사 로그 조회 권한 안내',
     content: '감사 로그는 생성·조회만 가능하며 수정·삭제는 제공하지 않습니다.',
     attachments: [],
@@ -99,7 +99,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(23),
   },
   {
-    noticeId: 9008,
+    id: 9008,
     title: '추석 연휴 고객센터 운영 안내',
     content: '연휴 기간 1:1 문의 답변이 지연될 수 있습니다. 긴급 문의는 앱 내 채팅을 이용해 주세요.',
     attachments: [],
@@ -111,7 +111,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(30),
   },
   {
-    noticeId: 9009,
+    id: 9009,
     title: '위치 트래킹 정확도 개선 안내',
     content: '5분 단위 배치 전송 방식이 개선되어 이동 경로가 더 정확하게 표시됩니다.',
     attachments: [],
@@ -123,7 +123,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(38),
   },
   {
-    noticeId: 9010,
+    id: 9010,
     title: '서비스 오픈 안내',
     content: '케어가드 서비스가 정식 오픈했습니다. 많은 이용 부탁드립니다.',
     attachments: [],
@@ -135,7 +135,7 @@ export const MOCK_NOTICES: NoticeDetail[] = [
     updatedAt: daysAgo(52),
   },
   {
-    noticeId: 9011,
+    id: 9011,
     title: '[내부] 목 데이터 사용 안내',
     content: '백엔드 연동 전까지 관리자 콘솔은 목 데이터로 동작합니다.',
     attachments: [],

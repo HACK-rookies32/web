@@ -127,6 +127,16 @@ export function AuditLogsPage() {
       },
     },
     {
+      key: 'description',
+      header: '사유',
+      width: '220px',
+      /*
+       * 조치 사유. 이것이 있어야 정당한 조치와 오남용을 구분할 수 있다.
+       * 로그인처럼 사유가 없는 활동도 있어 비어 있으면 '-' 로 둔다.
+       */
+      render: (row) => <span className="muted">{row.description || '-'}</span>,
+    },
+    {
       key: 'createdAt',
       header: '발생일시',
       width: '200px',

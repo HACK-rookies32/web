@@ -86,7 +86,7 @@ export function HomePage() {
           <HomePanel title="공지 내역" to="/notices" query={notices} emptyText="등록된 공지가 없습니다">
             {(rows: NonNullable<typeof notices.data>) =>
               rows.content.slice(0, PREVIEW_SIZE).map((n) => (
-                <li key={n.noticeId} className="home__row">
+                <li key={n.id} className="home__row">
                   <span className="home__row-main">{n.title}</span>
                   <span className="home__row-side">
                     <time className="home__row-time">{formatRelative(n.createdAt)}</time>

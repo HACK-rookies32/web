@@ -176,7 +176,7 @@ export async function fetchInquiriesCsv(vars: { adminUsername: string }): Promis
         i.memberNickname,
         i.title,
         i.content,
-        i.attachmentUrl ?? '',
+        (i.attachments ?? []).join(' '),
         i.linkUrl ?? '',
         i.answered ? 'Y' : 'N',
         i.createdAt,
