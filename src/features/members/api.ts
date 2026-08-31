@@ -16,7 +16,7 @@ import type { Page } from '@/shared/lib/types';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members';
 import { MOCK_WALLETS } from '@/mocks/payments';
-import type { WalletSummary } from '@/shared/lib/wallet';
+import type { WalletSummary, WalletTransaction } from '@/shared/lib/wallet';
 import type {
   Member,
   MemberDevice,
@@ -92,12 +92,63 @@ export async function fetchMemberDevices(memberId: number): Promise<MemberDevice
  * ⚠️ 응답이 우리 WalletSummary 보다 좁다 — userName · role · relatedNames ·
  *    updatedAt 등이 오지 않는다. 자세한 차이는 payments/api.ts 의 fetchWallet 주석 참고.
  */
+/** `GET /admin/members/customers/{id}/subscription` 응답. */
+interface AdminUserWalletResponse {
+  userId: number;
+  balance: number;
+  recentTransactions:
+    | Array<{
+        id: number;
+        type: string;
+        amount: number;
+        balanceAfter: number;
+        refUid: string | null;
+        createdAt: string;
+      }>
+    | null;
+}
+
+/**
+ * 회원 지갑 요약.
+ *
+ * 서버는 `{ userId, balance, recentTransactions }` 만 준다 — WalletSummary 가 쓰는
+ * `relatedNames` · `updatedAt` · 원장의 `txId`/`refId` 가 없다. 매핑 없이 그대로
+ * 넘기면 회원 상세 화면이 `relatedNames.map(...)` 에서 undefined 로 크래시한다.
+ * 여기서 화면이 기대하는 모양으로 채워 준다(없는 값은 빈 값). 회원 이름·구분은
+ * 상세 화면이 회원 데이터로 이미 갖고 있으므로 지갑에서는 비워 둔다.
+ */
 export async function fetchMemberWallet(memberId: number): Promise<WalletSummary | null> {
   if (USE_MOCK) return mockResponse(MOCK_WALLETS.find((w) => w.userId === memberId) ?? null);
-  return request<WalletSummary>({
+
+  const data = await request<AdminUserWalletResponse>({
     url: `/admin/members/customers/${memberId}/subscription`,
     method: 'GET',
   });
+
+  const recentTransactions = (
+    Array.isArray(data?.recentTransactions) ? data.recentTransactions : []
+  ).map<WalletTransaction>((t) => ({
+    txId: t.id,
+    type: t.type as WalletTransaction['type'],
+    amount: t.amount,
+    balanceAfter: t.balanceAfter,
+    refId: t.refUid,
+    memo: null,
+    createdAt: t.createdAt,
+  }));
+
+  return {
+    walletId: 0,
+    userId: data?.userId ?? memberId,
+    userName: '',
+    userEmail: '',
+    role: 'PARENT',
+    balance: data?.balance ?? 0,
+    /* 지갑에 갱신 시각이 없어 가장 최근 원장의 시각을 쓴다. */
+    updatedAt: recentTransactions[0]?.createdAt ?? '',
+    relatedNames: [],
+    recentTransactions,
+  };
 }
 
 /**
@@ -105,13 +156,39 @@ export async function fetchMemberWallet(memberId: number): Promise<WalletSummary
  * TODO(api): 명세 5.4 의 GET /admin/inquiries 에 memberId 필터가 없다.
  *            지금은 목에서 회원별로 나눠 두었고, 연동 시 쿼리 파라미터가 필요하다.
  */
+/** `GET /admin/inquiries` content 원소 (회원 상세에서 쓰는 부분). */
+interface AdminInquiryListItem {
+  id: number;
+  title: string;
+  answered: boolean;
+  createdAt: string;
+}
+
+/**
+ * 회원의 1:1 문의 기록.
+ *
+ * `GET /admin/inquiries?memberId=` 는 **페이지 객체**(`{ content, page, ... }`)를
+ * 준다. 그대로 배열로 넘기면 문의 탭 목록이 배열이 아니라 크래시한다. content 를
+ * 꺼내 화면이 쓰는 모양으로 옮긴다. 목록 응답에는 답변 시각이 없어 answeredAt 은
+ * null 로 둔다(답변 여부만 표시).
+ */
 export async function fetchMemberInquiries(memberId: number): Promise<MemberInquiry[]> {
   if (USE_MOCK) return mockResponse(getMemberInquiries(memberId));
-  return request<MemberInquiry[]>({
+
+  const data = await request<Page<AdminInquiryListItem>>({
     url: '/admin/inquiries',
     method: 'GET',
     params: { memberId },
   });
+
+  const content = Array.isArray(data?.content) ? data.content : [];
+  return content.map<MemberInquiry>((i) => ({
+    id: i.id,
+    title: i.title,
+    answered: i.answered,
+    createdAt: i.createdAt,
+    answeredAt: null,
+  }));
 }
 
 /**
