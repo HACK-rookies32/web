@@ -63,7 +63,21 @@ export async function fetchMembers(params: MemberListParams): Promise<Page<Membe
     method: 'GET',
     params,
   });
-  return toPage(data);
+
+  /*
+   * 탈퇴 회원을 여기서 한 번 더 걸러낸다.
+   *
+   * 회원 삭제는 소프트 삭제(is_deleted=true)인데 서버 목록 쿼리에 그 조건이 없어
+   * 탈퇴 회원이 목록에 그대로 남는다. 삭제 후 목록을 새로 받아도 행이 사라지지
+   * 않아 관리자가 "삭제가 안 됐다" 고 오해한다. 목 모드는 처음부터 걸러 왔으므로
+   * 실서버 경로만 맞춰 준다.
+   *
+   * ⚠️ totalElements 는 서버가 준 값(탈퇴 포함)이라 실제 표시 건수와 어긋날 수
+   *    있다. 근본 수정은 서버 목록 쿼리에 `AND m.is_deleted = false` 를 넣는 것이라
+   *    백엔드에 요청해야 한다.
+   */
+  const page = toPage(data);
+  return { ...page, content: page.content.filter((m) => !m.isDeleted) };
 }
 
 /** GET /admin/members/{id} */
@@ -153,11 +167,7 @@ export async function fetchMemberWallet(memberId: number): Promise<WalletSummary
   };
 }
 
-/**
- * 회원의 1:1 문의 기록.
- * TODO(api): 명세 5.4 의 GET /admin/inquiries 에 memberId 필터가 없다.
- *            지금은 목에서 회원별로 나눠 두었고, 연동 시 쿼리 파라미터가 필요하다.
- */
+/* `memberId` 필터는 서버가 정식 지원한다(GET /admin/inquiries?memberId=). */
 /** `GET /admin/inquiries` content 원소 (회원 상세에서 쓰는 부분). */
 interface AdminInquiryListItem {
   id: number;
@@ -180,7 +190,12 @@ export async function fetchMemberInquiries(memberId: number): Promise<MemberInqu
   const data = await request<Page<AdminInquiryListItem>>({
     url: '/admin/inquiries',
     method: 'GET',
-    params: { memberId },
+    /*
+     * size 를 주지 않으면 서버 기본값 10건에서 잘린다. 이 탭에는 페이지네이션이
+     * 없어 11번째부터는 볼 방법이 아예 없었다. 회원 한 명의 문의 기록은 많아야
+     * 수십 건이라 넉넉히 받아 한 번에 보여준다.
+     */
+    params: { memberId, size: 100 },
   });
 
   const content = Array.isArray(data?.content) ? data.content : [];

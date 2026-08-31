@@ -224,7 +224,7 @@ export async function deleteNotice(vars: {
 
 /**
  * POST /admin/notifications/broadcast — 전체 알림 발송 (SUPER_ADMIN)
- * 되돌릴 수 없으므로 호출 전 확인 절차를 반드시 거친다. 응답은 202(비동기 접수).
+ * 되돌릴 수 없으므로 호출 전 확인 절차를 반드시 거친다. 서버는 발송까지 마친 뒤 200 을 준다.
  */
 export async function broadcastNotification(vars: {
   body: BroadcastRequest;

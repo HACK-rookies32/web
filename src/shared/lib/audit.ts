@@ -14,15 +14,23 @@
 /**
  * 활동 유형.
  *
- * 명세 5.8 표에서 **서버에 대응 엔드포인트가 있는 것만** 남겼다.
- * `MEMBER_BAN` · `MEMBER_UNBAN` 은 표에 있으나 밴 API 가 없어져 발생할 수 없다.
- * `ADMIN_LOGIN` 은 표에 없지만 실서버에서 실제로 쌓이는 것을 확인했다.
+ * 서버 `AdminActivityType` 을 기준으로 맞춘다(코드 대조 2026-08-31).
+ *
+ * `ADMIN_LOGIN` · `ADMIN_LOGOUT` 은 명세 5.8 표에 없지만 로그인·로그아웃마다 실제로
+ * 쌓인다. `MEMBER_BAN` 은 "밴 API 가 없어졌다" 고 적어 두었던 것이 사실과 달랐다 —
+ * 서버에 `POST /admin/community/members/ban` 과 enum 이 모두 살아 있어, 다른 경로로
+ * 밴이 일어나면 이 유형이 쌓인다. 웹에 없으면 필터로 걸러볼 수 없어 추가한다.
+ *
+ * `REPORT_DOWNLOAD` 는 **서버 enum 에 없다**(CSV 다운로드를 서버가 기록하지 않는다).
+ * 목 모드에서만 쓰이며, 서버로 나가면 INVALID_ACTIVITY_TYPE 이라 필터에서 숨긴다.
  */
 export type AuditActivityType =
   | 'ADMIN_LOGIN'
+  | 'ADMIN_LOGOUT'
   | 'MEMBER_UPDATE'
   | 'MEMBER_DELETE'
   | 'MEMBER_ROLE_UPDATE'
+  | 'MEMBER_BAN'
   | 'WALLET_BALANCE_ADJUST'
   | 'CHARGE_CANCEL'
   | 'PAYMENT_REFUND'
@@ -47,9 +55,11 @@ export type AuditActivityType =
  */
 export const AUDIT_ACTIVITY_LABEL: Record<AuditActivityType, string> = {
   ADMIN_LOGIN: '관리자 로그인',
+  ADMIN_LOGOUT: '관리자 로그아웃',
   MEMBER_UPDATE: '회원 정보 수정',
   MEMBER_DELETE: '회원 삭제',
   MEMBER_ROLE_UPDATE: '관리자 권한 변경',
+  MEMBER_BAN: '계정 정지',
   WALLET_BALANCE_ADJUST: '지갑 잔액 수동 조정',
   CHARGE_CANCEL: '충전 취소',
   PAYMENT_REFUND: '강제 환불',
@@ -109,7 +119,9 @@ const TARGET_KINDS: Record<string, { label: string; href: (id: number) => string
   POST: { label: '게시글', href: (id) => `/community?id=${id}` },
   HARMFUL_KEYWORD: { label: '차단 키워드', href: () => '/harmful-keywords' },
   NOTICE: { label: '공지', href: () => '/notices' },
-  INQUIRY_ANSWER: { label: '문의 답변', href: (id) => `/inquiries?id=${id}` },
+  /* 서버 AuditTargetType 은 `INQUIRY` 다 — 답변 등록·수정·삭제가 모두 이 값으로 온다.
+     `INQUIRY_ANSWER` 로 두었을 때는 대상 칸에 코드값이 그대로 찍혔다. */
+  INQUIRY: { label: '1:1 문의', href: (id) => `/inquiries?id=${id}` },
   NOTIFICATION: { label: '전체 알림', href: () => '/notices' },
 };
 

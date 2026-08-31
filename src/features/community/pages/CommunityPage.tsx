@@ -38,18 +38,13 @@ export function CommunityPage() {
     : DEFAULT_PAGE_SIZE;
   const selectedId = searchParams.get('id') ? Number(searchParams.get('id')) : null;
   /*
-   * 명세 5.5 의 커뮤니티 API 별 요구 권한.
+   * 커뮤니티 API 의 실제 요구 권한(서버 시큐리티 체인 확인, 2026-08-31).
    *
-   *   GET    /admin/community/posts        SUPER · GENERAL · COMMUNITY   ← 목록만 열려 있다
-   *   GET    /admin/community/posts/{id}   SUPER · GENERAL · COMMUNITY   ← 문서 기준
-   *   DELETE /admin/community/posts/{id}   SUPER · COMMUNITY
+   *   /api/admin/community/**   SUPER_ADMIN · COMMUNITY_ADMIN
    *
-   * 여기서는 GENERAL_ADMIN 에게 목록만 열어 둔다. 상세·삭제는 막는다.
-   *
-   * TODO(api): 상세 조회는 문서에 아직 GENERAL_ADMIN 이 적혀 있어 코드가 문서보다
-   *            좁다. 삭제의 GENERAL_ADMIN 은 백엔드가 "잘못 들어간 것" 이라고 확인해
-   *            문서에서 뺐는데, 상세도 같은 오기인지는 확인받지 못했다.
-   *            **문서만 보고 넓히지 말 것.** 확인되면 이 주석과 함께 정리한다.
+   * 목록·상세·삭제가 한 체인으로 묶여 있어 **조회까지 두 역할 전용**이다.
+   * 명세 5.5 는 목록·상세에 GENERAL_ADMIN 도 적어 두었으나 코드가 그렇지 않다 —
+   * 문서만 보고 넓히면 목록부터 403 이 난다(메뉴 노출도 같은 기준으로 맞춰 두었다).
    *
    * ⚠️ 이 가드는 UX 용이며 실제 접근 통제는 서버가 담당한다.
    */

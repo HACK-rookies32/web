@@ -63,7 +63,12 @@ export const NAV_ICON: Record<NavIconName, IconName> = {
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: '홈 화면', icon: 'dashboard' },
-  { to: '/members', label: '회원 관리', icon: 'members', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
+  /*
+   * 회원 관리는 SUPER_ADMIN 전용이다. 서버가 `/api/admin/members/**` 전체를
+   * (조회까지) SUPER_ADMIN 으로 막고 있어, GENERAL_ADMIN 에게 메뉴를 열어 두면
+   * 들어가는 순간 목록·상세가 전부 403 이라 빈 화면만 본다.
+   */
+  { to: '/members', label: '회원 관리', icon: 'members', roles: ['SUPER_ADMIN'] },
   { to: '/payments', label: '자금·결제 관리', icon: 'payments', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
   { to: '/notices', label: '공지 관리', icon: 'notices', roles: ['SUPER_ADMIN'] },
   {
@@ -76,8 +81,12 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/community',
     label: '커뮤니티 관리',
     icon: 'community',
-    /* 명세 5.5 GET /admin/community/posts 는 GENERAL_ADMIN 도 허용한다. */
-    roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN'],
+    /*
+     * 서버는 `/api/admin/community/**` 를 **조회까지** SUPER_ADMIN·COMMUNITY_ADMIN
+     * 으로만 연다. 명세 5.5 에는 GENERAL_ADMIN 도 목록을 볼 수 있다고 적혀 있었으나
+     * 실제 시큐리티 체인이 그렇지 않아, 열어 두면 목록부터 403 이 난다.
+     */
+    roles: ['SUPER_ADMIN', 'COMMUNITY_ADMIN'],
   },
   { to: '/harmful-keywords', label: '유해사이트 관리', icon: 'harmful', roles: ['SUPER_ADMIN'] },
   { to: '/audit-logs', label: '감사 로그', icon: 'audit', roles: ['SUPER_ADMIN'] },

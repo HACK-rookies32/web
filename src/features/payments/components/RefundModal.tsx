@@ -18,7 +18,7 @@ interface RefundModalProps {
 /**
  * 환불·취소 확인 모달.
  *
- * 매장 결제 강제 환불(POST /admin/payments/{paymentId}/refund)과
+ * 매장 결제 강제 환불(POST /api/admin/finance/payments/{qrToken}/force-refund — 웹은 쓰지 않는다)과
  * 충전 취소 두 곳이 같은 절차를 쓴다 — 대상을 확인하고, 사유를 받고, 실행한다.
  * 사유는 요청 본문에 들어가 감사 로그에 남으므로 항상 필수다.
  */

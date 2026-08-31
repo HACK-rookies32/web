@@ -157,9 +157,19 @@ async function fetchFundsFlowFromServer(params: FundsFlowParams): Promise<Page<F
   /* 상태 필터가 걸리면 용돈 이동은 상태가 없어 자연히 빠진다(목 경로와 동일). */
   const statusActive = Boolean(params.status && params.status !== 'ALL');
 
+  /*
+   * 검색어가 있으면 용돈 이동을 뺀다.
+   *
+   * `/transactions` 에는 keyword 파라미터가 없어 서버가 걸러 주지 못한다. 그대로
+   * 합치면 **검색어와 무관한 용돈 이동이 전건 섞여** 나와, 검색 결과가 아닌 것이
+   * 검색 결과처럼 보인다. 충전(`/charges`)만 서버 검색을 지원하므로 그쪽만 남긴다.
+   * (서버에 `/transactions` keyword 추가를 요청해 두면 이 분기를 없앨 수 있다)
+   */
+  const keywordActive = Boolean(params.keyword);
+
   const [chargePage, transferPage] = await Promise.all([
     fetchChargesFromServer({ ...params, page: 0, size: need }),
-    statusActive
+    statusActive || keywordActive
       ? Promise.resolve<Page<FundsFlowRow>>({
           content: [],
           page: 0,
@@ -312,7 +322,12 @@ export async function fetchStorePayments(
       .filter((p) =>
         params.merchant ? p.storeName.toLowerCase().includes(params.merchant.toLowerCase()) : true,
       )
-      .filter((p) => matchesKeyword(p, params.keyword, ['childName', 'parentName', 'storeName']));
+      /*
+       * 서버의 `keyword` 는 자녀·보호자 실명만 본다. 매장명은 별도 `merchant`
+       * 파라미터이고 서버가 둘을 AND 로 묶어, 한 입력에 같이 넣으면 결과가 사라진다.
+       * 목이 매장명까지 찾아 주면 실서버와 동작이 갈리므로 여기서도 뺀다.
+       */
+      .filter((p) => matchesKeyword(p, params.keyword, ['childName', 'parentName']));
 
     return mockResponse(paginate(filtered, params));
   }
@@ -486,7 +501,8 @@ export async function fetchWallets(params: WalletListParams): Promise<Page<Walle
   if (USE_MOCK) {
     const filtered = walletStore
       .filter((w) => (params.role && params.role !== 'ALL' ? w.role === params.role : true))
-      .filter((w) => matchesKeyword(w, params.keyword, ['userName', 'userEmail']));
+      /* 서버는 실명·로그인 아이디로만 찾는다(이메일 아님). 목도 같은 기준으로 둔다. */
+      .filter((w) => matchesKeyword(w, params.keyword, ['userName']));
 
     return mockResponse(paginate(filtered, params));
   }

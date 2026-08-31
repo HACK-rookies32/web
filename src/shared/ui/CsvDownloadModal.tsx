@@ -97,7 +97,13 @@ export function CsvDownloadModal({
       open={open}
       onClose={onClose}
       title={title}
-      description="CSV 파일을 만듭니다. 내려받은 기록은 감사 로그에 남습니다."
+      /*
+       * "감사 로그에 남습니다" 라고 안내했었으나 사실이 아니다 — 서버 CSV 엔드포인트는
+       * 감사 로그를 기록하지 않고, REPORT_DOWNLOAD 유형 자체가 서버에 없다. 개인정보
+       * 반출을 다루는 화면에서 없는 통제를 있다고 적어 두면 안 되므로 문구를 내린다.
+       * (서버가 기록을 시작하면 문구를 되살린다)
+       */
+      description="CSV 파일을 만듭니다. 개인정보가 포함되므로 취급에 주의해 주세요."
       footer={
         <>
           <Button onClick={onClose} disabled={phase === 'generating'}>

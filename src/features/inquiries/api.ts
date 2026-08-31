@@ -68,22 +68,50 @@ export async function fetchInquiries(params: InquiryListParams): Promise<Page<In
     return mockResponse(paginate(filtered, params));
   }
 
+  const answeredActive = Boolean(params.answered && params.answered !== 'ALL');
+  const page = params.page ?? 0;
+  const size = params.size ?? DEFAULT_PAGE_SIZE;
+
+  /*
+   * 서버 `GET /admin/inquiries` 에는 답변 여부 필터가 없다.
+   *
+   * 예전에는 서버가 준 **그 페이지 안에서만** 걸러 놓고 건수·페이지 수는 서버 값
+   * (필터 전)을 그대로 썼다. 그래서 "전체 87건 · 9페이지" 라고 적혀 있는데 각
+   * 페이지에는 0~10건이 들쭉날쭉 나오고, 대기 문의가 없는 페이지는 통째로 비었다.
+   *
+   * 필터가 걸린 동안에는 넉넉히 받아 와서 **웹이 직접 걸러 페이지를 나눈다.**
+   * 그래야 표시 건수와 페이지 수가 실제 결과와 맞는다.
+   */
   const data = await request<Page<InquiryListItem>>({
     url: '/admin/inquiries',
     method: 'GET',
-    params: { page: params.page ?? 0, size: params.size ?? DEFAULT_PAGE_SIZE },
+    params: answeredActive ? { page: 0, size: 200 } : { page, size },
   });
 
   const content = Array.isArray(data?.content) ? data.content : [];
+
+  if (!answeredActive) {
+    return {
+      content,
+      page: data?.page ?? 0,
+      size: data?.size ?? 0,
+      totalElements: data?.totalElements ?? 0,
+      totalPages: data?.totalPages ?? 0,
+    };
+  }
+
+  const filtered = content.filter((i) =>
+    params.answered === 'ANSWERED' ? i.answered : !i.answered,
+  );
+  const totalPages = Math.max(1, Math.ceil(filtered.length / size));
+  const safePage = Math.min(page, totalPages - 1);
+
   return {
-    content:
-      !params.answered || params.answered === 'ALL'
-        ? content
-        : content.filter((i) => (params.answered === 'ANSWERED' ? i.answered : !i.answered)),
-    page: data?.page ?? 0,
-    size: data?.size ?? 0,
-    totalElements: data?.totalElements ?? 0,
-    totalPages: data?.totalPages ?? 0,
+    content: filtered.slice(safePage * size, safePage * size + size),
+    page: safePage,
+    size,
+    totalElements: filtered.length,
+    totalPages,
   };
 }
 

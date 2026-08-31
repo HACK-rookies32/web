@@ -53,10 +53,18 @@ export function StorePaymentsTab({
       key: 'child',
       header: '자녀 / 보호자',
       width: '24%',
+      /*
+       * 페어링된 보호자가 없으면 서버가 parentId·parentName 을 null 로 준다.
+       * 그대로 찍으면 "회원 #null" 이라는 없는 회원이 생기므로 문구로 대체한다.
+       */
       render: (row) => (
         <StackedCell
-          primary={`${maskName(row.childName)} (${memberRef(row.childId, '자녀')})`}
-          secondary={`보호자 ${maskName(row.parentName)} (${memberRef(row.parentId)})`}
+          primary={`${maskName(row.childName ?? '')} (${memberRef(row.childId, '자녀')})`}
+          secondary={
+            row.parentId != null
+              ? `보호자 ${maskName(row.parentName ?? '')} (${memberRef(row.parentId)})`
+              : '보호자 미연결'
+          }
         />
       ),
     },
@@ -98,7 +106,8 @@ export function StorePaymentsTab({
 
   return (
     <FundsTabLayout
-      searchPlaceholder="자녀명 · 보호자명 · 매장명 검색"
+      /* 서버 keyword 는 자녀·보호자 실명만 본다. 매장명은 별도 파라미터라 여기서 못 찾는다. */
+      searchPlaceholder="자녀명 · 보호자명 검색"
       searchLabel="매장 결제 검색"
       keyword={keyword}
       onSearch={handleSearch}
