@@ -71,6 +71,13 @@ export function PaymentsPage() {
       const name = maskName(chargeRefundTarget?.userName ?? '');
       const amount = formatCurrency(result.refundedAmount);
       queryClient.invalidateQueries({ queryKey: fundKeys.all });
+      /*
+       * 회원 상세(회원 관리)의 지갑은 memberKeys(['member', id, ...])로 캐시돼 있어
+       * fundKeys.all 무효화에 걸리지 않는다. 취소·조정으로 잔액이 바뀌었으니 회원 쪽
+       * 지갑·상세도 다시 불러오도록 'member' 접두 키를 함께 무효화한다.
+       * (feature 간 직접 import 를 피하려 키 상수 대신 접두사로 맞춘다.)
+       */
+      queryClient.invalidateQueries({ queryKey: ['member'] });
       syncAuditLog();
       setChargeRefundTarget(null);
       toast.success(
@@ -90,6 +97,13 @@ export function PaymentsPage() {
       const name = maskName(adjustTarget?.userName ?? '');
       const balance = formatCurrency(result.balance);
       queryClient.invalidateQueries({ queryKey: fundKeys.all });
+      /*
+       * 회원 상세(회원 관리)의 지갑은 memberKeys(['member', id, ...])로 캐시돼 있어
+       * fundKeys.all 무효화에 걸리지 않는다. 취소·조정으로 잔액이 바뀌었으니 회원 쪽
+       * 지갑·상세도 다시 불러오도록 'member' 접두 키를 함께 무효화한다.
+       * (feature 간 직접 import 를 피하려 키 상수 대신 접두사로 맞춘다.)
+       */
+      queryClient.invalidateQueries({ queryKey: ['member'] });
       syncAuditLog();
       setAdjustTarget(null);
       toast.success(
