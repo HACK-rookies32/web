@@ -71,6 +71,11 @@ server {
         add_header Referrer-Policy "strict-origin-when-cross-origin" always;
         add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
         add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=()" always;
+
+        # index.html 은 캐시하지 않는다. 캐시되면 브라우저가 옛 index.html 로 옛 해시
+        # 청크를 계속 불러와 새 배포가 사용자에게 전파되지 않는다. 해시 자산은 아래
+        # /assets/ 에서 길게 캐시하되, 그것을 가리키는 index.html 만 매번 새로 받게 한다.
+        add_header Cache-Control "no-store" always;
     }
 
     # 해시가 박힌 빌드 산출물은 내용이 바뀌면 파일명이 바뀌므로 길게 캐시한다.
