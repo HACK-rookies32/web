@@ -50,6 +50,14 @@ server {
     #   (특히 CSP script-src 'self' 로 인라인 스크립트·이벤트 핸들러 실행 차단).
     location / {
         try_files $uri $uri/ /index.html;
+
+        # index.html 은 캐시하지 않는다.
+        #
+        # 이 파일이 캐시되면 브라우저가 옛 index.html 을 붙들고 옛 해시 청크
+        # (/assets/*.js)를 계속 불러와, 새 배포가 사용자에게 전파되지 않는다.
+        # 해시 자산은 immutable 로 길게 캐시하되(아래 /assets/), 그 자산을 가리키는
+        # index.html 만은 매번 새로 받게 해야 배포가 즉시 반영된다.
+        add_header Cache-Control "no-store" always;
     }
 
     # 해시가 박힌 빌드 산출물은 내용이 바뀌면 파일명이 바뀌므로 길게 캐시한다.
