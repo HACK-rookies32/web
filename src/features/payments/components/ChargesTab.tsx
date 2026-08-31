@@ -4,7 +4,7 @@ import type { SetURLSearchParams } from 'react-router-dom';
 import { Button, Column, RowActions, Select, StackedCell, StatusPill } from '@/shared/ui';
 import { FundsTabLayout } from './FundsTabLayout';
 import { formatCurrency, formatDateTime, maskEmail, maskName, memberRef } from '@/shared/lib/format';
-import { CHARGE_STATUS, type ChargeStatus } from '@/shared/lib/wallet';
+import { chargeStatusMeta, type ChargeStatus } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { fetchFundsFlow, fundKeys } from '../api';
 import type { ChargeItem, FundsFlowFilter, FundsFlowRow } from '../types';
@@ -125,7 +125,7 @@ export function ChargesTab({
       width: '96px',
       render: (row) =>
         row.kind === 'CHARGE' ? (
-          <StatusPill tone={CHARGE_STATUS[row.status].tone}>{CHARGE_STATUS[row.status].label}</StatusPill>
+          <StatusPill tone={chargeStatusMeta(row.status).tone}>{chargeStatusMeta(row.status).label}</StatusPill>
         ) : (
           <StatusPill tone="neutral">완료</StatusPill>
         ),

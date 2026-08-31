@@ -4,7 +4,7 @@ import type { SetURLSearchParams } from 'react-router-dom';
 import { Column, Select, StackedCell, StatusPill } from '@/shared/ui';
 import { FundsTabLayout } from './FundsTabLayout';
 import { formatCurrency, formatDateTime, maskName, memberRef } from '@/shared/lib/format';
-import { STORE_PAYMENT_STATUS, type StorePaymentStatus } from '@/shared/lib/wallet';
+import { storePaymentStatusMeta, type StorePaymentStatus } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { fetchStorePayments, fundKeys } from '../api';
 import type { StorePayment } from '../types';
@@ -82,8 +82,8 @@ export function StorePaymentsTab({
       header: '상태',
       width: '104px',
       render: (row) => (
-        <StatusPill tone={STORE_PAYMENT_STATUS[row.status].tone}>
-          {STORE_PAYMENT_STATUS[row.status].label}
+        <StatusPill tone={storePaymentStatusMeta(row.status).tone}>
+          {storePaymentStatusMeta(row.status).label}
         </StatusPill>
       ),
     },

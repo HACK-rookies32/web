@@ -20,7 +20,7 @@ import {
   maskPhone,
   memberRef,
 } from '@/shared/lib/format';
-import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
+import { formatSignedAmount, walletTxMeta } from '@/shared/lib/wallet';
 import { fetchMemberDevices, fetchMemberWallet, memberKeys } from '../api';
 import type { Member } from '../types';
 import { DeviceGlyph } from './Glyphs';
@@ -159,7 +159,7 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
                   <ul className="quickview__ledger">
                     {wallet.data.recentTransactions.slice(0, 3).map((t) => (
                       <li key={t.txId} className="quickview__tx">
-                        <StatusPill tone={WALLET_TX[t.type].tone}>{WALLET_TX[t.type].label}</StatusPill>
+                        <StatusPill tone={walletTxMeta(t.type).tone}>{walletTxMeta(t.type).label}</StatusPill>
                         <span
                           className={
                             t.amount >= 0
