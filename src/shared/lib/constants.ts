@@ -10,7 +10,7 @@ export const ROLE_LABEL: Record<Role, string> = {
   INQUIRY_ADMIN: '문의 관리자',
 };
 
-/** 로그인 화면의 데모용 역할 선택지 (목 로그인 전용). */
+/** 관리자 계정 관리 화면의 역할 선택지. */
 export const ROLE_OPTIONS: { value: Role; label: string; hint: string }[] = [
   { value: 'SUPER_ADMIN', label: '슈퍼 관리자', hint: '전체 기능' },
   { value: 'GENERAL_ADMIN', label: '일반 관리자', hint: '회원·결제·문의' },

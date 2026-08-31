@@ -77,9 +77,9 @@ export function NoticesPage() {
   });
 
   const saveMutation = useMutation({
-    mutationFn: (vars: { noticeId?: number; body: NoticeRequest }) =>
-      vars.noticeId
-        ? updateNotice({ noticeId: vars.noticeId, body: vars.body, adminUsername })
+    mutationFn: (vars: { id?: number; body: NoticeRequest }) =>
+      vars.id
+        ? updateNotice({ id: vars.id, body: vars.body, adminUsername })
         : createNotice({ body: vars.body, adminUsername }),
     onSuccess: (notice, vars) => {
       queryClient.invalidateQueries({ queryKey: noticeKeys.all });
@@ -87,7 +87,7 @@ export function NoticesPage() {
       setFormOpen(false);
       setEditing(null);
       toast.success(
-        vars.noticeId ? '공지를 수정했습니다' : '공지를 등록했습니다',
+        vars.id ? '공지를 수정했습니다' : '공지를 등록했습니다',
         notice.title,
       );
     },
@@ -96,7 +96,7 @@ export function NoticesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: (target: NoticeListItem) =>
-      deleteNotice({ noticeId: target.noticeId, title: target.title, adminUsername }),
+      deleteNotice({ id: target.id, title: target.title, adminUsername }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: noticeKeys.all });
       syncAuditLog();
@@ -117,9 +117,9 @@ export function NoticesPage() {
     onError: () => toast.error('알림 발송에 실패했습니다', '잠시 후 다시 시도해 주세요.'),
   });
 
-  async function openDetail(noticeId: number, mode: 'view' | 'edit') {
+  async function openDetail(id: number, mode: 'view' | 'edit') {
     try {
-      const detail = await fetchNotice(noticeId);
+      const detail = await fetchNotice(id);
       if (mode === 'edit') {
         setEditing(detail);
         setFormOpen(true);
@@ -172,7 +172,7 @@ export function NoticesPage() {
             size="sm"
             className="btn--icon-only"
             aria-label={`${row.title} 내용 보기`}
-            onClick={() => void openDetail(row.noticeId, 'view')}
+            onClick={() => void openDetail(row.id, 'view')}
           >
             <Icon name="eye-view" />
           </Button>
@@ -181,7 +181,7 @@ export function NoticesPage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => void openDetail(row.noticeId, 'edit')}
+                onClick={() => void openDetail(row.id, 'edit')}
                 aria-label={`${row.title} 수정`}
               >
                 수정
@@ -228,10 +228,10 @@ export function NoticesPage() {
           caption="공지 목록"
           columns={columns}
           rows={data?.content ?? []}
-          rowKey={(r) => r.noticeId}
+          rowKey={(r) => r.id}
           loading={isPending}
           error={isError ? '공지 목록을 불러오지 못했습니다.' : undefined}
-          onRowClick={(row) => void openDetail(row.noticeId, 'view')}
+          onRowClick={(row) => void openDetail(row.id, 'view')}
           emptyState={
             <EmptyState
               title="등록된 공지가 없습니다"
@@ -351,7 +351,7 @@ export function NoticesPage() {
           setFormOpen(false);
           setEditing(null);
         }}
-        onSubmit={(body) => saveMutation.mutate({ noticeId: editing?.noticeId, body })}
+        onSubmit={(body) => saveMutation.mutate({ id: editing?.id, body })}
       />
 
       <BroadcastModal

@@ -16,7 +16,6 @@ import search from '@/assets/icons/search.svg?raw';
 import user from '@/assets/icons/user.svg?raw';
 import userLine from '@/assets/icons/user-line.svg?raw';
 import lock from '@/assets/icons/lock.svg?raw';
-import eye from '@/assets/icons/eye.svg?raw';
 import eyeView from '@/assets/icons/eye-view.svg?raw';
 import trash from '@/assets/icons/trash.svg?raw';
 import arrowRight from '@/assets/icons/arrow-right.svg?raw';
@@ -39,7 +38,6 @@ const ICONS = {
   user,
   'user-line': userLine,
   lock,
-  eye,
   'eye-view': eyeView,
   trash,
   'arrow-right': arrowRight,

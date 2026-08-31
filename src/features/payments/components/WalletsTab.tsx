@@ -25,7 +25,11 @@ interface WalletsTabProps {
   onAdjust: (wallet: WalletSummary) => void;
 }
 
-/** 회원 지갑 목록. 서버에 대응 엔드포인트가 없어 목으로만 동작한다(api.ts 참고). */
+/**
+ * 회원 지갑 목록. `GET /admin/finance/wallets`
+ *
+ * 지갑은 회원당 하나이고 서버 목록 응답에 walletId 가 없어 행 key 는 userId 를 쓴다.
+ */
 export function WalletsTab({
   keyword,
   role,
@@ -56,7 +60,13 @@ export function WalletsTab({
       render: (row) => (
         <StackedCell
           primary={maskName(row.userName)}
-          secondary={`${memberRef(row.userId, row.role === 'CHILD' ? '자녀' : '회원')} · ${row.userEmail === '-' ? '자녀 계정' : maskEmail(row.userEmail)}`}
+          secondary={[
+            memberRef(row.userId, row.role === 'CHILD' ? '자녀' : '회원'),
+            /* 자녀 계정에는 이메일이 없고, 서버 목록 응답에도 없다. */
+            row.userEmail === '-' ? '자녀 계정' : row.userEmail ? maskEmail(row.userEmail) : null,
+          ]
+            .filter(Boolean)
+            .join(' · ')}
         />
       ),
     },
@@ -145,7 +155,7 @@ export function WalletsTab({
       caption="회원 지갑 목록"
       columns={columns}
       data={data}
-      rowKey={(r) => r.walletId}
+      rowKey={(r) => r.userId}
       loading={isPending}
       error={isError}
       entityName="지갑"

@@ -24,6 +24,7 @@ export type AuditActivityType =
   | 'MEMBER_DELETE'
   | 'MEMBER_ROLE_UPDATE'
   | 'WALLET_BALANCE_ADJUST'
+  | 'CHARGE_CANCEL'
   | 'PAYMENT_REFUND'
   | 'POST_DELETE'
   | 'HARMFUL_KEYWORD_ADD'
@@ -50,6 +51,7 @@ export const AUDIT_ACTIVITY_LABEL: Record<AuditActivityType, string> = {
   MEMBER_DELETE: '회원 삭제',
   MEMBER_ROLE_UPDATE: '관리자 권한 변경',
   WALLET_BALANCE_ADJUST: '지갑 잔액 수동 조정',
+  CHARGE_CANCEL: '충전 취소',
   PAYMENT_REFUND: '강제 환불',
   POST_DELETE: '게시글 삭제',
   HARMFUL_KEYWORD_ADD: '차단 키워드 추가',
@@ -67,13 +69,20 @@ export const AUDIT_ACTIVITY_LABEL: Record<AuditActivityType, string> = {
 /**
  * 필터 드롭다운에 노출할 값.
  *
- * `REPORT_DOWNLOAD` 는 뺀다 — 명세 5.8 표에 없어 서버가 이 값으로 필터링해 주지
- * 않는다. CSV 다운로드도 감사 대상이므로 표에 추가해 달라고 요청해 둔 상태이고,
- * 반영되면 이 예외를 지운다.
+ * 두 가지를 뺀다.
+ *
+ *   REPORT_DOWNLOAD — 명세 5.8 표에 없어 서버가 이 값으로 필터링해 주지 않는다.
+ *                     CSV 다운로드도 감사 대상이므로 표에 추가를 요청해 둔 상태다.
+ *   PAYMENT_REFUND  — 대응하는 강제 환불 기능을 웹에서 걷어냈다. 서버는 과거 이력을
+ *                     읽기 위해 코드와 enum 을 남겨 두었으므로(백엔드 회신 2026-08-29)
+ *                     **라벨 표는 유지하되 필터에는 노출하지 않는다.** 지난 기록에
+ *                     이 유형이 섞여 있으면 목록 행에는 그대로 "강제 환불" 로 보인다.
  */
+const HIDDEN_FILTER_ACTIVITIES: AuditActivityType[] = ['REPORT_DOWNLOAD', 'PAYMENT_REFUND'];
+
 export const AUDIT_FILTER_ACTIVITIES = (
   Object.keys(AUDIT_ACTIVITY_LABEL) as AuditActivityType[]
-).filter((type) => type !== 'REPORT_DOWNLOAD');
+).filter((type) => !HIDDEN_FILTER_ACTIVITIES.includes(type));
 
 /**
  * 감사 로그 목록 쿼리 키.

@@ -27,7 +27,8 @@ export interface InquiryAnswer {
 /** GET /admin/inquiries/{id} 의 data. */
 export interface InquiryDetail extends InquiryListItem {
   content: string;
-  attachmentUrl: string | null;
+  /** 첨부파일 URL 목록. 서버가 단일 문자열에서 배열로 바꿨다. */
+  attachments: string[];
   linkUrl: string | null;
   updatedAt: string;
   /** 답변이 없으면 null */

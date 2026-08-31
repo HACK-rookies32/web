@@ -2,7 +2,7 @@ import type { PageParams } from '@/shared/lib/types';
 
 /** 공지 목록 행 (GET /admin/notices). */
 export interface NoticeListItem {
-  noticeId: number;
+  id: number;
   title: string;
   authorName: string;
   /** 첨부파일 / 링크 개수 (목록에서는 개수만 보여준다) */

@@ -37,14 +37,19 @@ export function WalletDetailPanel({ userId }: { userId: number }) {
             </StatusPill>
           }
         />
-        {data.userEmail !== '-' ? (
+        {/* 자녀 계정에는 이메일이 없고, 서버 지갑 응답에도 없을 수 있다. */}
+        {data.userEmail && data.userEmail !== '-' ? (
           <DetailRow label="이메일" value={maskEmail(data.userEmail)} />
         ) : null}
-        <DetailRow
-          label={data.role === 'PARENT' ? '연결 자녀' : '보호자'}
-          value={data.relatedNames.map(maskName).join(', ') || '-'}
-        />
-        <DetailRow label="지갑 ID" value={<span className="tabular">{data.walletId}</span>} />
+        {data.relatedNames.length > 0 ? (
+          <DetailRow
+            label={data.role === 'PARENT' ? '연결 자녀' : '보호자'}
+            value={data.relatedNames.map(maskName).join(', ')}
+          />
+        ) : null}
+        {data.walletId > 0 ? (
+          <DetailRow label="지갑 ID" value={<span className="tabular">{data.walletId}</span>} />
+        ) : null}
       </DetailBox>
 
       <section className="wallet-panel__section">
@@ -69,8 +74,19 @@ export function WalletDetailPanel({ userId }: { userId: number }) {
                 <span className="wallet-panel__tx-meta">
                   {formatDateTime(t.createdAt)} · 잔액 {formatCurrency(t.balanceAfter)}
                 </span>
-                {t.memo ? <span className="wallet-panel__tx-memo">{t.memo}</span> : null}
-                {t.refId ? <span className="wallet-panel__tx-ref tabular">{t.refId}</span> : null}
+                {/*
+                  * refId 는 유형마다 담는 값이 다르다(백엔드 회신 2026-08-29).
+                  * 잔액 조정만 참조 키가 아니라 **조정 사유 텍스트**가 들어오므로,
+                  * 식별자 자리에 문장을 찍지 않고 사유 자리로 옮긴다.
+                  */}
+                {t.memo ?? (t.type === 'ADJUST' ? t.refId : null) ? (
+                  <span className="wallet-panel__tx-memo">
+                    {t.memo ?? (t.type === 'ADJUST' ? t.refId : null)}
+                  </span>
+                ) : null}
+                {t.refId && t.type !== 'ADJUST' ? (
+                  <span className="wallet-panel__tx-ref tabular">{t.refId}</span>
+                ) : null}
               </li>
             ))}
           </ul>

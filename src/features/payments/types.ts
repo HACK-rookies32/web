@@ -22,15 +22,18 @@ export type { ChargeStatus, StorePaymentStatus, WalletSummary, WalletTransaction
 /* ------------------------------------------------------------- 충전 ---- */
 
 
-/** GET /admin/charges 의 content 원소. */
+/** GET /admin/finance/charges 의 content 원소. */
 export interface ChargeItem {
   chargeId: number;
-  userId: number;
   /**
-   * 화면 표시용 회원 정보.
-   * TODO(api): 명세의 충전 응답 필드는 chargeId/amount/status/method/createdAt 뿐이다.
-   *            관리자 목록에서는 회원을 식별해야 하므로 join 된 값이 필요하다.
+   * PG 주문번호. 충전 취소가 이 값을 대상으로 받는다.
+   *
+   * 거래 원장(`/finance/transactions`)에는 이 값이 없어, 그쪽에서 만든 행은
+   * null 이고 취소 버튼이 뜨지 않는다. 취소하려면 「충전」 필터를 선택해
+   * 충전 목록(`/finance/charges`)에서 봐야 한다.
    */
+  merchantUid: string | null;
+  userId: number;
   userName: string;
   userEmail: string;
   amount: number;
@@ -40,6 +43,15 @@ export interface ChargeItem {
   createdAt: string;
   canceledAt: string | null;
   cancelReason: string | null;
+  /**
+   * 되돌린 주체.
+   *
+   * `status` 는 관리자 취소와 부모 본인 환불이 **둘 다 `REFUNDED`** 라 구분되지 않고,
+   * `refundedAt` 도 양쪽 모두 값이 있다. 서버가 사유를 받는 쪽은 관리자 취소뿐이라
+   * **`refundReason` 유무가 유일한 구분 근거**다(백엔드 회신 2026-08-29).
+   * 되돌리지 않은 건은 null. 소급 데이터는 사유가 없어 MEMBER 로 보인다.
+   */
+  refundedBy: 'ADMIN' | 'MEMBER' | null;
 }
 
 /**
@@ -83,13 +95,13 @@ export type FundsFlowRow =
 
 /** GET /admin/payments 의 content 원소. */
 export interface StorePayment {
-  paymentId: number;
+  id: number;
   childId: number;
   childName: string;
   parentId: number;
   parentName: string;
   /** 매장명. 필터 쿼리는 merchant */
-  merchantName: string;
+  storeName: string;
   amount: number;
   status: StorePaymentStatus;
   /** 결제 직후 자녀 지갑 잔액 */
@@ -103,38 +115,36 @@ export interface StorePayment {
 /* ------------------------------------------------------------- 환불 ---- */
 
 /**
- * 환불 대상 종류 (명세 5.9 POST /admin/wallets/refund).
+ * 충전 취소 요청 (POST /admin/finance/charges/{merchantUid}/cancel).
  *
- * 명세는 PAYMENT(매장 결제 강제 환불)도 정의하지만 관리자 웹에서는 쓰지 않는다.
- * 매장 결제 내역은 조회 전용이고, 웹에서 되돌리는 건 충전뿐이다.
- *   CHARGE — 부모 카드로 돈이 되돌아간다 → 지갑 잔액 차감
+ * 대상은 숫자 chargeId 가 아니라 **PG 주문번호(merchantUid)** 다. 매장 결제 환불은
+ * 별도 경로이고 관리자 웹에서는 쓰지 않는다 — 매장 결제 내역은 조회 전용이다.
  */
-export type RefundTargetType = 'CHARGE';
-
-/** POST /admin/wallets/refund 의 요청 본문. */
-export interface RefundRequest {
-  targetType: RefundTargetType;
-  /** targetType 이 CHARGE 면 chargeId, PAYMENT 면 paymentId. */
-  targetId: number;
+export interface ChargeCancelRequest {
+  merchantUid: string;
   /** 필수. 감사 로그에 그대로 남는다. */
   reason: string;
 }
 
-/** POST /admin/wallets/refund 의 data. */
-export interface RefundResult {
-  targetType: RefundTargetType;
-  targetId: number;
-  /** 잔액이 움직인 지갑의 주인. */
-  userId: number;
-  userName: string;
-  walletId: number;
-  /** 환불 금액. 방향과 무관하게 항상 양수다. */
-  amount: number;
-  /** 지갑에 실제로 반영된 증감. PAYMENT 는 +amount, CHARGE 는 -amount. */
-  delta: number;
-  balanceAfter: number;
-  refundedAt: string;
-  reason: string;
+/**
+ * 충전 취소 결과.
+ *
+ * 서버는 `{ merchantUid, refundedAmount, balance, transaction }` 을 준다.
+ * 회원 이름은 응답에 없으므로 안내 문구는 화면이 들고 있던 대상 정보를 쓴다.
+ */
+export interface AdjustResult {
+  /** 잔액이 조정된 회원. 서버 응답의 `targetUserId` 다. */
+  targetUserId: number;
+  /** 조정 후 잔액. */
+  balance: number;
+}
+
+export interface ChargeCancelResult {
+  merchantUid: string;
+  /** 되돌린 금액. 항상 양수다. */
+  refundedAmount: number;
+  /** 취소 후 지갑 잔액. 충전 취소이므로 잔액은 차감된다. */
+  balance: number;
 }
 
 /* --------------------------------------------------------- 파라미터 ---- */

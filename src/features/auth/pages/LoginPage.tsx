@@ -2,8 +2,6 @@ import { useState, type FormEvent } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button, FormField, Icon, TextInput } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
-import { ROLE_OPTIONS } from '@/shared/lib/constants';
-import type { Role } from '@/shared/lib/types';
 import logoLogin from '@/assets/brand/logo-login.png';
 import { login } from '../api';
 import './LoginPage.css';
@@ -15,18 +13,21 @@ interface LocationState {
 /**
  * 관리자 로그인 (Figma 131:1957).
  *
- * Figma 시안에는 없지만 핸드오프 문서 7번 요구에 따라 데모용 역할 선택을 추가했다.
- * 백엔드 연동 후에는 서버가 내려주는 role 을 쓰므로 이 블록만 제거하면 된다.
+ * 역할은 서버가 응답으로 내려준다. 백엔드 연동 전 임시로 두었던 데모용 역할
+ * 선택 블록은 연동이 끝나 제거했다 — 화면에서 역할을 고를 수 있으면 그 자체가
+ * 권한을 클라이언트가 정하는 것처럼 보인다.
+ *
+ * 비밀번호에는 보기 토글을 두지 않는다. 관리자 콘솔은 공용 PC 나 화면 공유
+ * 환경에서 열리는 일이 있어, 입력한 값이 평문으로 화면에 남을 수 있는 경로를
+ * 두지 않는다.
  */
 export function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [loginId, setLoginId] = useState('admin01');
+  const [loginId, setLoginId] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<Role>('SUPER_ADMIN');
-  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -41,7 +42,7 @@ export function LoginPage() {
     setError(null);
 
     try {
-      const result = await login({ loginId: loginId.trim(), password, role });
+      const result = await login({ loginId: loginId.trim(), password });
       signIn({
         token: result.token,
         username: result.username,
@@ -96,51 +97,16 @@ export function LoginPage() {
                 <Icon name="lock" className="login__control-icon" />
                 <TextInput
                   {...p}
-                  className="login__input login__input--password"
-                  type={showPassword ? 'text' : 'password'}
+                  className="login__input"
+                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="비밀번호를 입력하세요"
                   autoComplete="current-password"
                 />
-                <button
-                  type="button"
-                  className="login__reveal"
-                  onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? '비밀번호 숨기기' : '비밀번호 표시'}
-                  aria-pressed={showPassword}
-                >
-                  <Icon name="eye" />
-                </button>
               </div>
             )}
           </FormField>
-
-          {/* --- 데모 전용: 역할 선택 --- */}
-          <fieldset className="login__roles">
-            <legend className="login__roles-legend">
-              데모 역할 <span className="login__roles-note">(백엔드 연동 전 임시)</span>
-            </legend>
-            <div className="login__roles-grid">
-              {ROLE_OPTIONS.map((opt) => (
-                <label
-                  key={opt.value}
-                  className={role === opt.value ? 'login__role is-selected' : 'login__role'}
-                >
-                  <input
-                    className="sr-only"
-                    type="radio"
-                    name="role"
-                    value={opt.value}
-                    checked={role === opt.value}
-                    onChange={() => setRole(opt.value)}
-                  />
-                  <span className="login__role-label">{opt.label}</span>
-                  <span className="login__role-hint">{opt.hint}</span>
-                </label>
-              ))}
-            </div>
-          </fieldset>
 
           {error ? (
             <p className="login__error" role="alert">

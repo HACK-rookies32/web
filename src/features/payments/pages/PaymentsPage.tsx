@@ -6,7 +6,7 @@ import type { ChargeStatus, StorePaymentStatus, WalletSummary } from '@/shared/l
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
 import { useListParams } from '@/shared/hooks/useListParams';
-import { adjustWallet, fundKeys, refund } from '../api';
+import { adjustWallet, cancelCharge, fundKeys } from '../api';
 import type { ChargeItem, FundsFlowFilter } from '../types';
 import { ChargesTab } from '../components/ChargesTab';
 import { StorePaymentsTab } from '../components/StorePaymentsTab';
@@ -61,15 +61,21 @@ export function PaymentsPage() {
   }
 
   const chargeRefundMutation = useMutation({
-    mutationFn: (vars: { targetId: number; reason: string }) =>
-      refund({ ...vars, targetType: 'CHARGE', adminUsername: session?.username ?? 'unknown' }),
+    mutationFn: (vars: { merchantUid: string; reason: string }) =>
+      cancelCharge({ ...vars, adminUsername: session?.username ?? 'unknown' }),
+    /*
+     * 서버 응답에는 회원 이름이 없다. 안내 문구에 쓸 이름은 화면이 이미 들고 있는
+     * 대상에서 가져온다 — onSuccess 에서 대상을 비우기 전에 읽어 둔다.
+     */
     onSuccess: (result) => {
+      const name = maskName(chargeRefundTarget?.userName ?? '');
+      const amount = formatCurrency(result.refundedAmount);
       queryClient.invalidateQueries({ queryKey: fundKeys.all });
       syncAuditLog();
       setChargeRefundTarget(null);
       toast.success(
         '충전을 취소했습니다',
-        `${maskName(result.userName)} 회원의 지갑에서 ${formatCurrency(result.amount)}${josa(formatCurrency(result.amount), '이')} 차감되었으며 감사 로그에 기록되었습니다.`,
+        `${name} 회원의 지갑에서 ${amount}${josa(amount, '이')} 차감되었으며 감사 로그에 기록되었습니다.`,
       );
     },
     onError: (e) =>
@@ -79,13 +85,16 @@ export function PaymentsPage() {
   const adjustMutation = useMutation({
     mutationFn: (vars: { userId: number; amount: number; reason: string }) =>
       adjustWallet({ ...vars, adminUsername: session?.username ?? 'unknown' }),
+    /* 서버 응답에 회원 이름이 없다. 대상을 비우기 전에 화면이 들고 있던 이름을 읽는다. */
     onSuccess: (result) => {
+      const name = maskName(adjustTarget?.userName ?? '');
+      const balance = formatCurrency(result.balance);
       queryClient.invalidateQueries({ queryKey: fundKeys.all });
       syncAuditLog();
       setAdjustTarget(null);
       toast.success(
         '잔액을 조정했습니다',
-        `${maskName(result.userName)} 지갑 잔액이 ${formatCurrency(result.balance)}${josa(formatCurrency(result.balance), '이')} 되었으며 감사 로그에 기록되었습니다.`,
+        `${name} 지갑 잔액이 ${balance}${josa(balance, '이')} 되었으며 감사 로그에 기록되었습니다.`,
       );
     },
     onError: (e) =>
@@ -185,8 +194,8 @@ export function PaymentsPage() {
         submitting={chargeRefundMutation.isPending}
         onClose={() => setChargeRefundTarget(null)}
         onSubmit={(reason) =>
-          chargeRefundTarget &&
-          chargeRefundMutation.mutate({ targetId: chargeRefundTarget.chargeId, reason })
+          chargeRefundTarget?.merchantUid &&
+          chargeRefundMutation.mutate({ merchantUid: chargeRefundTarget.merchantUid, reason })
         }
       />
 

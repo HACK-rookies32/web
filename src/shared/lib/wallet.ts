@@ -60,14 +60,28 @@ export const WALLET_TX: Record<WalletTxType, { label: string; tone: Tone }> = {
   ADJUST: { label: '수동 조정', tone: 'danger' },
 };
 
-/** 충전 상태. */
-export type ChargeStatus = 'READY' | 'PAID' | 'FAILED' | 'CANCELED';
+/**
+ * 충전 상태. 서버 `AdminChargeResponse.status` 값을 그대로 쓴다.
+ *
+ * 이전에는 취소를 `CANCELED`(L 하나)로 두고 있었는데 서버는 `CANCELLED` 다.
+ * 매장 결제 상태는 처음부터 `CANCELLED` 였어서 웹 안에서 두 표기가 섞여 있었다.
+ * `REFUNDED`(환불 완료)와 `EXPIRED`(결제 만료)는 서버에만 있던 값이라 추가했다.
+ */
+export type ChargeStatus =
+  | 'READY'
+  | 'PAID'
+  | 'FAILED'
+  | 'REFUNDED'
+  | 'CANCELLED'
+  | 'EXPIRED';
 
 export const CHARGE_STATUS: Record<ChargeStatus, { label: string; tone: Tone }> = {
   READY: { label: '대기', tone: 'warning' },
   PAID: { label: '완료', tone: 'success' },
   FAILED: { label: '실패', tone: 'danger' },
-  CANCELED: { label: '취소', tone: 'neutral' },
+  REFUNDED: { label: '환불', tone: 'neutral' },
+  CANCELLED: { label: '취소', tone: 'neutral' },
+  EXPIRED: { label: '만료', tone: 'neutral' },
 };
 
 /**

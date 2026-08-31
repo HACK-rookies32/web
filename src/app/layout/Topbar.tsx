@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
+import { logout } from '@/features/auth/api';
 import { ROLE_LABEL } from '@/shared/lib/constants';
 import { ThemeSwitch } from './ThemeSwitch';
 import './Topbar.css';
@@ -66,8 +67,15 @@ export function Topbar({ title, onToggleSidebar }: TopbarProps) {
                 className="topbar__menu-item"
                 onClick={() => {
                   setMenuOpen(false);
-                  signOut();
-                  navigate('/login', { replace: true });
+                  /*
+                   * 서버 세션을 먼저 무효화한다. 토큰을 지운 뒤에 부르면 인증 헤더가
+                   * 없어 서버가 세션을 못 닫는다. logout() 은 실패해도 던지지 않으므로
+                   * 화면 전환은 어느 경우에나 진행된다.
+                   */
+                  void logout().finally(() => {
+                    signOut();
+                    navigate('/login', { replace: true });
+                  });
                 }}
               >
                 로그아웃

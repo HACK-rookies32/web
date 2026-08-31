@@ -60,7 +60,7 @@ export function StorePaymentsTab({
         />
       ),
     },
-    { key: 'merchant', header: '매장', render: (row) => row.merchantName },
+    { key: 'merchant', header: '매장', render: (row) => row.storeName },
     {
       key: 'amount',
       header: '결제 금액',
@@ -118,7 +118,7 @@ export function StorePaymentsTab({
       caption="매장 결제 내역"
       columns={columns}
       data={data}
-      rowKey={(r) => r.paymentId}
+      rowKey={(r) => r.id}
       loading={isPending}
       error={isError}
       entityName="결제 내역"
