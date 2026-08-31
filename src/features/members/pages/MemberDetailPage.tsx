@@ -25,7 +25,7 @@ import {
   memberRef,
 } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
-import { formatSignedAmount, walletTxMeta } from '@/shared/lib/wallet';
+import { formatSignedAmount, walletTxMeta, walletTxSignedAmount } from '@/shared/lib/wallet';
 import {
   fetchMember,
   fetchMemberDevices,
@@ -256,21 +256,25 @@ export function MemberDetailPage() {
 
                     {wallet.data.recentTransactions.length > 0 ? (
                       <ul className="detail__ledger">
-                        {wallet.data.recentTransactions.slice(0, 4).map((t) => (
+                        {wallet.data.recentTransactions.slice(0, 4).map((t) => {
+                          /* 증감 부호는 금액이 아니라 type 으로 정한다(REFUND 는 회원 역할로 방향 결정). */
+                          const signed = walletTxSignedAmount(t.type, t.amount, m.role);
+                          return (
                           <li key={t.txId} className="detail__tx">
                             <StatusPill tone={walletTxMeta(t.type).tone}>{walletTxMeta(t.type).label}</StatusPill>
                             <span className="detail__tx-time">{formatDateTime(t.createdAt)}</span>
                             <span
                               className={
-                                t.amount >= 0
+                                signed >= 0
                                   ? 'detail__tx-amount is-plus tabular'
                                   : 'detail__tx-amount is-minus tabular'
                               }
                             >
-                              {formatSignedAmount(t.amount)}
+                              {formatSignedAmount(signed)}
                             </span>
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     ) : null}
                   </>

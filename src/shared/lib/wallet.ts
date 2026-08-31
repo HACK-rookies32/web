@@ -15,6 +15,7 @@ export type WalletTxType =
   | 'TRANSFER_IN'
   | 'TRANSFER_OUT'
   | 'PAYMENT'
+  | 'PAYMENT_CANCEL'
   | 'REFUND'
   | 'RECLAIM'
   | 'ADJUST';
@@ -55,6 +56,7 @@ export const WALLET_TX: Record<WalletTxType, { label: string; tone: Tone }> = {
   TRANSFER_IN: { label: '용돈 받음', tone: 'info' },
   TRANSFER_OUT: { label: '용돈 보냄', tone: 'neutral' },
   PAYMENT: { label: '매장 결제', tone: 'accent' },
+  PAYMENT_CANCEL: { label: '결제 취소', tone: 'info' },
   REFUND: { label: '환불', tone: 'warning' },
   RECLAIM: { label: '회수', tone: 'neutral' },
   ADJUST: { label: '수동 조정', tone: 'danger' },
@@ -114,6 +116,40 @@ export function chargeStatusMeta(status: string): { label: string; tone: Tone } 
 }
 export function storePaymentStatusMeta(status: string): { label: string; tone: Tone } {
   return STORE_PAYMENT_STATUS[status as StorePaymentStatus] ?? { label: status || '기타', tone: 'neutral' };
+}
+
+/**
+ * 원장 한 줄에 표시할 증감액(부호 포함).
+ *
+ * 서버는 금액을 **항상 양수**로 저장하고 방향은 `type` 으로 표현한다(백엔드 회신
+ * 2026-08-31). 부호를 amount 값에서 읽으면 차감(PAYMENT·TRANSFER_OUT·충전취소
+ * REFUND)이 "+" 로 잘못 뜬다. 그래서 type 으로 방향을 정한다.
+ *
+ *   증가(+): CHARGE · TRANSFER_IN · PAYMENT_CANCEL
+ *   차감(−): PAYMENT · TRANSFER_OUT
+ *   ADJUST : 금액 자체에 부호가 있으므로 그대로 (유일하게 음수가 올 수 있음)
+ *   REFUND : 지갑 소유자에 따라 갈린다 — 부모 지갑은 충전 취소로 차감(−),
+ *            자녀 지갑은 매장 결제 강제환불로 증가(+). 한 type 이 양쪽에 쓰여
+ *            소유자 역할로 가른다(백엔드가 type 분리를 완료하면 role 인자는 뗀다).
+ *   그 외(RECLAIM 등 서버가 방향을 확정 안 준 유형): 저장된 부호를 그대로 둔다.
+ */
+export function walletTxSignedAmount(type: string, amount: number, ownerRole?: string): number {
+  const magnitude = Math.abs(amount);
+  switch (type as WalletTxType) {
+    case 'CHARGE':
+    case 'TRANSFER_IN':
+    case 'PAYMENT_CANCEL':
+      return magnitude;
+    case 'PAYMENT':
+    case 'TRANSFER_OUT':
+      return -magnitude;
+    case 'REFUND':
+      return ownerRole === 'CHILD' ? magnitude : -magnitude;
+    case 'ADJUST':
+      return amount;
+    default:
+      return amount;
+  }
 }
 
 /** 부호를 붙인 금액 표시. 증가는 +, 차감은 -. */
