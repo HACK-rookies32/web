@@ -12,6 +12,8 @@ export interface Column<T> {
   width?: string;
   /** 숫자 칸 — tabular-nums 로 자릿수를 고정한다. */
   numeric?: boolean;
+  /** 본문 셀에 덧붙일 클래스 (예: 긴 텍스트를 단어 단위로 줄바꿈하는 'cell-wrap'). */
+  cellClassName?: string;
   /**
    * 행에 마우스를 올렸을 때만 보이는 칸.
    * Figma 액션 칸이 기본 opacity 0 으로 되어 있는 것을 반영한다.
@@ -109,6 +111,7 @@ export function Table<T>({
                             col.align ? `is-${col.align}` : '',
                             col.numeric ? 'tabular' : '',
                             col.hoverOnly ? 'is-hover-only' : '',
+                            col.cellClassName ?? '',
                           ]
                             .filter(Boolean)
                             .join(' ')}
