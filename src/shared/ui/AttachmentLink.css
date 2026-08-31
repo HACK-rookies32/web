@@ -1,0 +1,26 @@
+.attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  word-break: break-all;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.attachment--link {
+  color: var(--accent-strong);
+}
+
+.attachment--link:hover {
+  text-decoration: underline;
+}
+
+.attachment__blocked {
+  flex: none;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--surface-subtle);
+  color: var(--danger);
+  font-size: var(--fs-badge);
+  line-height: var(--lh-badge);
+}

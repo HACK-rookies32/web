@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
+  AttachmentLink,
   Button,
   Card,
   ConfirmModal,
@@ -14,7 +15,7 @@ import {
   Table,
   useToast,
 } from '@/shared/ui';
-import { attachmentName, formatDateTime, formatRelative } from '@/shared/lib/format';
+import { formatDateTime, formatRelative } from '@/shared/lib/format';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { useAuditLogSync } from '@/shared/hooks/useAuditLogSync';
@@ -34,20 +35,6 @@ import { BroadcastModal } from '../components/BroadcastModal';
 import './NoticesPage.css';
 
 /** 첨부 링크 앞에 붙는 클립. 아이콘 자산에 없어 직접 그린다. */
-function PaperclipGlyph() {
-  return (
-    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
-      <path
-        d="M10.5 6.2 6.3 10.4a2.4 2.4 0 0 1-3.4-3.4l4.2-4.2a1.6 1.6 0 0 1 2.3 2.3L5.2 9.3a.8.8 0 0 1-1.1-1.1l3.6-3.6"
-        stroke="currentColor"
-        strokeWidth="1.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 /**
  * 공지 관리 (API 명세 5.3).
  * 목록 CRUD + 작성/수정 모달 + 전체 알림 발송.
@@ -321,19 +308,7 @@ export function NoticesPage() {
                 <ul className="notices__preview-list">
                   {preview.attachments.map((a) => (
                     <li key={a}>
-                      {/*
-                        같은 출처(/api/files/...)라 download 속성이 그대로 먹는다.
-                        서버가 302 로 넘기면 브라우저가 따라가 내려받는다.
-                      */}
-                      <a
-                        className="notices__file"
-                        href={a}
-                        download={attachmentName(a)}
-                        title={attachmentName(a)}
-                      >
-                        <PaperclipGlyph />
-                        {attachmentName(a)}
-                      </a>
+                      <AttachmentLink url={a} />
                     </li>
                   ))}
                 </ul>
