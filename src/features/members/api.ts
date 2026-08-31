@@ -103,6 +103,8 @@ interface AdminUserWalletResponse {
         amount: number;
         balanceAfter: number;
         refUid: string | null;
+        /* 취소·조정 사유. 서버가 원장에 memo 컬럼을 추가하며 신설됐다(2026-08-31). */
+        memo: string | null;
         createdAt: string;
       }>
     | null;
@@ -133,7 +135,7 @@ export async function fetchMemberWallet(memberId: number): Promise<WalletSummary
     amount: t.amount,
     balanceAfter: t.balanceAfter,
     refId: t.refUid,
-    memo: null,
+    memo: t.memo ?? null,
     createdAt: t.createdAt,
   }));
 

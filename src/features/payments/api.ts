@@ -102,6 +102,9 @@ interface AdminTxResponse {
   refUid: string | null;
   storeName: string | null;
   method: string | null;
+  /* 취소·조정 사유. 서버가 원장에 memo 컬럼을 추가하며 신설됐다(2026-08-31).
+     배포 전 거래는 null 이다(소급 기록 안 함). */
+  memo: string | null;
   createdAt: string;
 }
 
@@ -574,7 +577,7 @@ export async function fetchWallet(userId: number): Promise<WalletSummary> {
       amount: tx.amount,
       balanceAfter: tx.balanceAfter,
       refId: tx.refUid,
-      memo: null,
+      memo: tx.memo ?? null,
       createdAt: tx.createdAt,
     }));
 
