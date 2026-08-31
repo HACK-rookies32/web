@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Button, FormField, Modal, TextArea, TextInput } from '@/shared/ui';
+import { Button, FormField, Modal, TextArea, TextInput, useToast } from '@/shared/ui';
 import type { NoticeDetail, NoticeRequest } from '../types';
 
 interface NoticeFormModalProps {
@@ -19,15 +19,14 @@ export function NoticeFormModal({
   onClose,
   onSubmit,
 }: NoticeFormModalProps) {
+  const toast = useToast();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [links, setLinks] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
-    setError(null);
     setTitle(notice?.title ?? '');
     setContent(notice?.content ?? '');
     setLinks((notice?.links ?? []).join('\n'));
@@ -37,12 +36,13 @@ export function NoticeFormModal({
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
+    /* 검증 실패는 폼 안 텍스트 대신 알림(토스트)으로 띄운다. */
     if (!title.trim()) {
-      setError('제목을 입력해 주세요.');
+      toast.error('제목을 입력해 주세요.');
       return;
     }
     if (!content.trim()) {
-      setError('본문을 입력해 주세요.');
+      toast.error('본문을 입력해 주세요.');
       return;
     }
 
@@ -136,12 +136,6 @@ export function NoticeFormModal({
               <li key={name}>{name}</li>
             ))}
           </ul>
-        ) : null}
-
-        {error ? (
-          <p role="alert" style={{ color: 'var(--danger)', fontSize: 'var(--fs-label)' }}>
-            {error}
-          </p>
         ) : null}
       </form>
     </Modal>
