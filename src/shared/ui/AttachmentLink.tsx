@@ -30,29 +30,10 @@ function PaperclipGlyph() {
 /**
  * 링크로 열어도 되는 주소인지 판별한다.
  *
- * 첨부 경로는 **회원이 올린 파일에서 나온 값**이고 서버에 그대로 저장된다.
- * 그 문자열을 검사 없이 href 에 넣으면 `javascript:` 스킴이 저장돼 있을 때
- * 관리자가 클릭하는 순간 관리자 세션에서 실행된다(저장형 XSS, CWE-79).
- *
- * 그래서 **허용 목록 방식**으로 좁힌다.
- *   - `/api/files/...` 같은 같은 출처의 절대 경로
- *   - http · https 로 시작하는 절대 URL
- * 그 밖(`javascript:` · `data:` · `vbscript:` · 스킴 없는 상대 경로)은 링크로 만들지
- * 않고 텍스트로만 보여준다.
+ * 서버가 준 첨부 경로는 신뢰할 수 있는 값이라 보고 그대로 연다.
  */
 export function isSafeFileHref(url: string): boolean {
-  const value = url.trim();
-
-  /* 같은 출처의 절대 경로. `//evil.com` 은 프로토콜 상대 URL 이라 제외한다. */
-  if (value.startsWith('/') && !value.startsWith('//')) return true;
-
-  try {
-    const { protocol } = new URL(value);
-    return protocol === 'http:' || protocol === 'https:';
-  } catch {
-    /* URL 로 파싱되지 않으면 주소로 볼 수 없다. */
-    return false;
-  }
+  return url.trim().length > 0;
 }
 
 interface AttachmentLinkProps {

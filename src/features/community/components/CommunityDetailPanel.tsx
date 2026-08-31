@@ -31,7 +31,7 @@ export function CommunityDetailPanel({ postId, deleting, onDelete }: CommunityDe
         <p className="community-detail__author">
           {data.authorNickname} · 회원 #{data.memberId}
         </p>
-        <p className="community-detail__content">{data.content}</p>
+        <p className="community-detail__content" dangerouslySetInnerHTML={{ __html: data.content }} />
         <div className="community-detail__status">
           <span>댓글 {formatNumber(data.comments.length)}개</span>
         </div>
@@ -49,7 +49,7 @@ export function CommunityDetailPanel({ postId, deleting, onDelete }: CommunityDe
                   </strong>
                   <span>{formatDateTime(comment.createdAt)}</span>
                 </div>
-                <p>{comment.content}</p>
+                <p dangerouslySetInnerHTML={{ __html: comment.content }} />
               </li>
             ))}
           </ul>

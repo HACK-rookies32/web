@@ -292,8 +292,7 @@ export function NoticesPage() {
                 <ul className="notices__preview-list">
                   {preview.links.map((l) => (
                     <li key={l}>
-                      {/* 외부 링크는 새 탭으로 열고 referrer 를 넘기지 않는다. */}
-                      <a href={l} target="_blank" rel="noreferrer noopener">
+                      <a href={l} target="_blank">
                         {l}
                       </a>
                     </li>

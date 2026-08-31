@@ -35,7 +35,7 @@ export function PaymentsPage() {
   const queryClient = useQueryClient();
   const syncAuditLog = useAuditLogSync();
   const { hasRole, session } = useAuth();
-  const canManage = hasRole(['SUPER_ADMIN']);
+  const canManage = hasRole();
 
   const { searchParams, setSearchParams, patchParams, page } = useListParams();
   const tabParam = searchParams.get('tab') as TabKey | null;

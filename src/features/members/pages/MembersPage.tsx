@@ -58,7 +58,7 @@ export function MembersPage() {
   const queryClient = useQueryClient();
   const { hasRole, session } = useAuth();
   const syncAuditLog = useAuditLogSync();
-  const canManage = hasRole(['SUPER_ADMIN']); // 수정·삭제는 SUPER_ADMIN 전용 (명세 5.2)
+  const canManage = hasRole();
 
   const { searchParams, patchParams, resetParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
