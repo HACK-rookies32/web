@@ -154,9 +154,20 @@ export function toCsv(headers: string[], rows: unknown[][]): string {
   return `﻿${lines.join('\r\n')}`;
 }
 
-/** 브라우저에서 CSV 문자열을 파일로 내려받는다. */
+/** UTF-8 BOM. 엑셀이 파일을 UTF-8 로 인식하게 하는 표식이다. */
+const UTF8_BOM = '﻿';
+
+/**
+ * 브라우저에서 CSV 문자열을 파일로 내려받는다.
+ *
+ * BOM 을 반드시 앞에 붙인다. 서버가 BOM 을 실어 보내도 **브라우저가 응답을
+ * 문자열로 디코드할 때 선행 BOM 을 떼어낸다.** 그대로 저장하면 BOM 이 사라져
+ * 엑셀(특히 한국어 윈도우)이 UTF-8 을 cp949 로 오인해 한글이 깨진다.
+ * 목 모드의 toCsv 는 이미 BOM 을 넣으므로 중복해서 붙이지 않는다.
+ */
 export function downloadCsv(filename: string, csv: string): void {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const withBom = csv.startsWith(UTF8_BOM) ? csv : `${UTF8_BOM}${csv}`;
+  const blob = new Blob([withBom], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
