@@ -151,6 +151,10 @@ export function ChargesTab({
     {
       key: 'note',
       header: '비고',
+      /* 취소 사유가 길게 들어와도 좁은 칸에서 글자가 세로로 쌓이지 않게 폭을 주고
+         단어 단위로 줄바꿈한다(cell-wrap). */
+      width: '200px',
+      cellClassName: 'cell-wrap',
       /*
        * 되돌린 건은 **누가 되돌렸는지**가 사유보다 먼저다. 관리자 취소와 부모 본인 환불이
        * status·refundedAt 으로는 구분되지 않아, 사유 유무로만 갈린다(refundedBy).
