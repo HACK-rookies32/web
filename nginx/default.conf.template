@@ -43,6 +43,29 @@ server {
     # react-router-dom 사용. 이 폴백이 없으면 /members 등에서 새로고침 시 404.
     location / {
         try_files $uri $uri/ /index.html;
+
+        # ------------------------------------------------------------------
+        # 보안 응답 헤더 (문서 응답에 적용)
+        #
+        # CSP 가 이 앱의 XSS 방어 핵심이다. script-src 'self' 는 인라인 스크립트와
+        # 인라인 이벤트 핸들러(onerror= 등)를 차단한다 — 회원이 넣은 본문이
+        # 화면에 삽입돼도 실행되지 않는다. frame-ancestors 'none' 은 클릭재킹을,
+        # base-uri/form-action/object-src 는 각각 base 태그 주입·폼 탈취·플러그인
+        # 실행을 막는다. connect-src 'self' 로 외부로의 데이터 유출 통로를 좁힌다.
+        #
+        # style-src 에 'unsafe-inline' 을 남긴 건 런타임 인라인 스타일 때문이다.
+        # 스크립트와 달리 인라인 스타일은 실행 위협이 아니라 남겨 둔다.
+        #
+        # add_header 는 location 단위로 상속이 끊기므로(하위 블록이 자체
+        # add_header 를 두면 서버 레벨 헤더가 사라진다) 문서를 내보내는 이
+        # location 에 직접 둔다. 정적 자산(/assets/)에는 nosniff 만 따로 건다.
+        # ------------------------------------------------------------------
+        add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'" always;
+        add_header X-Content-Type-Options "nosniff" always;
+        add_header X-Frame-Options "DENY" always;
+        add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+        add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+        add_header Permissions-Policy "geolocation=(), camera=(), microphone=(), payment=()" always;
     }
 
     # 해시가 박힌 빌드 산출물은 내용이 바뀌면 파일명이 바뀌므로 길게 캐시한다.
@@ -50,6 +73,8 @@ server {
     location /assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
+        # 해시 자산도 선언된 Content-Type 을 지키게 한다(스니핑 차단).
+        add_header X-Content-Type-Options "nosniff" always;
     }
 
     # ------------------------------------------------------------------

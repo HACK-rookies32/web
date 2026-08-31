@@ -132,9 +132,17 @@ export function maskAddress(address: string): string {
 
 /* ---------------------------------------------------------------- CSV ---- */
 
-/** 값 하나를 CSV 셀로 이스케이프한다. */
+/**
+ * 값 하나를 CSV 셀로 이스케이프한다.
+ *
+ * CSV 수식 주입 방지(CWE-1236): Excel·구글 시트는 `=`·`+`·`-`·`@`·탭·개행으로
+ * 시작하는 셀을 **수식으로 실행**한다. 회원이 이름·주소에 `=HYPERLINK(...)` 나
+ * `=cmd|...` 를 넣어 두면 관리자가 내려받아 여는 순간 실행된다. 그래서 그런
+ * 셀은 앞에 작은따옴표를 붙여 텍스트로 강제한다.
+ */
 function csvCell(value: unknown): string {
-  const s = value === null || value === undefined ? '' : String(value);
+  let s = value === null || value === undefined ? '' : String(value);
+  if (/^[=+\-@\t\r]/.test(s)) s = `'${s}`;
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
