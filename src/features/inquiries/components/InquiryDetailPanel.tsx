@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import {
+  AttachmentLink,
   Button,
   EmptyState,
   FormField,
   LoadingBlock,
   StatusPill,
   TextArea,
+  isSafeFileHref,
 } from '@/shared/ui';
 import { formatDateTime } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
@@ -110,14 +112,24 @@ export function InquiryDetailPanel({
         {data.attachments.length > 0 || data.linkUrl ? (
           <ul className="inquiry-panel__attachments">
             {data.attachments.map((url) => (
-              <li key={url}>첨부: {url}</li>
+              <li key={url}>
+                <AttachmentLink url={url} />
+              </li>
             ))}
+            {/*
+              linkUrl 도 회원이 적어 넣은 값이라 첨부와 같은 기준으로 다룬다.
+              열 수 없는 스킴이면 링크로 만들지 않고 원문만 보여준다.
+            */}
             {data.linkUrl ? (
               <li>
                 링크:{' '}
-                <a href={data.linkUrl} target="_blank" rel="noreferrer noopener">
-                  {data.linkUrl}
-                </a>
+                {isSafeFileHref(data.linkUrl) ? (
+                  <a href={data.linkUrl} target="_blank" rel="noreferrer noopener">
+                    {data.linkUrl}
+                  </a>
+                ) : (
+                  <span title={data.linkUrl}>{data.linkUrl} (열 수 없는 주소)</span>
+                )}
               </li>
             ) : null}
           </ul>

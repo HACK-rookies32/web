@@ -37,7 +37,7 @@ export const MOCK_INQUIRIES: InquiryDetail[] = [
     title: '충전한 금액이 지갑에 안 들어왔어요',
     content:
       '어제 20,000원을 카드로 충전했는데 결제는 됐다고 나오고 지갑 잔액은 그대로입니다.\n확인 부탁드립니다.',
-    attachments: ['/uploads/inquiry/102_receipt.png'],
+    attachments: ['/api/files/inquiry/7c1a_결제-영수증.png'],
     linkUrl: null,
     answered: false,
     createdAt: hoursAgo(4),

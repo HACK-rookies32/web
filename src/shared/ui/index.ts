@@ -6,6 +6,8 @@
  * 여기 있는 컴포넌트를 고칠 때는 다른 화면에 영향이 가므로 팀원에게 공지할 것.
  */
 
+export { AttachmentLink, isSafeFileHref } from './AttachmentLink';
+
 export { Button, buttonClass } from './Button';
 export type { ButtonVariant, ButtonSize } from './Button';
 
