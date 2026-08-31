@@ -27,7 +27,16 @@ import { adminKeys, fetchAdmins, updateAdminRole } from '../api';
 import type { AdminAccount, AdminRoleFilter } from '../types';
 import './AdminsPage.css';
 
-/** 검색어가 관리자 한 명과 일치하는지 판정한다. */
+/**
+ * 검색어가 관리자 한 명과 일치하는지 판정한다.
+ *
+ * [VULN-WEB-06] 민감정보 노출 — 검색을 통한 마스킹 역추론.
+ *   화면에는 이메일·전화를 min***@…·010-****-8890 으로 가려 두면서, 검색은
+ *   **원문 전체**를 부분일치시킨다. 가운데 번호·가린 로컬파트를 한 조각씩 질의해
+ *   결과 유무로 되짚으면 가려 둔 값을 복원할 수 있다(CWE-200, ISMS-P 3.2.3
+ *   "like 검색을 통한 과도한 정보 조회"). 대응: 검색 대상을 아이디·닉네임과
+ *   이메일 앞 3자 시작·전체 일치, 전화 뒤 4자리 일치로만 제한.
+ */
 function matchesAdminKeyword(admin: AdminAccount, keyword: string): boolean {
   const needle = keyword.trim().toLocaleLowerCase();
   if (!needle) return true;

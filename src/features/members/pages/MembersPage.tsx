@@ -58,6 +58,9 @@ export function MembersPage() {
   const queryClient = useQueryClient();
   const { hasRole, session } = useAuth();
   const syncAuditLog = useAuditLogSync();
+  // [VULN-WEB-05] 권한 상승 — 수정·삭제가 SUPER_ADMIN 전용이어야 하나 hasRole()
+  //   (인증만 되면 참)이라 전 역할에 파괴적 버튼이 노출된다(A01). 서버도 막지
+  //   않으면 API 직접 호출로도 성립. 대응: hasRole(['SUPER_ADMIN']).
   const canManage = hasRole();
 
   const { searchParams, patchParams, resetParams, page } = useListParams();

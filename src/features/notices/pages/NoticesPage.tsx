@@ -292,6 +292,12 @@ export function NoticesPage() {
                 <ul className="notices__preview-list">
                   {preview.links.map((l) => (
                     <li key={l}>
+                      {/*
+                        [VULN-WEB-07] 리버스 탭내빙·Referrer 유출 — rel 없음.
+                          target=_blank 인데 rel="noreferrer noopener" 가 없어, 열린
+                          탭이 window.opener 로 원래 탭을 조작(피싱)하고 Referrer 로
+                          내부 경로가 샌다(A05). 대응: rel="noreferrer noopener".
+                      */}
                       <a href={l} target="_blank">
                         {l}
                       </a>

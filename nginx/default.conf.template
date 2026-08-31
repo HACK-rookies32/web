@@ -41,6 +41,13 @@ server {
     }
 
     # react-router-dom 사용. 이 폴백이 없으면 /members 등에서 새로고침 시 404.
+    #
+    # [VULN-WEB-08] 보안 응답 헤더 부재 (A05).
+    #   이 문서 응답에 CSP·X-Frame-Options·X-Content-Type-Options·Referrer-Policy·
+    #   Strict-Transport-Security·Permissions-Policy 가 없다. 그래서 XSS
+    #   (VULN-WEB-01~03)가 성립했을 때 막을 2차 방어선(CSP)이 없고, iframe 삽입
+    #   으로 클릭재킹이 열린다. 대응: 이 블록에 보안 헤더 6종을 add_header 로 추가
+    #   (특히 CSP script-src 'self' 로 인라인 스크립트·이벤트 핸들러 실행 차단).
     location / {
         try_files $uri $uri/ /index.html;
     }

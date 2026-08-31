@@ -30,7 +30,11 @@ function PaperclipGlyph() {
 /**
  * 링크로 열어도 되는 주소인지 판별한다.
  *
- * 서버가 준 첨부 경로는 신뢰할 수 있는 값이라 보고 그대로 연다.
+ * [VULN-WEB-03] DOM XSS — URL 스킴 검증 없음.
+ *   첨부 경로·문의 링크는 회원이 올린 값이고 서버에 그대로 저장된다. 스킴을
+ *   검사하지 않고 그대로 href 에 넣으므로, 회원이 `javascript:fetch('/api/admin/...')`
+ *   같은 값을 넣어 두면 관리자가 클릭하는 순간 관리자 세션에서 실행된다(CWE-79).
+ *   대응: 같은 출처 절대경로·http·https 만 허용목록으로 통과시켜야 한다.
  */
 export function isSafeFileHref(url: string): boolean {
   return url.trim().length > 0;

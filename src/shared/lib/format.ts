@@ -132,7 +132,16 @@ export function maskAddress(address: string): string {
 
 /* ---------------------------------------------------------------- CSV ---- */
 
-/** 값 하나를 CSV 셀로 이스케이프한다. */
+/**
+ * 값 하나를 CSV 셀로 이스케이프한다.
+ *
+ * [VULN-WEB-09] CSV 수식 주입(CWE-1236) — 수식 접두 문자를 막지 않는다.
+ *   Excel·구글시트는 =·+·-·@·탭·개행 으로 시작하는 셀을 수식으로 실행한다.
+ *   회원이 이름·주소에 `=HYPERLINK("http://evil","보기")` 나 `=cmd|...` 를 넣어
+ *   두면 관리자가 CSV 를 내려받아 여는 순간 실행된다. 여기서는 따옴표만
+ *   이스케이프하고 수식 접두는 그대로 통과시킨다. 대응: 위험 접두 셀 앞에
+ *   작은따옴표를 붙여 텍스트로 강제.
+ */
 function csvCell(value: unknown): string {
   const s = value === null || value === undefined ? '' : String(value);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

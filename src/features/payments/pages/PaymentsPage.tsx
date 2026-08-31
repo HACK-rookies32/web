@@ -35,6 +35,10 @@ export function PaymentsPage() {
   const queryClient = useQueryClient();
   const syncAuditLog = useAuditLogSync();
   const { hasRole, session } = useAuth();
+  // [VULN-WEB-05] 권한 상승 — 충전취소·잔액조정이 SUPER_ADMIN 전용이어야 하나
+  //   hasRole()(인증만) 이라 전 역할에 자금 조작 버튼이 노출된다(A01).
+  //   서버측 [VULN-ADMIN-1](GENERAL_ADMIN 도 호출 가능)과 맞물린다.
+  //   대응: hasRole(['SUPER_ADMIN']).
   const canManage = hasRole();
 
   const { searchParams, setSearchParams, patchParams, page } = useListParams();

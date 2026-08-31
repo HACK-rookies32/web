@@ -31,6 +31,11 @@ export function CommunityDetailPanel({ postId, deleting, onDelete }: CommunityDe
         <p className="community-detail__author">
           {data.authorNickname} · 회원 #{data.memberId}
         </p>
+        {/*
+          [VULN-WEB-02] 저장형 XSS — 회원이 작성한 게시글 본문을 HTML 로 렌더한다.
+            공격자가 게시글에 스크립트를 심으면 관리자가 열람할 때 실행된다(CWE-79).
+            아래 댓글도 같다. 대응: 텍스트 렌더 + CSP.
+        */}
         <p className="community-detail__content" dangerouslySetInnerHTML={{ __html: data.content }} />
         <div className="community-detail__status">
           <span>댓글 {formatNumber(data.comments.length)}개</span>
@@ -49,6 +54,7 @@ export function CommunityDetailPanel({ postId, deleting, onDelete }: CommunityDe
                   </strong>
                   <span>{formatDateTime(comment.createdAt)}</span>
                 </div>
+                {/* [VULN-WEB-02] 저장형 XSS — 회원 댓글을 HTML 로 렌더(위 본문과 동일). */}
                 <p dangerouslySetInnerHTML={{ __html: comment.content }} />
               </li>
             ))}

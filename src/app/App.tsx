@@ -86,6 +86,13 @@ export function App() {
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
 
+                {/*
+                  [VULN-WEB-04] 접근통제 실패 — 화면군별 역할 가드가 없다.
+                    아래 라우트는 인증(ProtectedRoute)만 확인하고 역할을 보지 않는다.
+                    INQUIRY_ADMIN·COMMUNITY_ADMIN 같은 낮은 권한 계정이 주소창에
+                    /admins·/payments·/audit-logs 를 직접 쳐서 들어간다(A01, BFLA).
+                    대응: 화면군마다 <ProtectedRoute roles={[...]}> 로 감싼다.
+                */}
                 <Route element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>
                     <Route index element={<HomePage />} />
