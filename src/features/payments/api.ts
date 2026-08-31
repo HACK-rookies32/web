@@ -109,9 +109,9 @@ interface AdminTxResponse {
  * 실서버 충전·용돈 조회.
  *
  * 화면의 「거래 종류」 필터를 서버 type 으로 옮긴다.
- *   충전   → CHARGE   (되돌린 건 REFUND 로 따로 남는다)
- *   용돈   → TRANSFER_OUT
- *   전체   → 서버 필터 없이 받아 두 종류만 남긴다
+ *   충전   → /charges
+ *   용돈   → /transactions?type=TRANSFER_OUT
+ *   전체   → 위 둘을 각각 받아 시간순으로 병합 (서버가 다중 type 을 못 받는다)
  *
  * 이메일은 응답에 없다. 목 데이터로 채우지 않고 빈 값으로 둔다 —
  * 실서버 화면에 가상 회원이 뜨면 실제 거래로 오해한다.
@@ -129,55 +129,94 @@ async function fetchFundsFlowFromServer(params: FundsFlowParams): Promise<Page<F
    * 「전체」·「용돈 이동」은 두 종류를 한 흐름으로 봐야 하므로 원장을 쓴다.
    */
   if (flow === 'CHARGE') return fetchChargesFromServer(params);
+  if (flow === 'TRANSFER') return fetchTransfersFromServer(params);
 
-  const type = flow === 'TRANSFER' ? 'TRANSFER_OUT' : undefined;
+  /*
+   * flow === 'ALL' — 충전과 용돈 이동을 한 흐름으로 합쳐 보여준다.
+   *
+   * 예전에는 `GET /transactions` 를 type 없이 받아 화면에서 CHARGE·TRANSFER_OUT 만
+   * 걸렀는데, 원장에는 매장 결제(PAYMENT)·용돈 받음(TRANSFER_IN) 등 다른 유형이 섞여
+   * 있고 서버가 최신순으로 한 페이지만 준다. 첫 페이지가 전부 다른 유형이면 걸러낸
+   * 결과가 **0건**이 돼 "내역 없음" 으로 보였다(실서버 확인: 46건 중 첫 20건이 전부
+   * PAYMENT·TRANSFER_IN·PAYMENT_CANCEL). 게다가 원장의 CHARGE 는 「충전」 필터가 쓰는
+   * `/charges` 보다 적다(완료분만 원장에 남음) — 같은 전체인데 개수가 달라진다.
+   *
+   * 그래서 「충전」 필터와 같은 `/charges`, 「용돈」 필터와 같은 `TRANSFER_OUT` 원장을
+   * 각각 받아 합친다. 서버는 type 을 하나만 받아(다중 type 은 무시하거나 400) 한 번에
+   * 못 준다. 두 목록은 각자 페이징되므로, 요청 페이지까지 채우는 데 필요한 만큼
+   * ((page+1)*size)씩 양쪽에서 받으면 합친 상위 구간에 전역 상위가 모두 들어온다.
+   * 그 구간을 시간순으로 잘라 쓴다.
+   */
+  const page = params.page ?? 0;
+  const size = params.size ?? DEFAULT_PAGE_SIZE;
+  const need = (page + 1) * size;
 
+  /* 상태 필터가 걸리면 용돈 이동은 상태가 없어 자연히 빠진다(목 경로와 동일). */
+  const statusActive = Boolean(params.status && params.status !== 'ALL');
+
+  const [chargePage, transferPage] = await Promise.all([
+    fetchChargesFromServer({ ...params, page: 0, size: need }),
+    statusActive
+      ? Promise.resolve<Page<FundsFlowRow>>({
+          content: [],
+          page: 0,
+          size: 0,
+          totalElements: 0,
+          totalPages: 0,
+        })
+      : fetchTransfersFromServer({ ...params, page: 0, size: need }),
+  ]);
+
+  const merged = [...chargePage.content, ...transferPage.content].sort((a, b) =>
+    b.createdAt.localeCompare(a.createdAt),
+  );
+
+  const totalElements = chargePage.totalElements + transferPage.totalElements;
+  const start = page * size;
+  return {
+    content: merged.slice(start, start + size),
+    page,
+    size,
+    totalElements,
+    totalPages: Math.max(1, Math.ceil(totalElements / size)),
+  };
+}
+
+/**
+ * 용돈 이동(TRANSFER_OUT) 원장.
+ *
+ * 서버가 type 으로 걸러 주므로 이 응답에는 TRANSFER_OUT 만 온다. 보내는 쪽 원장이라
+ * `userId`·`userName` 은 **보낸 사람**이고, 받는 자녀는 `refUid` 에 회원 id 가 문자열로
+ * 들어 있다(백엔드 회신 2026-08-29). 이름까지는 없어 식별자만 채운다.
+ */
+async function fetchTransfersFromServer(params: FundsFlowParams): Promise<Page<FundsFlowRow>> {
   const data = await request<Page<AdminTxResponse>>({
     url: '/admin/finance/transactions',
     method: 'GET',
     params: {
-      type,
+      type: 'TRANSFER_OUT',
       userId: params.userId,
       page: params.page ?? 0,
       size: params.size ?? DEFAULT_PAGE_SIZE,
     },
   });
 
-  const rows = (Array.isArray(data?.content) ? data.content : [])
-    .filter((tx) => tx.type === 'CHARGE' || tx.type === 'TRANSFER_OUT')
-    .map<FundsFlowRow>((tx) =>
-      tx.type === 'CHARGE'
-        ? {
-            kind: 'CHARGE',
-            chargeId: tx.id,
-            /* 원장에는 PG 주문번호가 없다 → 이 행에서는 취소할 수 없다. */
-            merchantUid: null,
-            userId: tx.userId,
-            userName: tx.userName ?? '',
-            userEmail: '',
-            amount: Math.abs(tx.amount),
-            status: 'PAID',
-            method: tx.method ?? '',
-            createdAt: tx.createdAt,
-            canceledAt: null,
-            cancelReason: null,
-            refundedBy: null,
-          }
-        : {
-            kind: 'TRANSFER',
-            transferId: tx.id,
-            fromUserId: tx.userId,
-            fromUserName: tx.userName ?? '',
-            toUserId: toMemberId(tx.refUid),
-            toUserName: '',
-            amount: Math.abs(tx.amount),
-            memo: null,
-            createdAt: tx.createdAt,
-          },
-    );
+  const content = (Array.isArray(data?.content) ? data.content : [])
+    .filter((tx) => tx.type === 'TRANSFER_OUT')
+    .map<FundsFlowRow>((tx) => ({
+      kind: 'TRANSFER',
+      transferId: tx.id,
+      fromUserId: tx.userId,
+      fromUserName: tx.userName ?? '',
+      toUserId: toMemberId(tx.refUid),
+      toUserName: '',
+      amount: Math.abs(tx.amount),
+      memo: null,
+      createdAt: tx.createdAt,
+    }));
 
   return {
-    content: rows,
+    content,
     page: data?.page ?? 0,
     size: data?.size ?? 0,
     totalElements: data?.totalElements ?? 0,
@@ -274,7 +313,23 @@ export async function fetchStorePayments(
 
     return mockResponse(paginate(filtered, params));
   }
-  return request<Page<StorePayment>>({ url: '/admin/finance/payments', method: 'GET', params });
+  /*
+   * `status` 는 화면에서 「전체」일 때 'ALL' 이라는 값이 들어온다. 이걸 그대로 서버에
+   * 넘기면 서버가 `status = 'ALL'` 로 걸러 **0건**을 준다(실서버 확인). 실제 상태값이
+   * 아니면 파라미터에서 빼야 전체가 나온다. merchant·keyword 도 빈 값이면 뺀다.
+   */
+  return request<Page<StorePayment>>({
+    url: '/admin/finance/payments',
+    method: 'GET',
+    params: {
+      status: params.status && params.status !== 'ALL' ? params.status : undefined,
+      childId: params.childId,
+      merchant: params.merchant || undefined,
+      keyword: params.keyword || undefined,
+      page: params.page ?? 0,
+      size: params.size ?? DEFAULT_PAGE_SIZE,
+    },
+  });
 }
 
 /* ------------------------------------------------------------- 환불 ---- */
