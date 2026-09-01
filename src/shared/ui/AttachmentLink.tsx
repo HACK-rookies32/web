@@ -1,4 +1,6 @@
-import { attachmentName } from '@/shared/lib/format';
+import { useState } from 'react';
+import { attachmentName, isImageAttachment } from '@/shared/lib/format';
+import { Modal } from './Modal';
 import './AttachmentLink.css';
 
 /**
@@ -11,6 +13,9 @@ import './AttachmentLink.css';
  * 화면마다 따로 그리면 아래 두 가지가 어긋난다 — 그래서 공용 계층에 둔다.
  *   1. 저장된 경로를 그대로 노출할지, 파일명만 보여줄지
  *   2. 어떤 스킴을 클릭 가능하게 열어 줄지
+ *
+ * 이미지는 새 창으로 튕겨 원본만 덩그러니 띄우면 닫을 방법이 뒤로가기밖에 없다.
+ * 그래서 이미지는 화면 안 라이트박스(× 로 닫기)로 열고, 그 외 파일만 링크로 연다.
  */
 
 function PaperclipGlyph() {
@@ -63,6 +68,9 @@ interface AttachmentLinkProps {
 
 export function AttachmentLink({ url, className }: AttachmentLinkProps) {
   const name = attachmentName(url);
+  const [viewing, setViewing] = useState(false);
+
+  const cls = className ? `attachment attachment--link ${className}` : 'attachment attachment--link';
 
   /*
    * 열 수 없는 주소는 링크로 만들지 않는다. 그렇다고 감추지도 않는다 —
@@ -79,9 +87,42 @@ export function AttachmentLink({ url, className }: AttachmentLinkProps) {
     );
   }
 
+  /*
+   * 이미지는 화면 안에서 확대해 보고 × 로 닫는다 — 첨부 이미지 뷰어에서 가장
+   * 흔한 방식이다. 새 창으로 튕기지 않아 관리자 조사 흐름(현재 목록·필터)을
+   * 잃지 않는다. 위 isSafeFileHref 가 안전한 주소만 통과시키고, img src 는 그마저도
+   * javascript: 스킴을 실행하지 않는다.
+   */
+  if (isImageAttachment(url)) {
+    return (
+      <>
+        <button type="button" className={cls} onClick={() => setViewing(true)} title={name}>
+          <PaperclipGlyph />
+          <span className="attachment__name">{name}</span>
+        </button>
+        <Modal
+          open={viewing}
+          onClose={() => setViewing(false)}
+          title={name}
+          size="lg"
+          footer={
+            <a className="attachment__newtab" href={url} target="_blank" rel="noreferrer noopener">
+              새 탭에서 열기
+            </a>
+          }
+        >
+          <div className="attachment__viewer">
+            <img className="attachment__image" src={url} alt={name} />
+          </div>
+        </Modal>
+      </>
+    );
+  }
+
+  /* 이미지가 아닌 첨부는 새 탭에서 열거나 내려받는다. */
   return (
     <a
-      className={className ? `attachment attachment--link ${className}` : 'attachment attachment--link'}
+      className={cls}
       href={url}
       /* 같은 출처(/api/files/...)라 download 가 그대로 먹는다. 302 면 브라우저가 따라간다. */
       download={name}

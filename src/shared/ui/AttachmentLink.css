@@ -24,3 +24,38 @@
   font-size: var(--fs-badge);
   line-height: var(--lh-badge);
 }
+
+/* 이미지 첨부는 <button> 으로 라이트박스를 연다 — 링크와 같은 모양으로 보이게 초기화. */
+button.attachment--link {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* 라이트박스 본문 */
+.attachment__viewer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 72vh;
+  overflow: auto;
+}
+
+.attachment__image {
+  max-width: 100%;
+  max-height: 72vh;
+  object-fit: contain;
+  border-radius: var(--radius);
+}
+
+.attachment__newtab {
+  font-size: var(--fs-label);
+  color: var(--accent-strong);
+  text-decoration: none;
+}
+
+.attachment__newtab:hover {
+  text-decoration: underline;
+}
