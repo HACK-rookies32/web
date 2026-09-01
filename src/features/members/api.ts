@@ -22,6 +22,7 @@ import type {
   MemberDevice,
   MemberInquiry,
   MemberListParams,
+  MemberSort,
   MemberUpdateRequest,
 } from './types';
 
@@ -45,6 +46,27 @@ let memberStore: Member[] = [...MOCK_MEMBERS];
  * 이메일·전화번호는 넣지 않는다. 화면에서 마스킹한 구간을 검색 결과의 참/거짓으로
  * 되짚을 수 있어(가운데 번호 4자리를 조회로 확인 가능) 마스킹이 무력해진다.
  */
+/**
+ * 목 정렬. 실서버는 ?sort= 로 서버가 정렬하지만, 목 모드에서도 같은 순서를 보여준다.
+ * 기본은 RECENT(가입 최신순).
+ */
+function sortMembers(list: Member[], sort: MemberSort = 'RECENT'): Member[] {
+  const byName = (a: Member, b: Member) => a.username.localeCompare(b.username, 'ko');
+  const byDate = (a: Member, b: Member) => a.createdAt.localeCompare(b.createdAt);
+  const copy = [...list];
+  switch (sort) {
+    case 'OLDEST':
+      return copy.sort(byDate);
+    case 'NAME':
+      return copy.sort(byName);
+    case 'NAME_DESC':
+      return copy.sort((a, b) => byName(b, a));
+    case 'RECENT':
+    default:
+      return copy.sort((a, b) => byDate(b, a));
+  }
+}
+
 export async function fetchMembers(params: MemberListParams): Promise<Page<Member>> {
   if (USE_MOCK) {
     /* 탈퇴 회원은 목록에 두지 않는다. 탈퇴는 되돌리지 않는 상태이고,
@@ -54,7 +76,7 @@ export async function fetchMembers(params: MemberListParams): Promise<Page<Membe
       .filter((m) => (params.role ? m.role === params.role : true))
       .filter((m) => matchesKeyword(m, params.keyword, ['loginId', 'username', 'nickname']));
 
-    return mockResponse(paginate(filtered, params));
+    return mockResponse(paginate(sortMembers(filtered, params.sort), params));
   }
 
   /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다. */

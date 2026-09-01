@@ -14,6 +14,7 @@ import {
   Pagination,
   RowActions,
   SearchInput,
+  Select,
   StackedCell,
   Table,
   useToast,
@@ -39,7 +40,7 @@ import {
   memberKeys,
   updateMember,
 } from '../api';
-import type { Member, MemberUpdateRequest } from '../types';
+import type { Member, MemberSort, MemberUpdateRequest } from '../types';
 import { PencilGlyph } from '../components/Glyphs';
 import { MemberQuickView } from '../components/MemberQuickView';
 import { MemberFormModal } from '../components/MemberFormModal';
@@ -52,6 +53,13 @@ import './MembersPage.css';
  * 검색어·상태·페이지를 URL 쿼리로 관리한다. 새로고침하거나 링크를 공유해도
  * 같은 목록이 나오고, 뒤로 가기도 자연스럽게 동작한다.
  */
+const MEMBER_SORT_OPTIONS: { value: MemberSort; label: string }[] = [
+  { value: 'RECENT', label: '가입 최신순' },
+  { value: 'OLDEST', label: '가입 오래된순' },
+  { value: 'NAME', label: '이름 가나다순' },
+  { value: 'NAME_DESC', label: '이름 역순' },
+];
+
 export function MembersPage() {
   const navigate = useNavigate();
   const toast = useToast();
@@ -62,6 +70,7 @@ export function MembersPage() {
 
   const { searchParams, patchParams, resetParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
+  const sort = (searchParams.get('sort') as MemberSort | null) ?? 'RECENT';
 
   const [quickView, setQuickView] = useState<Member | null>(null);
   const [editing, setEditing] = useState<Member | null>(null);
@@ -69,7 +78,7 @@ export function MembersPage() {
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
 
-  const params = useMemo(() => ({ keyword, page, size: DEFAULT_PAGE_SIZE }), [keyword, page]);
+  const params = useMemo(() => ({ keyword, sort, page, size: DEFAULT_PAGE_SIZE }), [keyword, sort, page]);
 
   const { data, isPending, isError } = useQuery({
     queryKey: memberKeys.list(params),
@@ -218,6 +227,18 @@ export function MembersPage() {
           />
         }
       >
+        <Select
+          aria-label="회원 정렬"
+          value={sort}
+          onChange={(e) => patchParams({ sort: e.target.value === 'RECENT' ? null : e.target.value })}
+        >
+          {MEMBER_SORT_OPTIONS.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </Select>
+
         {/* 전체 회원 목록을 CSV 로 내려받는다. 개별 회원 리포트가 아니라 목록 전체다. */}
         <Button iconLeft={<DownloadGlyph />} onClick={() => setCsvOpen(true)}>
           회원 목록 CSV
