@@ -260,3 +260,13 @@ export function attachmentName(url: string): string {
   const cut = decoded.indexOf('_');
   return cut > 0 ? decoded.slice(cut + 1) : decoded;
 }
+
+/**
+ * 첨부가 브라우저에서 바로 볼 수 있는 이미지인지 확장자로 판별한다.
+ *
+ * 이미지면 화면 안에서 확대해 보여주고(라이트박스), 그 외 파일은 링크로 연다.
+ */
+export function isImageAttachment(url: string): boolean {
+  const name = attachmentName(url).toLowerCase();
+  return /\.(png|jpe?g|gif|webp|bmp|avif|svg)$/.test(name);
+}
