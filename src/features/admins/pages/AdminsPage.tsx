@@ -12,6 +12,9 @@ import {
   RowActions,
   SearchInput,
   Select,
+  SlideOver,
+  DetailBox,
+  DetailRow,
   StackedCell,
   StatusPill,
   Table,
@@ -87,6 +90,7 @@ export function AdminsPage() {
   const role = (searchParams.get('role') as AdminRoleFilter | null) ?? 'ALL';
   const [editing, setEditing] = useState<AdminAccount | null>(null);
   const [nextRole, setNextRole] = useState<Role>('GENERAL_ADMIN');
+  const [detail, setDetail] = useState<AdminAccount | null>(null);
 
   const query = useQuery({ queryKey: adminKeys.all, queryFn: fetchAdmins });
 
@@ -202,6 +206,7 @@ export function AdminsPage() {
           columns={columns}
           rows={visibleAdmins}
           rowKey={(row) => row.id}
+          onRowClick={setDetail}
           loading={query.isPending}
           error={query.isError ? '관리자 계정 목록을 불러오지 못했습니다.' : undefined}
           emptyState={
@@ -214,6 +219,56 @@ export function AdminsPage() {
           }
         />
       </Card>
+
+      {/* 관리자 계정 상세 — 행 클릭으로 연다. 목록이 이미 전체 필드를 주므로
+          별도 조회 없이 그 데이터로 채운다(단일 관리자 조회 API 는 없다). */}
+      <SlideOver
+        open={detail !== null}
+        onClose={() => setDetail(null)}
+        title={
+          detail ? (
+            <span className="admins__detail-title">
+              {detail.nickname || detail.loginId}
+              <StatusPill tone={roleTone(detail.role)} shape="pill">
+                {ROLE_LABEL[detail.role]}
+              </StatusPill>
+            </span>
+          ) : (
+            ''
+          )
+        }
+        subtitle={detail ? `${memberRef(detail.id, '관리자')} · ${detail.loginId}` : undefined}
+        footer={
+          detail && detail.loginId !== session?.username ? (
+            <Button
+              variant="primary"
+              onClick={() => {
+                openRoleModal(detail);
+                setDetail(null);
+              }}
+            >
+              권한 변경
+            </Button>
+          ) : undefined
+        }
+      >
+        {detail ? (
+          <DetailBox>
+            <DetailRow
+              label="권한"
+              value={
+                <StatusPill tone={roleTone(detail.role)} shape="pill">
+                  {ROLE_LABEL[detail.role]}
+                </StatusPill>
+              }
+            />
+            <DetailRow label="로그인 ID" value={detail.loginId} />
+            <DetailRow label="이메일" value={maskEmail(detail.email)} />
+            <DetailRow label="휴대폰" value={maskPhone(detail.phoneNumber)} />
+            <DetailRow label="생성일시" value={formatDateTime(detail.createdAt)} />
+          </DetailBox>
+        ) : null}
+      </SlideOver>
 
       <Modal
         open={editing !== null}
