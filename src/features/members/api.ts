@@ -79,27 +79,16 @@ export async function fetchMembers(params: MemberListParams): Promise<Page<Membe
     return mockResponse(paginate(sortMembers(filtered, params.sort), params));
   }
 
-  /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다. */
+  /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다.
+     탈퇴(is_deleted) 회원은 서버가 목록 쿼리에서 제외한다(백엔드 #173, 2026-09-01
+     배포 확인). 예전엔 서버가 안 걸러 여기서 한 번 더 필터했으나, 그러면
+     totalElements 가 어긋나 제거했다. */
   const data = await request<SpringPage<Member>>({
     url: '/admin/members/customers',
     method: 'GET',
     params,
   });
-
-  /*
-   * 탈퇴 회원을 여기서 한 번 더 걸러낸다.
-   *
-   * 회원 삭제는 소프트 삭제(is_deleted=true)인데 서버 목록 쿼리에 그 조건이 없어
-   * 탈퇴 회원이 목록에 그대로 남는다. 삭제 후 목록을 새로 받아도 행이 사라지지
-   * 않아 관리자가 "삭제가 안 됐다" 고 오해한다. 목 모드는 처음부터 걸러 왔으므로
-   * 실서버 경로만 맞춰 준다.
-   *
-   * ⚠️ totalElements 는 서버가 준 값(탈퇴 포함)이라 실제 표시 건수와 어긋날 수
-   *    있다. 근본 수정은 서버 목록 쿼리에 `AND m.is_deleted = false` 를 넣는 것이라
-   *    백엔드에 요청해야 한다.
-   */
-  const page = toPage(data);
-  return { ...page, content: page.content.filter((m) => !m.isDeleted) };
+  return toPage(data);
 }
 
 /** GET /admin/members/{id} */
