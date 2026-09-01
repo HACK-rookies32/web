@@ -19,7 +19,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
     <aside className={collapsed ? 'sidebar is-collapsed' : 'sidebar'}>
       <div className="sidebar__brand">
         <img className="sidebar__logo" src={logoMark} alt="" width={32} height={32} />
-        <span className="sidebar__brand-text">케어가드 어드민</span>
+        <span className="sidebar__brand-text">kidhack 어드민</span>
       </div>
 
       <nav className="sidebar__nav" aria-label="주요 메뉴">
