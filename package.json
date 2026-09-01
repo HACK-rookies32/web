@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "H.A.C.K 자녀보호앱 관리자 웹 콘솔 (케어가드 어드민)",
+  "description": "H.A.C.K 자녀보호앱 관리자 웹 콘솔 (kidhack 어드민)",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
