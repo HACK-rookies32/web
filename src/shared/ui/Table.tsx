@@ -33,6 +33,12 @@ interface TableProps<T> {
   /** 결과가 없을 때 보여줄 내용. 생략하면 기본 문구. */
   emptyState?: ReactNode;
   onRowClick?: (row: T) => void;
+  /**
+   * 클릭 가능한 행의 접근성 이름. onRowClick 이 있을 때 각 행 <tr> 의 aria-label 로
+   * 들어간다. 스크린리더 사용자가 포커스했을 때 "무엇을 여는 행인지" 를 듣게 한다.
+   * (role="button" 은 표 구조 시맨틱을 깨므로 쓰지 않고, 행 시맨틱은 유지한다.)
+   */
+  rowLabel?: (row: T) => string;
   /** 표 하단에 붙일 요소 (보통 Pagination) */
   footer?: ReactNode;
 }
@@ -53,6 +59,7 @@ export function Table<T>({
   error,
   emptyState,
   onRowClick,
+  rowLabel,
   footer,
 }: TableProps<T>) {
   const showBody = !loading && !error && rows.length > 0;
@@ -93,6 +100,7 @@ export function Table<T>({
                       className={onRowClick ? 'table__row is-clickable' : 'table__row'}
                       onClick={onRowClick ? () => onRowClick(row) : undefined}
                       tabIndex={onRowClick ? 0 : undefined}
+                      aria-label={onRowClick && rowLabel ? rowLabel(row) : undefined}
                       onKeyDown={
                         onRowClick
                           ? (e) => {

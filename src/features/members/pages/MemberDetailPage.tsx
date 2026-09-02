@@ -321,6 +321,7 @@ export function MemberDetailPage() {
               loading={inquiries.isPending}
               error={inquiries.isError ? '문의 기록을 불러오지 못했습니다.' : undefined}
               onRowClick={(i) => navigate(`/inquiries?id=${i.id}`)}
+              rowLabel={(i) => `${i.title} 문의 상세 보기`}
               emptyState={<EmptyState title="문의 기록이 없습니다" />}
             />
           </Card>

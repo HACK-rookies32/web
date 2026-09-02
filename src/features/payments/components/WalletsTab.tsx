@@ -162,6 +162,7 @@ export function WalletsTab({
       entityName="지갑"
       tab="wallets"
       onRowClick={onOpen}
+      rowLabel={(row) => `${maskName(row.userName)} 지갑 상세 보기`}
       onResetFilters={(tab) => setSearchParams(new URLSearchParams({ tab }))}
       onPageChange={(next) => patchParams({ page: String(next) }, false)}
     />

@@ -257,6 +257,7 @@ export function MembersPage() {
           loading={isPending}
           error={isError ? '회원 목록을 불러오지 못했습니다.' : undefined}
           onRowClick={(row) => navigate(`/members/${row.id}`)}
+          rowLabel={(row) => `${maskName(row.username)} 회원 상세 보기`}
           emptyState={
             <EmptyState
               title="조회된 회원이 없습니다"

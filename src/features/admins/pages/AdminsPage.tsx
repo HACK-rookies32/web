@@ -186,6 +186,7 @@ export function AdminsPage() {
           rows={visibleAdmins}
           rowKey={(row) => row.id}
           onRowClick={setDetail}
+          rowLabel={(row) => `${row.nickname || row.loginId} 관리자 계정 상세 보기`}
           loading={query.isPending}
           error={query.isError ? '관리자 계정 목록을 불러오지 못했습니다.' : undefined}
           emptyState={
