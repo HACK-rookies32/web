@@ -219,6 +219,7 @@ export function NoticesPage() {
           loading={isPending}
           error={isError ? '공지 목록을 불러오지 못했습니다.' : undefined}
           onRowClick={(row) => void openDetail(row.id, 'view')}
+          rowLabel={(row) => `${row.title} 공지 상세 보기`}
           emptyState={
             <EmptyState
               title="등록된 공지가 없습니다"

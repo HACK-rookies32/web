@@ -141,6 +141,7 @@ export function CommunityPage() {
           loading={query.isPending}
           error={query.isError ? '게시글 목록을 불러오지 못했습니다.' : undefined}
           onRowClick={canModerate ? (row) => patchParams({ id: String(row.id) }, false) : undefined}
+          rowLabel={(row) => `${row.title} 게시글 상세 보기`}
           emptyState={<EmptyState title="게시글이 없습니다" description="조회된 커뮤니티 게시글이 없습니다." />}
           footer={
             query.data && query.data.totalElements > 0 ? (

@@ -24,6 +24,7 @@ interface FundsTabLayoutProps<T> {
   onResetFilters: (tab: string) => void;
   onPageChange: (page: number) => void;
   onRowClick?: (row: T) => void;
+  rowLabel?: (row: T) => string;
 }
 
 /**
@@ -50,6 +51,7 @@ export function FundsTabLayout<T>({
   onResetFilters,
   onPageChange,
   onRowClick,
+  rowLabel,
 }: FundsTabLayoutProps<T>) {
   return (
     <div className="funds__tab">
@@ -75,6 +77,7 @@ export function FundsTabLayout<T>({
           loading={loading}
           error={error ? `${entityName}을 불러오지 못했습니다.` : undefined}
           onRowClick={onRowClick}
+          rowLabel={rowLabel}
           emptyState={
             <EmptyState
               title={`조회된 ${entityName}이 없습니다`}

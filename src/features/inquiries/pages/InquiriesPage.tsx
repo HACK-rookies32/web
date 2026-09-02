@@ -172,6 +172,7 @@ export function InquiriesPage() {
           loading={isPending}
           error={isError ? '문의 목록을 불러오지 못했습니다.' : undefined}
           onRowClick={(row) => patchParams({ id: String(row.id) }, false)}
+          rowLabel={(row) => `${row.title} 문의 상세 보기`}
           emptyState={
             <EmptyState
               title="조회된 문의가 없습니다"
