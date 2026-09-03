@@ -1,103 +1,76 @@
-.sidebar {
+/* 시안 A — 호버로 펼쳐지는 아이콘 레일. */
+.rail {
   grid-area: aside;
-  /* 본문이 길어져도 사이드바는 화면에 고정된다. */
   position: sticky;
-  top: 0;
+  top: var(--header-height);
   align-self: start;
-  height: 100vh;
+  height: calc(100vh - var(--header-height));
   z-index: 25;
 
-  width: var(--aside-width);
-  display: flex;
-  flex-direction: column;
-  background: var(--bg);
-  filter: drop-shadow(var(--shadow-aside));
-  transition: width var(--transition);
+  width: var(--rail-width);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
   overflow: hidden;
+  transition: width var(--transition), box-shadow var(--transition);
 }
 
-/* 접힘 상태 — 아이콘만 남긴다. */
-.sidebar.is-collapsed {
-  width: 72px;
+/* 마우스 호버 · 키보드 포커스 시 펼쳐진다. */
+.rail:hover,
+.rail:has(:focus-visible) {
+  width: 232px;
+  box-shadow: var(--shadow-lg);
 }
 
-.sidebar.is-collapsed .sidebar__brand-text,
-.sidebar.is-collapsed .sidebar__label {
-  display: none;
-}
-
-.sidebar.is-collapsed .sidebar__link {
-  justify-content: center;
-  padding-inline: 0;
-}
-
-/* ---- 브랜드 ----------------------------------------------------------- */
-
-.sidebar__brand {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  height: var(--header-height);
-  flex-shrink: 0;
-  padding: 0 var(--space-5);
-  border-bottom: 1px solid var(--border);
-}
-
-.sidebar__logo {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-}
-
-.sidebar__brand-text {
-  font-size: var(--fs-label);
-  line-height: var(--lh-label);
-  font-weight: 700;
-  color: var(--accent-strong);
-  white-space: nowrap;
-}
-
-/* ---- 메뉴 ------------------------------------------------------------- */
-
-.sidebar__nav {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
+.rail__nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-2);
+  gap: 2px;
+  padding: var(--space-3) 0;
 }
 
-.sidebar__link {
+.rail__link {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius);
-  font-size: var(--fs-body);
-  line-height: var(--lh-body);
-  color: var(--text);
+  height: 46px;
+  color: var(--text-muted);
   white-space: nowrap;
+  overflow: hidden;
   transition:
     background-color var(--transition),
     color var(--transition);
 }
 
-.sidebar__link:hover {
-  background: var(--surface-tint);
+/* 아이콘은 접힘 폭(72px) 한가운데 고정 — 펼쳐도 자리가 흔들리지 않는다. */
+.rail__icon {
+  flex: 0 0 var(--rail-width);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rail__label {
+  opacity: 0;
+  transition: opacity var(--transition);
+}
+
+.rail:hover .rail__label,
+.rail:has(:focus-visible) .rail__label {
+  opacity: 1;
+}
+
+.rail__link:hover {
+  background: var(--surface-subtle);
   color: var(--accent-strong);
   text-decoration: none;
 }
 
-.sidebar__link.is-active {
+.rail__link.is-active {
+  color: var(--accent-strong);
   background: var(--accent-active-bg);
-  color: var(--accent-active-fg);
-  font-weight: 500;
+  box-shadow: inset 3px 0 0 var(--accent);
+  font-weight: 700;
 }
 
-.sidebar__link.is-active:hover {
-  background: var(--accent-active-bg);
-  color: var(--accent-active-fg);
+.rail__link:focus-visible {
+  box-shadow: inset var(--focus-ring);
 }
