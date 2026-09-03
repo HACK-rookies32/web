@@ -93,6 +93,27 @@ export const NAV_ITEMS: NavItem[] = [
   { to: '/admins', label: '관리자 계정 관리', icon: 'admins', roles: ['SUPER_ADMIN'] },
 ];
 
+/* ------------------------------------------------- 상단 가로 내비 그룹 ---- */
+
+export interface NavGroup {
+  key: string;
+  label: string;
+  /** 이 그룹에 속한 NAV_ITEMS 의 경로. 이 순서대로 드롭다운에 나열된다. */
+  paths: string[];
+}
+
+/**
+ * CleanPay 식 이중 내비의 상단 대분류. 항목이 1개면 링크, 2개 이상이면 드롭다운.
+ * 권한으로 항목이 전부 걸러지면 그룹 자체를 숨긴다(Topbar 에서 처리).
+ */
+export const NAV_GROUPS: NavGroup[] = [
+  { key: 'home', label: '홈', paths: ['/'] },
+  { key: 'members', label: '회원·자금', paths: ['/members', '/payments'] },
+  { key: 'content', label: '콘텐츠', paths: ['/notices', '/inquiries', '/community'] },
+  { key: 'safety', label: '안전', paths: ['/harmful-keywords'] },
+  { key: 'system', label: '시스템', paths: ['/audit-logs', '/admins'] },
+];
+
 /* ----------------------------------------------------------- 페이징 ---- */
 
 /** 명세 3.5 의 기본값은 20 이나, 화면 밀도상 목록은 10건으로 끊는다. */

@@ -1,30 +1,25 @@
+/* 시안 A — 상단 전폭 컨텍스트 바 + 좌측 아이콘 레일(호버 확장). */
 .app-layout {
   display: grid;
   grid-template-areas:
-    'aside header'
-    'aside main';
-  grid-template-columns: var(--aside-width) minmax(0, 1fr);
+    'header header'
+    'aside  main';
+  grid-template-columns: var(--rail-width) minmax(0, 1fr);
   grid-template-rows: var(--header-height) minmax(0, 1fr);
   min-height: 100vh;
   background: var(--bg);
-  transition: grid-template-columns var(--transition);
-}
-
-.app-layout.is-collapsed {
-  grid-template-columns: 72px minmax(0, 1fr);
 }
 
 .app-layout__main {
   grid-area: main;
   min-width: 0;
-  /* 본문은 절대 가로로 밀리지 않는다. 넓은 표는 표 안에서 스크롤한다. */
   overflow-x: hidden;
 }
 
 .app-layout__content {
   max-width: var(--content-max);
   margin: 0 auto;
-  padding: var(--space-5);
+  padding: var(--space-5) var(--space-6);
   display: flex;
   flex-direction: column;
   gap: var(--space-5);

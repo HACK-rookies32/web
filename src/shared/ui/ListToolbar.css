@@ -1,9 +1,14 @@
+/* CleanPay 레퍼런스: 검색·필터를 연한 배경의 둥근 카드에 묶는다. */
 .list-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: wrap;
+  padding: var(--space-4) var(--space-5);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
 /* 검색 없이 필터·액션만 있는 경우(커뮤니티 등) 오른쪽으로 붙인다.
