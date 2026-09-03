@@ -7,6 +7,9 @@
   line-height: 20px;
   font-weight: 500;
   white-space: nowrap;
+  /* CleanPay 레퍼런스: 흰 배경 + 글자색과 같은 컬러 테두리(보류=앰버, 등록=그린). */
+  background: var(--surface);
+  border: 1px solid currentColor;
 }
 
 .pill--tag {
@@ -21,31 +24,25 @@
 /* ---- 톤 --------------------------------------------------------------- */
 
 .pill--success {
-  background: var(--success-bg);
   color: var(--success);
 }
 
 .pill--warning {
-  background: var(--warning-bg);
   color: var(--warning);
 }
 
 .pill--danger {
-  background: var(--danger-bg);
   color: var(--danger);
 }
 
 .pill--info {
-  background: var(--info-bg);
   color: var(--info);
 }
 
 .pill--neutral {
-  background: var(--neutral-bg);
   color: var(--neutral);
 }
 
 .pill--accent {
-  background: var(--tag-accent-bg);
   color: var(--tag-accent);
 }

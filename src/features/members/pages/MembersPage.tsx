@@ -10,10 +10,9 @@ import {
   DownloadGlyph,
   EmptyState,
   Icon,
-  ListToolbar,
   Pagination,
   RowActions,
-  SearchInput,
+  SearchPanel,
   Select,
   StackedCell,
   Table,
@@ -50,7 +49,7 @@ import './MembersPage.css';
 /**
  * 회원 관리 목록.
  *
- * 검색어·상태·페이지를 URL 쿼리로 관리한다. 새로고침하거나 링크를 공유해도
+ * 검색어·구분·정렬·페이지를 URL 쿼리로 관리한다. 새로고침하거나 링크를 공유해도
  * 같은 목록이 나오고, 뒤로 가기도 자연스럽게 동작한다.
  */
 const MEMBER_SORT_OPTIONS: { value: MemberSort; label: string }[] = [
@@ -73,6 +72,13 @@ export function MembersPage() {
 
   const { searchParams, patchParams, resetParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
+  /* 구분 필터(명세 5.2 role). 체크박스 둘 중 하나만 고르면 그 역할, 둘 다·아무것도 아니면 전체. */
+  const roleParam = searchParams.get('role');
+  /* 명시 타입이 없으면 객체 리터럴에 넣을 때 리터럴 유니온이 string 으로 widening 된다. */
+  const role: Member['role'] | undefined =
+    roleParam === 'PARENT' || roleParam === 'CHILD' ? roleParam : undefined;
+  const roleSelected = role ? [role] : ['PARENT', 'CHILD'];
+  /* 정렬(서버 신설 ?sort=). 미전송 시 서버가 RECENT 로 처리. */
   const sort = (searchParams.get('sort') as MemberSort | null) ?? 'RECENT';
 
   const [quickView, setQuickView] = useState<Member | null>(null);
@@ -81,7 +87,10 @@ export function MembersPage() {
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
 
-  const params = useMemo(() => ({ keyword, sort, page, size: DEFAULT_PAGE_SIZE }), [keyword, sort, page]);
+  const params = useMemo(
+    () => ({ keyword, role, sort, page, size: DEFAULT_PAGE_SIZE }),
+    [keyword, role, sort, page],
+  );
 
   const { data, isPending, isError } = useQuery({
     queryKey: memberKeys.list(params),
@@ -89,6 +98,10 @@ export function MembersPage() {
   });
 
   const handleSearch = useCallback((value: string) => patchParams({ keyword: value }), [patchParams]);
+  const handleRoleChange = useCallback(
+    (values: string[]) => patchParams({ role: values.length === 1 ? values[0] : null }),
+    [patchParams],
+  );
 
   const updateMutation = useMutation({
     mutationFn: (vars: { memberId: number; body: MemberUpdateRequest }) =>
@@ -173,20 +186,20 @@ export function MembersPage() {
     },
     {
       key: 'actions',
-      header: '액션',
+      header: '상세보기',
       align: 'center',
-      width: canManage ? '116px' : '56px',
-      hoverOnly: true,
+      width: canManage ? '196px' : '116px',
       render: (row) => (
         <RowActions>
+          {/* CleanPay 레퍼런스: 행마다 항상 보이는 아웃라인 "상세보기" 버튼 */}
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
-            className="btn--icon-only"
-            aria-label={`${maskName(row.username)} 빠른 보기`}
+            iconLeft={<Icon name="search" />}
+            aria-label={`${maskName(row.username)} 상세보기`}
             onClick={() => setQuickView(row)}
           >
-            <Icon name="eye-view" />
+            상세보기
           </Button>
 
           {canManage ? (
@@ -218,35 +231,45 @@ export function MembersPage() {
 
   return (
     <div className="members">
-      <ListToolbar
-        search={
-          <SearchInput
-            value={keyword}
-            onSearch={handleSearch}
-            /* 검색 대상은 명세 5.2 기준 실명·아이디다. 마스킹한 이메일·전화번호는
-               검색으로 되짚을 수 있어 대상에서 뺐다(api.ts 주석 참고). */
-            placeholder="회원명(실명) · 아이디 검색"
-            aria-label="회원 검색"
-          />
-        }
-      >
-        <Select
-          aria-label="회원 정렬"
-          value={sort}
-          onChange={(e) => patchParams({ sort: e.target.value === 'RECENT' ? null : e.target.value })}
-        >
-          {MEMBER_SORT_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </Select>
+      <SearchPanel
+        options={{
+          items: [
+            { value: 'PARENT', label: '보호자' },
+            { value: 'CHILD', label: '자녀' },
+          ],
+          selected: roleSelected,
+          onChange: handleRoleChange,
+        }}
+        keyword={keyword}
+        onSearch={handleSearch}
+        /* 검색 대상은 명세 5.2 기준 실명·아이디다. 마스킹한 이메일·전화번호는
+           검색으로 되짚을 수 있어 대상에서 뺐다(api.ts 주석 참고). */
+        placeholder="회원명(실명) · 아이디를 입력해주세요."
+        aria-label="회원 검색"
+      />
 
-        {/* 전체 회원 목록을 CSV 로 내려받는다. 개별 회원 리포트가 아니라 목록 전체다. */}
-        <Button iconLeft={<DownloadGlyph />} onClick={() => setCsvOpen(true)}>
-          회원 목록 CSV
-        </Button>
-      </ListToolbar>
+      <div className="members__meta">
+        <p className="members__count">
+          전체 <strong className="tabular">{formatNumber(data?.totalElements ?? 0)}</strong>건
+        </p>
+        <div className="members__meta-actions">
+          <Select
+            aria-label="회원 정렬"
+            value={sort}
+            onChange={(e) => patchParams({ sort: e.target.value === 'RECENT' ? null : e.target.value })}
+          >
+            {MEMBER_SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          {/* 전체 회원 목록을 CSV 로 내려받는다. 개별 회원 리포트가 아니라 목록 전체다. */}
+          <Button iconLeft={<DownloadGlyph />} onClick={() => setCsvOpen(true)}>
+            회원 목록 CSV
+          </Button>
+        </div>
+      </div>
 
       <Card flush>
         <Table

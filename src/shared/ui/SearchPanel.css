@@ -1,0 +1,64 @@
+/* CleanPay 식 검색 패널 — 연한 배경 카드에 옵션 줄 + 검색 줄. */
+.search-panel {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.search-panel__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-4) var(--space-5);
+}
+
+.search-panel__row + .search-panel__row {
+  border-top: 1px solid var(--border);
+}
+
+.search-panel__label {
+  flex: 0 0 96px;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* ---- 검색옵션 (체크박스) ---------------------------------------------- */
+
+.search-panel__checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-6);
+}
+
+.search-panel__check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* 네이티브 체크박스를 accent 로 물들인다 — 색은 여기(포인트)에만. */
+.search-panel__check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* ---- 검색명 (입력 + 버튼) --------------------------------------------- */
+
+.search-panel__row--search .search-panel__input {
+  flex: 1 1 auto;
+  min-width: 0;
+  background: var(--surface);
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
