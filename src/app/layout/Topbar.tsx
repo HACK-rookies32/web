@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { logout } from '@/features/auth/api';
@@ -24,7 +24,6 @@ function resolveTitle(pathname: string): string {
 /** 시안 A — 전폭 컨텍스트 바: 브랜드 + 현재 페이지 제목 + 프로필. 이동 메뉴는 없다. */
 export function Topbar() {
   const { session, signOut } = useAuth();
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const title = resolveTitle(pathname);
@@ -67,7 +66,13 @@ export function Topbar() {
                   setMenuOpen(false);
                   void logout().finally(() => {
                     signOut();
-                    navigate('/login', { replace: true });
+                    /*
+                     * SPA 이동(navigate)이 아니라 하드 리로드로 로그인 화면에 간다.
+                     * navigate 만 하면 이전 관리자의 TanStack Query 캐시가 메모리에
+                     * 남아, 낮은 권한 계정으로 재로그인 시 이전 목록이 노출된다.
+                     * 전체 리로드로 앱 상태·쿼리 캐시를 완전히 비운다.
+                     */
+                    window.location.assign('/login');
                   });
                 }}
               >

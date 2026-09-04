@@ -248,10 +248,6 @@ export function MemberDetailPage() {
                     <DetailBox>
                       <DetailRow label="현재 잔액" value={formatCurrency(wallet.data.balance)} />
                       <DetailRow label="최근 변동" value={formatDateTime(wallet.data.updatedAt)} />
-                      <DetailRow
-                        label="연결 자녀 지갑"
-                        value={wallet.data.relatedNames.map(maskName).join(', ') || '-'}
-                      />
                     </DetailBox>
 
                     {wallet.data.recentTransactions.length > 0 ? (
