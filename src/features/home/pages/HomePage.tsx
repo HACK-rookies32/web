@@ -40,7 +40,9 @@ export function HomePage() {
 
   const canNotice = hasRole(['SUPER_ADMIN']);
   const canAudit = hasRole(['SUPER_ADMIN']);
-  const canCommunity = hasRole(['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN']);
+  /* 커뮤니티는 서버가 조회까지 SUPER_ADMIN·COMMUNITY_ADMIN 만 연다(사이드바 기준과 일치).
+     GENERAL_ADMIN 을 넣으면 홈에 패널만 뜨고 목록은 403 이라 빈 채로 보인다. */
+  const canCommunity = hasRole(['SUPER_ADMIN', 'COMMUNITY_ADMIN']);
   const canInquiry = hasRole(['SUPER_ADMIN', 'INQUIRY_ADMIN']);
 
   const listParams = { page: 0, size: PREVIEW_SIZE };

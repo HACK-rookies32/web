@@ -87,28 +87,39 @@ export function App() {
                 <Route path="/login" element={<LoginPage />} />
 
                 {/*
-                  [VULN-WEB-04] 접근통제 실패 — 화면군별 역할 가드가 없다.
-                    아래 라우트는 인증(ProtectedRoute)만 확인하고 역할을 보지 않는다.
-                    INQUIRY_ADMIN·COMMUNITY_ADMIN 같은 낮은 권한 계정이 주소창에
-                    /admins·/payments·/audit-logs 를 직접 쳐서 들어간다(A01, BFLA).
-                    대응: 화면군마다 <ProtectedRoute roles={[...]}> 로 감싼다.
+                  화면군별 역할 가드 (API 명세 5장 엔드포인트 권한과 일치).
+                  바깥 ProtectedRoute 는 인증, 안쪽 ProtectedRoute roles 는 역할을 본다.
+                  권한 부족 계정이 주소창에 URL 을 직접 쳐도 홈(/)으로 되돌린다.
+                  ⚠️ 프런트 가드는 UX 용이며 실제 접근 통제는 서버(Spring Security)가 담당한다.
                 */}
                 <Route element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>
                     <Route index element={<HomePage />} />
 
-                    <Route path="members" element={<MembersPage />} />
-                    <Route path="members/:memberId" element={<MemberDetailPage />} />
-                    <Route path="payments" element={<PaymentsPage />} />
+                    {/* SUPER_ADMIN 전용 */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN']} />}>
+                      <Route path="members" element={<MembersPage />} />
+                      <Route path="members/:memberId" element={<MemberDetailPage />} />
+                      <Route path="notices" element={<NoticesPage />} />
+                      <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
+                      <Route path="audit-logs" element={<AuditLogsPage />} />
+                      <Route path="admins" element={<AdminsPage />} />
+                    </Route>
 
-                    <Route path="notices" element={<NoticesPage />} />
-                    <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
-                    <Route path="audit-logs" element={<AuditLogsPage />} />
-                    <Route path="admins" element={<AdminsPage />} />
+                    {/* 자금·결제 조회: SUPER_ADMIN · GENERAL_ADMIN */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN']} />}>
+                      <Route path="payments" element={<PaymentsPage />} />
+                    </Route>
 
-                    <Route path="inquiries" element={<InquiriesPage />} />
+                    {/* 1:1 문의: SUPER_ADMIN · INQUIRY_ADMIN */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'INQUIRY_ADMIN']} />}>
+                      <Route path="inquiries" element={<InquiriesPage />} />
+                    </Route>
 
-                    <Route path="community" element={<CommunityPage />} />
+                    {/* 커뮤니티: SUPER_ADMIN · COMMUNITY_ADMIN */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'COMMUNITY_ADMIN']} />}>
+                      <Route path="community" element={<CommunityPage />} />
+                    </Route>
 
                     {/* 공통 UI 스타일 가이드 (개발 모드 전용) */}
                     {UiKitPage ? <Route path="ui-kit" element={<UiKitPage />} /> : null}
