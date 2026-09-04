@@ -42,9 +42,9 @@ let memberStore: Member[] = [...MOCK_MEMBERS];
 /**
  * GET /admin/members — 목록/검색
  *
- * 검색 대상은 명세 5.2 가 정한 `loginId`/`username`(실명)/`nickname` 이다.
- * 이메일·전화번호는 넣지 않는다. 화면에서 마스킹한 구간을 검색 결과의 참/거짓으로
- * 되짚을 수 있어(가운데 번호 4자리를 조회로 확인 가능) 마스킹이 무력해진다.
+ * 검색 대상은 `loginId` 와 `nickname` 이다. 실명(`username`)·이메일·전화번호는 넣지
+ * 않는다. 화면에서 마스킹한 값을 검색 결과의 참/거짓으로 되짚는 역추론을 막기 위함이다.
+ * 회원 목록도 실명 대신 닉네임을 표시한다(닉네임 고유성은 서버가 보장).
  */
 /**
  * 목 정렬. 실서버는 ?sort= 로 서버가 정렬하지만, 목 모드에서도 같은 순서를 보여준다.
@@ -74,7 +74,7 @@ export async function fetchMembers(params: MemberListParams): Promise<Page<Membe
     const filtered = memberStore
       .filter((m) => !m.isDeleted)
       .filter((m) => (params.role ? m.role === params.role : true))
-      .filter((m) => matchesKeyword(m, params.keyword, ['loginId', 'username', 'nickname']));
+      .filter((m) => matchesKeyword(m, params.keyword, ['loginId', 'nickname']));
 
     return mockResponse(paginate(sortMembers(filtered, params.sort), params));
   }

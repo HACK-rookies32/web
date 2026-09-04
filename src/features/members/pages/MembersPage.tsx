@@ -23,7 +23,6 @@ import {
   formatNumber,
   maskAddress,
   maskEmail,
-  maskName,
   maskPhone,
   memberRef,
 } from '@/shared/lib/format';
@@ -111,7 +110,7 @@ export function MembersPage() {
       syncAuditLog();
       setFormOpen(false);
       setEditing(null);
-      toast.success('회원 정보를 수정했습니다', `${maskName(member.username)} 회원의 정보가 갱신되었습니다.`);
+      toast.success('회원 정보를 수정했습니다', `${member.nickname} 회원의 정보가 갱신되었습니다.`);
     },
     onError: () => toast.error('수정에 실패했습니다', '잠시 후 다시 시도해 주세요.'),
   });
@@ -122,7 +121,7 @@ export function MembersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
       syncAuditLog();
-      const name = deleteTarget ? maskName(deleteTarget.username) : '회원';
+      const name = deleteTarget ? deleteTarget.nickname : '회원';
       setDeleteTarget(null);
       toast.success('회원을 삭제했습니다', `${name} 회원이 삭제되었으며 감사 로그에 기록되었습니다.`);
     },
@@ -146,7 +145,7 @@ export function MembersPage() {
       width: '22%',
       render: (row) => (
         <StackedCell
-          primary={maskName(row.username)}
+          primary={row.nickname}
           secondary={`${memberRef(row.id)} · ${row.email ? maskEmail(row.email) : '이메일 없음'}`}
         />
       ),
@@ -196,7 +195,7 @@ export function MembersPage() {
             variant="secondary"
             size="sm"
             iconLeft={<Icon name="search" />}
-            aria-label={`${maskName(row.username)} 상세보기`}
+            aria-label={`${row.nickname} 상세보기`}
             onClick={() => setQuickView(row)}
           >
             상세보기
@@ -208,7 +207,7 @@ export function MembersPage() {
                 variant="ghost"
                 size="sm"
                 className="btn--icon-only"
-                aria-label={`${maskName(row.username)} 정보 수정`}
+                aria-label={`${row.nickname} 정보 수정`}
                 onClick={() => void openEdit(row)}
               >
                 <PencilGlyph />
@@ -217,7 +216,7 @@ export function MembersPage() {
                 variant="ghost"
                 size="sm"
                 className="btn--icon-only members__danger"
-                aria-label={`${maskName(row.username)} 삭제`}
+                aria-label={`${row.nickname} 삭제`}
                 onClick={() => setDeleteTarget(row)}
               >
                 <Icon name="trash" />
@@ -242,9 +241,9 @@ export function MembersPage() {
         }}
         keyword={keyword}
         onSearch={handleSearch}
-        /* 검색 대상은 명세 5.2 기준 실명·아이디다. 마스킹한 이메일·전화번호는
-           검색으로 되짚을 수 있어 대상에서 뺐다(api.ts 주석 참고). */
-        placeholder="회원명(실명) · 아이디를 입력해주세요."
+        /* 검색은 로그인 아이디·닉네임으로만 한다. 실명 검색을 없애 마스킹 역추론을
+           막는다(회원 목록도 실명 대신 닉네임을 표시. 닉네임 고유성은 서버가 보장). */
+        placeholder="로그인 아이디 · 닉네임으로 검색"
         aria-label="회원 검색"
       />
 
@@ -280,7 +279,7 @@ export function MembersPage() {
           loading={isPending}
           error={isError ? '회원 목록을 불러오지 못했습니다.' : undefined}
           onRowClick={(row) => navigate(`/members/${row.id}`)}
-          rowLabel={(row) => `${maskName(row.username)} 회원 상세 보기`}
+          rowLabel={(row) => `${row.nickname} 회원 상세 보기`}
           emptyState={
             <EmptyState
               title="조회된 회원이 없습니다"
@@ -346,7 +345,7 @@ export function MembersPage() {
       >
         {deleteTarget ? (
           <p className="members__confirm">
-            <strong>{maskName(deleteTarget.username)}</strong> ({memberRef(deleteTarget.id)} ·{' '}
+            <strong>{deleteTarget.nickname}</strong> ({memberRef(deleteTarget.id)} ·{' '}
             {deleteTarget.loginId}) 회원을 삭제합니다. 이 회원에게 연결된 자녀 계정과 기기 정보도
             함께 정리됩니다.
           </p>
