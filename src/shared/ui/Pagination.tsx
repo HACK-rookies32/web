@@ -10,8 +10,8 @@ interface PaginationProps {
   size: number;
   onChange: (page: number) => void;
   /**
-   * 'more'  — CleanPay 식 "더 보기 ( 1/12 )" 한 줄. 누르면 다음 페이지로 간다(기본).
-   * 'pages' — 왼쪽 요약 + 오른쪽 번호 버튼(Figma 131:3667).
+   * 'pages' — 왼쪽 요약 + 오른쪽 번호 버튼(Figma 131:3667). 기본값.
+   * 'more'  — "더 보기 ( 1/12 )" 한 줄. 누르면 다음 페이지로 간다(이어 붙이기 아님).
    */
   variant?: 'more' | 'pages';
 }
@@ -39,7 +39,7 @@ export function Pagination({
   totalElements,
   size,
   onChange,
-  variant = 'more',
+  variant = 'pages',
 }: PaginationProps) {
   if (variant === 'more') {
     const isLast = page >= totalPages - 1;
