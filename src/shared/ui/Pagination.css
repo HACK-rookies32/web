@@ -43,8 +43,9 @@
 }
 
 .pagination__page.is-active {
-  background: var(--accent);
-  color: var(--accent-on-fill);
+  /* 활성 번호 버튼도 채움 버튼과 같은 밤색으로 통일(흰 글자). */
+  background: var(--accent-strong);
+  color: var(--text-on-accent);
 }
 
 .pagination__arrow {
