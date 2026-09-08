@@ -1,0 +1,4 @@
+# 관리자 웹은 검색 노출 대상이 아니므로 모든 크롤러의 전체 경로 수집을 막는다.
+# (Vite 가 빌드 시 public/ 아래 파일을 dist/ 루트로 복사하므로 /robots.txt 로 서빙된다)
+User-agent: *
+Disallow: /
