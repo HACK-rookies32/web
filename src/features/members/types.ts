@@ -51,8 +51,13 @@ export interface MemberInquiry {
 }
 
 /** 회원 목록 조회 파라미터 (명세 5.2 — keyword/role/page/size). */
+/** 회원 목록 정렬 (서버 신설 파라미터 ?sort=, 백엔드 회신 #173). */
+export type MemberSort = 'RECENT' | 'OLDEST' | 'NAME' | 'NAME_DESC';
+
 export interface MemberListParams extends PageParams {
   role?: 'PARENT' | 'CHILD';
+  /** 정렬. 기본 RECENT(가입 최신순). 미전송 시 서버가 RECENT 로 처리. */
+  sort?: MemberSort;
 }
 
 /**

@@ -7,7 +7,8 @@ import navDashboard from '@/assets/icons/nav-dashboard.svg?raw';
 import navMembers from '@/assets/icons/nav-members.svg?raw';
 import navPayments from '@/assets/icons/nav-payments.svg?raw';
 import navNotices from '@/assets/icons/nav-notices.svg?raw';
-import navInquiries from '@/assets/icons/nav-inquiries.svg?raw';
+import navInquiry from '@/assets/icons/nav-inquiry.svg?raw';
+import navCommunity from '@/assets/icons/nav-community.svg?raw';
 import navHarmful from '@/assets/icons/nav-harmful.svg?raw';
 import navAudit from '@/assets/icons/nav-audit.svg?raw';
 import navAdmins from '@/assets/icons/nav-admins.svg?raw';
@@ -28,8 +29,8 @@ const ICONS = {
   'nav-members': navMembers,
   'nav-payments': navPayments,
   'nav-notices': navNotices,
-  'nav-inquiries': navInquiries,
-  'nav-community': navInquiries, // Figma 에서 커뮤니티/문의가 동일 글리프를 공유한다
+  'nav-inquiries': navInquiry, // 1:1 문의 — 말풍선 + 물음표
+  'nav-community': navCommunity, // 커뮤니티 — 사람 그룹(users)
   'nav-harmful': navHarmful,
   'nav-audit': navAudit,
   'nav-admins': navAdmins,

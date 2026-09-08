@@ -4,7 +4,26 @@
   gap: var(--space-4);
 }
 
-/* 툴바는 공통 ListToolbar 로 옮겼다 (@/shared/ui). */
+/* 검색은 공통 SearchPanel 로 옮겼다 (@/shared/ui). */
+
+/* ---- 건수 + 액션 (CleanPay: "전체 N건" 한 줄) ---------------------------- */
+
+.members__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.members__count {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
+}
+
+.members__count strong {
+  color: var(--text-strong);
+}
 
 /* ---- 셀 --------------------------------------------------------------- */
 
@@ -22,4 +41,17 @@
 
 .members__confirm strong {
   color: var(--text-strong);
+}
+
+/* "전체 N건" 오른쪽에 정렬 드롭다운 + CSV 를 묶는다. */
+.members__meta-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.members__meta-actions select {
+  width: auto;
+  min-width: 160px;
+  background-color: var(--surface);
 }

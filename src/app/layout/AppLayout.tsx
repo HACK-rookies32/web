@@ -1,38 +1,23 @@
-import { Suspense, useState } from 'react';
+import { Suspense } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { LoadingBlock } from '@/shared/ui';
-import { NAV_ITEMS } from '@/shared/lib/constants';
 import { RouteErrorBoundary } from '../RouteErrorBoundary';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import './AppLayout.css';
 
-/** 사이드바에 없는 상세 화면의 상단바 제목. */
-const EXTRA_TITLES: { match: RegExp; title: string }[] = [
-  { match: /^\/members\/[^/]+$/, title: '회원 상세' },
-];
-
-function resolveTitle(pathname: string): string {
-  const extra = EXTRA_TITLES.find((t) => t.match.test(pathname));
-  if (extra) return extra.title;
-
-  // 가장 구체적인(긴) 경로가 먼저 잡히도록 정렬해 비교한다.
-  const item = [...NAV_ITEMS]
-    .sort((a, b) => b.to.length - a.to.length)
-    .find((nav) => (nav.to === '/' ? pathname === '/' : pathname.startsWith(nav.to)));
-
-  return item?.label ?? '시스템 관리';
-}
-
-/** 좌측 사이드바 + 상단바 + 콘텐츠의 전역 셸. */
+/**
+ * 시안 A — 사이드바 중심. 상단은 전폭 컨텍스트 바(브랜드·제목·프로필)로 항상 보이고,
+ * 좌측은 아이콘 레일(유일 이동 수단)이 그 아래에 온다. 레일은 호버하면 라벨까지
+ * 펼쳐지며 콘텐츠 위로 겹친다(레이아웃이 밀리지 않는다).
+ */
 export function AppLayout() {
-  const [collapsed, setCollapsed] = useState(false);
   const { pathname } = useLocation();
 
   return (
-    <div className={collapsed ? 'app-layout is-collapsed' : 'app-layout'}>
-      <Sidebar collapsed={collapsed} />
-      <Topbar title={resolveTitle(pathname)} onToggleSidebar={() => setCollapsed((v) => !v)} />
+    <div className="app-layout">
+      <Topbar />
+      <Sidebar />
 
       <main className="app-layout__main">
         <div className="app-layout__content">

@@ -1,43 +1,42 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Icon } from '@/shared/ui';
 import { useAuth } from '@/shared/auth/AuthContext';
 import { logout } from '@/features/auth/api';
-import { ROLE_LABEL } from '@/shared/lib/constants';
+import { NAV_ITEMS, ROLE_LABEL } from '@/shared/lib/constants';
+import logoMark from '@/assets/brand/logo-mark.png';
 import { ThemeSwitch } from './ThemeSwitch';
 import './Topbar.css';
 
-interface TopbarProps {
-  title: string;
-  onToggleSidebar: () => void;
+const EXTRA_TITLES: { match: RegExp; title: string }[] = [
+  { match: /^\/members\/[^/]+$/, title: '회원 상세' },
+];
+
+function resolveTitle(pathname: string): string {
+  const extra = EXTRA_TITLES.find((t) => t.match.test(pathname));
+  if (extra) return extra.title;
+  const item = [...NAV_ITEMS]
+    .sort((a, b) => b.to.length - a.to.length)
+    .find((nav) => (nav.to === '/' ? pathname === '/' : pathname.startsWith(nav.to)));
+  return item?.label ?? '시스템 관리';
 }
 
-/**
- * 상단바 (Figma Header 131:3771).
- * 높이 64px, 반투명 배경 + backdrop-blur, 오른쪽에 테마·프로필.
- */
-export function Topbar({ title, onToggleSidebar }: TopbarProps) {
+/** 시안 A — 전폭 컨텍스트 바: 브랜드 + 현재 페이지 제목 + 프로필. 이동 메뉴는 없다. */
+export function Topbar() {
   const { session, signOut } = useAuth();
-  const navigate = useNavigate();
+  const { pathname } = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-
+  const title = resolveTitle(pathname);
 
   return (
     <header className="topbar">
-      <div className="topbar__left">
-        <button
-          type="button"
-          className="topbar__icon-btn"
-          onClick={onToggleSidebar}
-          aria-label="사이드바 접기/펼치기"
-        >
-          <Icon name="menu" />
-        </button>
-        <h1 className="topbar__title">{title}</h1>
-      </div>
+      <Link to="/" className="topbar__brand" aria-label="홈으로">
+        <img className="topbar__logo" src={logoMark} alt="" width={28} height={28} />
+      </Link>
+
+      <h1 className="topbar__title">{title}</h1>
 
       <div className="topbar__right">
-
         <div className="topbar__profile">
           <button
             type="button"
@@ -46,35 +45,34 @@ export function Topbar({ title, onToggleSidebar }: TopbarProps) {
             aria-expanded={menuOpen}
             aria-haspopup="menu"
           >
+            <span className="topbar__avatar" aria-hidden="true">
+              <Icon name="user" />
+            </span>
             <span className="topbar__profile-text">
               <span className="topbar__name">{session?.displayName ?? '-'}</span>
               <span className="topbar__role">{session ? ROLE_LABEL[session.role] : ''}</span>
-            </span>
-            <span className="topbar__avatar" aria-hidden="true">
-              <Icon name="user" />
             </span>
           </button>
 
           {menuOpen ? (
             <div className="topbar__menu" role="menu">
               <ThemeSwitch />
-
               <div className="topbar__menu-sep" role="separator" />
-
               <button
                 type="button"
                 role="menuitem"
                 className="topbar__menu-item"
                 onClick={() => {
                   setMenuOpen(false);
-                  /*
-                   * 서버 세션을 먼저 무효화한다. 토큰을 지운 뒤에 부르면 인증 헤더가
-                   * 없어 서버가 세션을 못 닫는다. logout() 은 실패해도 던지지 않으므로
-                   * 화면 전환은 어느 경우에나 진행된다.
-                   */
                   void logout().finally(() => {
                     signOut();
-                    navigate('/login', { replace: true });
+                    /*
+                     * SPA 이동(navigate)이 아니라 하드 리로드로 로그인 화면에 간다.
+                     * navigate 만 하면 이전 관리자의 TanStack Query 캐시가 메모리에
+                     * 남아, 낮은 권한 계정으로 재로그인 시 이전 목록이 노출된다.
+                     * 전체 리로드로 앱 상태·쿼리 캐시를 완전히 비운다.
+                     */
+                    window.location.assign('/login');
                   });
                 }}
               >

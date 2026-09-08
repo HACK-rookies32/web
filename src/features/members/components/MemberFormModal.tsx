@@ -47,12 +47,36 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) {
+    /*
+     * 이메일은 값이 있을 때만 형식을 본다. 자녀 계정은 이메일 없이 가입할 수 있어
+     * 무조건 검사하면 **전화번호만 고치려 해도 저장이 막혔다.**
+     */
+    if (values.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(values.email)) {
       setError('이메일 형식이 올바르지 않습니다.');
       return;
     }
 
-    onSubmit(values);
+    /*
+     * 실제로 바뀐 칸만 보낸다.
+     *
+     * 서버 PATCH 규약은 "null 인 필드는 미변경" 인데 빈 문자열은 null 이 아니라
+     * 그대로 덮어쓴다. 네 칸을 늘 함께 보내던 탓에, 원래 값이 없던(null) 주소·
+     * 닉네임이 저장만 눌러도 "" 로 바뀌어 데이터가 오염됐다.
+     *
+     * 빈 칸을 일괄로 빼면 이번엔 **값을 지울 수 없게** 되므로, 열었을 때와 달라진
+     * 칸만 골라 보낸다. 지우려고 비운 칸은 달라졌으니 그대로 전달된다.
+     */
+    const before = {
+      nickname: member?.nickname ?? '',
+      email: member?.email ?? '',
+      phoneNumber: member?.phoneNumber ?? '',
+      address: member?.address ?? '',
+    };
+    const patch = Object.fromEntries(
+      Object.entries(values).filter(([key, v]) => v !== before[key as keyof typeof before]),
+    ) as typeof values;
+
+    onSubmit(patch);
   }
 
   return (
@@ -83,7 +107,8 @@ export function MemberFormModal({ open, member, submitting, onClose, onSubmit }:
           )}
         </FormField>
 
-        <FormField label="이메일" required>
+        {/* 자녀 계정은 이메일 없이 가입할 수 있어 필수가 아니다. */}
+        <FormField label="이메일">
           {(p) => (
             <TextInput
               {...p}

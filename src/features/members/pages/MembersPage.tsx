@@ -10,10 +10,10 @@ import {
   DownloadGlyph,
   EmptyState,
   Icon,
-  ListToolbar,
   Pagination,
   RowActions,
-  SearchInput,
+  SearchPanel,
+  Select,
   StackedCell,
   Table,
   useToast,
@@ -23,7 +23,6 @@ import {
   formatNumber,
   maskAddress,
   maskEmail,
-  maskName,
   maskPhone,
   memberRef,
 } from '@/shared/lib/format';
@@ -39,7 +38,7 @@ import {
   memberKeys,
   updateMember,
 } from '../api';
-import type { Member, MemberUpdateRequest } from '../types';
+import type { Member, MemberSort, MemberUpdateRequest } from '../types';
 import { PencilGlyph } from '../components/Glyphs';
 import { MemberQuickView } from '../components/MemberQuickView';
 import { MemberFormModal } from '../components/MemberFormModal';
@@ -49,19 +48,37 @@ import './MembersPage.css';
 /**
  * 회원 관리 목록.
  *
- * 검색어·상태·페이지를 URL 쿼리로 관리한다. 새로고침하거나 링크를 공유해도
+ * 검색어·구분·정렬·페이지를 URL 쿼리로 관리한다. 새로고침하거나 링크를 공유해도
  * 같은 목록이 나오고, 뒤로 가기도 자연스럽게 동작한다.
  */
+const MEMBER_SORT_OPTIONS: { value: MemberSort; label: string }[] = [
+  { value: 'RECENT', label: '가입 최신순' },
+  { value: 'OLDEST', label: '가입 오래된순' },
+  { value: 'NAME', label: '이름 가나다순' },
+  { value: 'NAME_DESC', label: '이름 역순' },
+];
+
 export function MembersPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const queryClient = useQueryClient();
   const { hasRole, session } = useAuth();
   const syncAuditLog = useAuditLogSync();
-  const canManage = hasRole(['SUPER_ADMIN']); // 수정·삭제는 SUPER_ADMIN 전용 (명세 5.2)
+  // [VULN-WEB-05] 권한 상승 — 수정·삭제가 SUPER_ADMIN 전용이어야 하나 hasRole()
+  //   (인증만 되면 참)이라 전 역할에 파괴적 버튼이 노출된다(A01). 서버도 막지
+  //   않으면 API 직접 호출로도 성립. 대응: hasRole(['SUPER_ADMIN']).
+  const canManage = hasRole();
 
   const { searchParams, patchParams, resetParams, page } = useListParams();
   const keyword = searchParams.get('keyword') ?? '';
+  /* 구분 필터(명세 5.2 role). 체크박스 둘 중 하나만 고르면 그 역할, 둘 다·아무것도 아니면 전체. */
+  const roleParam = searchParams.get('role');
+  /* 명시 타입이 없으면 객체 리터럴에 넣을 때 리터럴 유니온이 string 으로 widening 된다. */
+  const role: Member['role'] | undefined =
+    roleParam === 'PARENT' || roleParam === 'CHILD' ? roleParam : undefined;
+  const roleSelected = role ? [role] : ['PARENT', 'CHILD'];
+  /* 정렬(서버 신설 ?sort=). 미전송 시 서버가 RECENT 로 처리. */
+  const sort = (searchParams.get('sort') as MemberSort | null) ?? 'RECENT';
 
   const [quickView, setQuickView] = useState<Member | null>(null);
   const [editing, setEditing] = useState<Member | null>(null);
@@ -69,7 +86,10 @@ export function MembersPage() {
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [csvOpen, setCsvOpen] = useState(false);
 
-  const params = useMemo(() => ({ keyword, page, size: DEFAULT_PAGE_SIZE }), [keyword, page]);
+  const params = useMemo(
+    () => ({ keyword, role, sort, page, size: DEFAULT_PAGE_SIZE }),
+    [keyword, role, sort, page],
+  );
 
   const { data, isPending, isError } = useQuery({
     queryKey: memberKeys.list(params),
@@ -77,6 +97,10 @@ export function MembersPage() {
   });
 
   const handleSearch = useCallback((value: string) => patchParams({ keyword: value }), [patchParams]);
+  const handleRoleChange = useCallback(
+    (values: string[]) => patchParams({ role: values.length === 1 ? values[0] : null }),
+    [patchParams],
+  );
 
   const updateMutation = useMutation({
     mutationFn: (vars: { memberId: number; body: MemberUpdateRequest }) =>
@@ -86,7 +110,7 @@ export function MembersPage() {
       syncAuditLog();
       setFormOpen(false);
       setEditing(null);
-      toast.success('회원 정보를 수정했습니다', `${maskName(member.username)} 회원의 정보가 갱신되었습니다.`);
+      toast.success('회원 정보를 수정했습니다', `${member.nickname} 회원의 정보가 갱신되었습니다.`);
     },
     onError: () => toast.error('수정에 실패했습니다', '잠시 후 다시 시도해 주세요.'),
   });
@@ -97,7 +121,7 @@ export function MembersPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: memberKeys.all });
       syncAuditLog();
-      const name = deleteTarget ? maskName(deleteTarget.username) : '회원';
+      const name = deleteTarget ? deleteTarget.nickname : '회원';
       setDeleteTarget(null);
       toast.success('회원을 삭제했습니다', `${name} 회원이 삭제되었으며 감사 로그에 기록되었습니다.`);
     },
@@ -121,7 +145,7 @@ export function MembersPage() {
       width: '22%',
       render: (row) => (
         <StackedCell
-          primary={maskName(row.username)}
+          primary={row.nickname}
           secondary={`${memberRef(row.id)} · ${row.email ? maskEmail(row.email) : '이메일 없음'}`}
         />
       ),
@@ -161,20 +185,20 @@ export function MembersPage() {
     },
     {
       key: 'actions',
-      header: '액션',
+      header: '상세보기',
       align: 'center',
-      width: canManage ? '116px' : '56px',
-      hoverOnly: true,
+      width: canManage ? '196px' : '116px',
       render: (row) => (
         <RowActions>
+          {/* CleanPay 레퍼런스: 행마다 항상 보이는 아웃라인 "상세보기" 버튼 */}
           <Button
-            variant="ghost"
+            variant="secondary"
             size="sm"
-            className="btn--icon-only"
-            aria-label={`${maskName(row.username)} 빠른 보기`}
+            iconLeft={<Icon name="search" />}
+            aria-label={`${row.nickname} 상세보기`}
             onClick={() => setQuickView(row)}
           >
-            <Icon name="eye-view" />
+            상세보기
           </Button>
 
           {canManage ? (
@@ -183,7 +207,7 @@ export function MembersPage() {
                 variant="ghost"
                 size="sm"
                 className="btn--icon-only"
-                aria-label={`${maskName(row.username)} 정보 수정`}
+                aria-label={`${row.nickname} 정보 수정`}
                 onClick={() => void openEdit(row)}
               >
                 <PencilGlyph />
@@ -192,7 +216,7 @@ export function MembersPage() {
                 variant="ghost"
                 size="sm"
                 className="btn--icon-only members__danger"
-                aria-label={`${maskName(row.username)} 삭제`}
+                aria-label={`${row.nickname} 삭제`}
                 onClick={() => setDeleteTarget(row)}
               >
                 <Icon name="trash" />
@@ -206,23 +230,45 @@ export function MembersPage() {
 
   return (
     <div className="members">
-      <ListToolbar
-        search={
-          <SearchInput
-            value={keyword}
-            onSearch={handleSearch}
-            /* 검색 대상은 명세 5.2 기준 실명·아이디다. 마스킹한 이메일·전화번호는
-               검색으로 되짚을 수 있어 대상에서 뺐다(api.ts 주석 참고). */
-            placeholder="회원명(실명) · 아이디 검색"
-            aria-label="회원 검색"
-          />
-        }
-      >
-        {/* 전체 회원 목록을 CSV 로 내려받는다. 개별 회원 리포트가 아니라 목록 전체다. */}
-        <Button iconLeft={<DownloadGlyph />} onClick={() => setCsvOpen(true)}>
-          회원 목록 CSV
-        </Button>
-      </ListToolbar>
+      <SearchPanel
+        options={{
+          items: [
+            { value: 'PARENT', label: '보호자' },
+            { value: 'CHILD', label: '자녀' },
+          ],
+          selected: roleSelected,
+          onChange: handleRoleChange,
+        }}
+        keyword={keyword}
+        onSearch={handleSearch}
+        /* 검색은 로그인 아이디·닉네임으로만 한다. 실명 검색을 없애 마스킹 역추론을
+           막는다(회원 목록도 실명 대신 닉네임을 표시. 닉네임 고유성은 서버가 보장). */
+        placeholder="로그인 아이디 · 닉네임으로 검색"
+        aria-label="회원 검색"
+      />
+
+      <div className="members__meta">
+        <p className="members__count">
+          전체 <strong className="tabular">{formatNumber(data?.totalElements ?? 0)}</strong>건
+        </p>
+        <div className="members__meta-actions">
+          <Select
+            aria-label="회원 정렬"
+            value={sort}
+            onChange={(e) => patchParams({ sort: e.target.value === 'RECENT' ? null : e.target.value })}
+          >
+            {MEMBER_SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </Select>
+          {/* 전체 회원 목록을 CSV 로 내려받는다. 개별 회원 리포트가 아니라 목록 전체다. */}
+          <Button iconLeft={<DownloadGlyph />} onClick={() => setCsvOpen(true)}>
+            회원 목록 CSV
+          </Button>
+        </div>
+      </div>
 
       <Card flush>
         <Table
@@ -233,6 +279,7 @@ export function MembersPage() {
           loading={isPending}
           error={isError ? '회원 목록을 불러오지 못했습니다.' : undefined}
           onRowClick={(row) => navigate(`/members/${row.id}`)}
+          rowLabel={(row) => `${row.nickname} 회원 상세 보기`}
           emptyState={
             <EmptyState
               title="조회된 회원이 없습니다"
@@ -298,7 +345,7 @@ export function MembersPage() {
       >
         {deleteTarget ? (
           <p className="members__confirm">
-            <strong>{maskName(deleteTarget.username)}</strong> ({memberRef(deleteTarget.id)} ·{' '}
+            <strong>{deleteTarget.nickname}</strong> ({memberRef(deleteTarget.id)} ·{' '}
             {deleteTarget.loginId}) 회원을 삭제합니다. 이 회원에게 연결된 자녀 계정과 기기 정보도
             함께 정리됩니다.
           </p>

@@ -1,5 +1,8 @@
-import { useEffect, useState, type FormEvent } from 'react';
-import { Button, FormField, Modal, TextArea, TextInput } from '@/shared/ui';
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
+import { Button, FormField, Modal, TextArea, TextInput, useToast } from '@/shared/ui';
+import { attachmentName } from '@/shared/lib/format';
+import { ApiError } from '@/shared/api/client';
+import { uploadNoticeAttachment } from '../api';
 import type { NoticeDetail, NoticeRequest } from '../types';
 
 interface NoticeFormModalProps {
@@ -19,30 +22,73 @@ export function NoticeFormModal({
   onClose,
   onSubmit,
 }: NoticeFormModalProps) {
+  const toast = useToast();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [links, setLinks] = useState('');
+  /** 서버가 준 첨부 공개 경로 목록. 파일명이 아니라 업로드 후의 경로다. */
   const [attachments, setAttachments] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    setError(null);
     setTitle(notice?.title ?? '');
     setContent(notice?.content ?? '');
     setLinks((notice?.links ?? []).join('\n'));
     setAttachments(notice?.attachments ?? []);
+    setUploading(false);
   }, [open, notice]);
+
+  /**
+   * 파일을 고르면 즉시 업로드해 공개 경로를 attachments 에 더한다.
+   *
+   * 서버는 공지 저장 시 첨부가 실제로 올라온 파일인지 검증하므로(파일명만 넘기면
+   * 400), 여기서 presign → S3 PUT 을 끝내고 받은 경로만 들고 있어야 한다.
+   */
+  async function handleFiles(e: ChangeEvent<HTMLInputElement>) {
+    const files = [...(e.target.files ?? [])];
+    /* 같은 파일을 다시 고를 수 있도록 input 값을 비운다. */
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (files.length === 0) return;
+
+    setUploading(true);
+    try {
+      const paths: string[] = [];
+      for (const file of files) {
+        paths.push(await uploadNoticeAttachment(file));
+      }
+      setAttachments((prev) => [...prev, ...paths]);
+    } catch (err) {
+      // 로컬 디스크 모드면 presign 이 409 다. 그 밖은 일반 업로드 실패로 안내한다.
+      if (err instanceof ApiError && err.status === 409) {
+        toast.error('첨부 업로드를 사용할 수 없습니다', '현재 저장소 설정에서는 파일 업로드가 지원되지 않습니다.');
+      } else {
+        toast.error('첨부 업로드에 실패했습니다', err instanceof Error ? err.message : undefined);
+      }
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function removeAttachment(path: string) {
+    setAttachments((prev) => prev.filter((p) => p !== path));
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
+    /* 검증 실패는 폼 안 텍스트 대신 알림(토스트)으로 띄운다. */
     if (!title.trim()) {
-      setError('제목을 입력해 주세요.');
+      toast.error('제목을 입력해 주세요.');
       return;
     }
     if (!content.trim()) {
-      setError('본문을 입력해 주세요.');
+      toast.error('본문을 입력해 주세요.');
+      return;
+    }
+    if (uploading) {
+      toast.error('첨부 업로드가 끝난 뒤 등록해 주세요.');
       return;
     }
 
@@ -66,10 +112,15 @@ export function NoticeFormModal({
       description="제목과 본문은 필수입니다. 링크와 첨부 파일은 선택입니다."
       footer={
         <>
-          <Button onClick={onClose} disabled={submitting}>
+          <Button onClick={onClose} disabled={submitting || uploading}>
             취소
           </Button>
-          <Button variant="primary" loading={submitting} onClick={handleSubmit}>
+          <Button
+            variant="primary"
+            loading={submitting}
+            disabled={uploading}
+            onClick={handleSubmit}
+          >
             {notice ? '저장' : '등록'}
           </Button>
         </>
@@ -113,35 +164,40 @@ export function NoticeFormModal({
           )}
         </FormField>
 
-        {/*
-          TODO(api): 관리자 명세 5.3 에 첨부 업로드 엔드포인트가 없다.
-          지금은 고른 파일의 이름만 들고 있다가 함께 넘긴다. 실제 업로드 경로가
-          생기면 여기서 presign → upload → 완료 확인 순서로 바꾼다.
-        */}
-        <FormField label="첨부 파일" hint="여러 개를 고를 수 있습니다.">
+        <FormField
+          label="첨부 파일"
+          hint={uploading ? '업로드 중입니다…' : '여러 개를 고를 수 있습니다. 고르면 바로 업로드됩니다.'}
+        >
           {(p) => (
             <input
               {...p}
+              ref={fileInputRef}
               className="control"
               type="file"
               multiple
-              onChange={(e) => setAttachments([...(e.target.files ?? [])].map((f) => f.name))}
+              disabled={uploading}
+              onChange={(e) => void handleFiles(e)}
             />
           )}
         </FormField>
 
         {attachments.length > 0 ? (
           <ul className="notice-form__files">
-            {attachments.map((name) => (
-              <li key={name}>{name}</li>
+            {attachments.map((path) => (
+              <li key={path}>
+                <span>{attachmentName(path)}</span>
+                <button
+                  type="button"
+                  className="notice-form__file-remove"
+                  aria-label={`${attachmentName(path)} 첨부 제거`}
+                  onClick={() => removeAttachment(path)}
+                  disabled={uploading || submitting}
+                >
+                  ×
+                </button>
+              </li>
             ))}
           </ul>
-        ) : null}
-
-        {error ? (
-          <p role="alert" style={{ color: 'var(--danger)', fontSize: 'var(--fs-label)' }}>
-            {error}
-          </p>
         ) : null}
       </form>
     </Modal>

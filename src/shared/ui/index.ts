@@ -23,6 +23,8 @@ export { Modal, CloseGlyph } from './Modal';
 export { PageHeader } from './PageHeader';
 export { Pagination } from './Pagination';
 export { SearchInput } from './SearchInput';
+export { SearchPanel } from './SearchPanel';
+export type { SearchOption } from './SearchPanel';
 export { SlideOver, DetailBox, DetailRow } from './SlideOver';
 export { Spinner, LoadingBlock } from './Spinner';
 export { StatusPill } from './StatusPill';

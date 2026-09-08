@@ -16,12 +16,13 @@ import type { Page } from '@/shared/lib/types';
 import { appendAuditLog } from '@/mocks/auditLogs';
 import { MOCK_DEVICES, MOCK_MEMBERS, getMemberInquiries } from '@/mocks/members';
 import { MOCK_WALLETS } from '@/mocks/payments';
-import type { WalletSummary } from '@/shared/lib/wallet';
+import type { WalletSummary, WalletTransaction } from '@/shared/lib/wallet';
 import type {
   Member,
   MemberDevice,
   MemberInquiry,
   MemberListParams,
+  MemberSort,
   MemberUpdateRequest,
 } from './types';
 
@@ -41,10 +42,31 @@ let memberStore: Member[] = [...MOCK_MEMBERS];
 /**
  * GET /admin/members — 목록/검색
  *
- * 검색 대상은 명세 5.2 가 정한 `loginId`/`username`(실명)/`nickname` 이다.
- * 이메일·전화번호는 넣지 않는다. 화면에서 마스킹한 구간을 검색 결과의 참/거짓으로
- * 되짚을 수 있어(가운데 번호 4자리를 조회로 확인 가능) 마스킹이 무력해진다.
+ * 검색 대상은 `loginId` 와 `nickname` 이다. 실명(`username`)·이메일·전화번호는 넣지
+ * 않는다. 화면에서 마스킹한 값을 검색 결과의 참/거짓으로 되짚는 역추론을 막기 위함이다.
+ * 회원 목록도 실명 대신 닉네임을 표시한다(닉네임 고유성은 서버가 보장).
  */
+/**
+ * 목 정렬. 실서버는 ?sort= 로 서버가 정렬하지만, 목 모드에서도 같은 순서를 보여준다.
+ * 기본은 RECENT(가입 최신순).
+ */
+function sortMembers(list: Member[], sort: MemberSort = 'RECENT'): Member[] {
+  const byName = (a: Member, b: Member) => a.username.localeCompare(b.username, 'ko');
+  const byDate = (a: Member, b: Member) => a.createdAt.localeCompare(b.createdAt);
+  const copy = [...list];
+  switch (sort) {
+    case 'OLDEST':
+      return copy.sort(byDate);
+    case 'NAME':
+      return copy.sort(byName);
+    case 'NAME_DESC':
+      return copy.sort((a, b) => byName(b, a));
+    case 'RECENT':
+    default:
+      return copy.sort((a, b) => byDate(b, a));
+  }
+}
+
 export async function fetchMembers(params: MemberListParams): Promise<Page<Member>> {
   if (USE_MOCK) {
     /* 탈퇴 회원은 목록에 두지 않는다. 탈퇴는 되돌리지 않는 상태이고,
@@ -52,12 +74,15 @@ export async function fetchMembers(params: MemberListParams): Promise<Page<Membe
     const filtered = memberStore
       .filter((m) => !m.isDeleted)
       .filter((m) => (params.role ? m.role === params.role : true))
-      .filter((m) => matchesKeyword(m, params.keyword, ['loginId', 'username', 'nickname']));
+      .filter((m) => matchesKeyword(m, params.keyword, ['loginId', 'nickname']));
 
-    return mockResponse(paginate(filtered, params));
+    return mockResponse(paginate(sortMembers(filtered, params.sort), params));
   }
 
-  /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다. */
+  /* Spring Page 로 온다 — 현재 페이지가 page 가 아니라 number 다.
+     탈퇴(is_deleted) 회원은 서버가 목록 쿼리에서 제외한다(백엔드 #173, 2026-09-01
+     배포 확인). 예전엔 서버가 안 걸러 여기서 한 번 더 필터했으나, 그러면
+     totalElements 가 어긋나 제거했다. */
   const data = await request<SpringPage<Member>>({
     url: '/admin/members/customers',
     method: 'GET',
@@ -92,26 +117,106 @@ export async function fetchMemberDevices(memberId: number): Promise<MemberDevice
  * ⚠️ 응답이 우리 WalletSummary 보다 좁다 — userName · role · relatedNames ·
  *    updatedAt 등이 오지 않는다. 자세한 차이는 payments/api.ts 의 fetchWallet 주석 참고.
  */
+/** `GET /admin/members/customers/{id}/subscription` 응답. */
+interface AdminUserWalletResponse {
+  userId: number;
+  balance: number;
+  recentTransactions:
+    | Array<{
+        id: number;
+        type: string;
+        amount: number;
+        balanceAfter: number;
+        refUid: string | null;
+        /* 취소·조정 사유. 서버가 원장에 memo 컬럼을 추가하며 신설됐다(2026-08-31). */
+        memo: string | null;
+        createdAt: string;
+      }>
+    | null;
+}
+
+/**
+ * 회원 지갑 요약.
+ *
+ * 서버는 `{ userId, balance, recentTransactions }` 만 준다 — WalletSummary 가 쓰는
+ * `relatedNames` · `updatedAt` · 원장의 `txId`/`refId` 가 없다. 매핑 없이 그대로
+ * 넘기면 회원 상세 화면이 `relatedNames.map(...)` 에서 undefined 로 크래시한다.
+ * 여기서 화면이 기대하는 모양으로 채워 준다(없는 값은 빈 값). 회원 이름·구분은
+ * 상세 화면이 회원 데이터로 이미 갖고 있으므로 지갑에서는 비워 둔다.
+ */
 export async function fetchMemberWallet(memberId: number): Promise<WalletSummary | null> {
   if (USE_MOCK) return mockResponse(MOCK_WALLETS.find((w) => w.userId === memberId) ?? null);
-  return request<WalletSummary>({
+
+  const data = await request<AdminUserWalletResponse>({
     url: `/admin/members/customers/${memberId}/subscription`,
     method: 'GET',
   });
+
+  const recentTransactions = (
+    Array.isArray(data?.recentTransactions) ? data.recentTransactions : []
+  ).map<WalletTransaction>((t) => ({
+    txId: t.id,
+    type: t.type as WalletTransaction['type'],
+    amount: t.amount,
+    balanceAfter: t.balanceAfter,
+    refId: t.refUid,
+    memo: t.memo ?? null,
+    createdAt: t.createdAt,
+  }));
+
+  return {
+    walletId: 0,
+    userId: data?.userId ?? memberId,
+    userName: '',
+    userEmail: '',
+    role: 'PARENT',
+    balance: data?.balance ?? 0,
+    /* 지갑에 갱신 시각이 없어 가장 최근 원장의 시각을 쓴다. */
+    updatedAt: recentTransactions[0]?.createdAt ?? '',
+    relatedNames: [],
+    recentTransactions,
+  };
+}
+
+/* `memberId` 필터는 서버가 정식 지원한다(GET /admin/inquiries?memberId=). */
+/** `GET /admin/inquiries` content 원소 (회원 상세에서 쓰는 부분). */
+interface AdminInquiryListItem {
+  id: number;
+  title: string;
+  answered: boolean;
+  createdAt: string;
 }
 
 /**
  * 회원의 1:1 문의 기록.
- * TODO(api): 명세 5.4 의 GET /admin/inquiries 에 memberId 필터가 없다.
- *            지금은 목에서 회원별로 나눠 두었고, 연동 시 쿼리 파라미터가 필요하다.
+ *
+ * `GET /admin/inquiries?memberId=` 는 **페이지 객체**(`{ content, page, ... }`)를
+ * 준다. 그대로 배열로 넘기면 문의 탭 목록이 배열이 아니라 크래시한다. content 를
+ * 꺼내 화면이 쓰는 모양으로 옮긴다. 목록 응답에는 답변 시각이 없어 answeredAt 은
+ * null 로 둔다(답변 여부만 표시).
  */
 export async function fetchMemberInquiries(memberId: number): Promise<MemberInquiry[]> {
   if (USE_MOCK) return mockResponse(getMemberInquiries(memberId));
-  return request<MemberInquiry[]>({
+
+  const data = await request<Page<AdminInquiryListItem>>({
     url: '/admin/inquiries',
     method: 'GET',
-    params: { memberId },
+    /*
+     * size 를 주지 않으면 서버 기본값 10건에서 잘린다. 이 탭에는 페이지네이션이
+     * 없어 11번째부터는 볼 방법이 아예 없었다. 회원 한 명의 문의 기록은 많아야
+     * 수십 건이라 넉넉히 받아 한 번에 보여준다.
+     */
+    params: { memberId, size: 100 },
   });
+
+  const content = Array.isArray(data?.content) ? data.content : [];
+  return content.map<MemberInquiry>((i) => ({
+    id: i.id,
+    title: i.title,
+    answered: i.answered,
+    createdAt: i.createdAt,
+    answeredAt: null,
+  }));
 }
 
 /**

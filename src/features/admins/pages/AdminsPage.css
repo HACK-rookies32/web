@@ -25,3 +25,11 @@
 .admins__role-change strong {
   color: var(--accent-strong);
 }
+
+/* 계정 상세(슬라이드오버) 제목 — 이름 오른쪽에 역할 배지 */
+.admins__detail-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}

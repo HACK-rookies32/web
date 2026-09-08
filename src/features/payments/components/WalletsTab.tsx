@@ -135,7 +135,8 @@ export function WalletsTab({
 
   return (
     <FundsTabLayout
-      searchPlaceholder="회원명 또는 이메일 검색"
+      /* 서버는 실명·로그인 아이디로만 찾는다. 이메일은 검색 대상이 아니다. */
+      searchPlaceholder="회원명 또는 로그인 아이디 검색"
       searchLabel="지갑 검색"
       keyword={keyword}
       onSearch={handleSearch}
@@ -161,6 +162,7 @@ export function WalletsTab({
       entityName="지갑"
       tab="wallets"
       onRowClick={onOpen}
+      rowLabel={(row) => `${maskName(row.userName)} 지갑 상세 보기`}
       onResetFilters={(tab) => setSearchParams(new URLSearchParams({ tab }))}
       onPageChange={(next) => patchParams({ page: String(next) }, false)}
     />

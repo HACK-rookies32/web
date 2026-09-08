@@ -86,6 +86,12 @@ export function App() {
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
 
+                {/*
+                  화면군별 역할 가드 (API 명세 5장 엔드포인트 권한과 일치).
+                  바깥 ProtectedRoute 는 인증, 안쪽 ProtectedRoute roles 는 역할을 본다.
+                  권한 부족 계정이 주소창에 URL 을 직접 쳐도 홈(/)으로 되돌린다.
+                  ⚠️ 프런트 가드는 UX 용이며 실제 접근 통제는 서버(Spring Security)가 담당한다.
+                */}
                 <Route element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>
                     <Route index element={<HomePage />} />

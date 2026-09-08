@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { DetailBox, DetailRow, EmptyState, LoadingBlock, StatusPill } from '@/shared/ui';
 import { formatCurrency, formatDateTime, maskEmail, maskName, memberRef } from '@/shared/lib/format';
-import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
+import { formatSignedAmount, walletTxMeta, walletTxSignedAmount } from '@/shared/lib/wallet';
 import { fetchWallet, fundKeys } from '../api';
 import './WalletDetailPanel.css';
 
@@ -57,18 +57,21 @@ export function WalletDetailPanel({ userId }: { userId: number }) {
 
         {data.recentTransactions.length > 0 ? (
           <ul className="wallet-panel__ledger">
-            {data.recentTransactions.map((t) => (
+            {data.recentTransactions.map((t) => {
+              /* 부호·증감은 금액이 아니라 type 으로 정한다(REFUND 는 소유자 역할로 방향 결정). */
+              const signed = walletTxSignedAmount(t.type, t.amount, data.role);
+              return (
               <li key={t.txId} className="wallet-panel__tx">
                 <span className="wallet-panel__tx-top">
-                  <StatusPill tone={WALLET_TX[t.type].tone}>{WALLET_TX[t.type].label}</StatusPill>
+                  <StatusPill tone={walletTxMeta(t.type).tone}>{walletTxMeta(t.type).label}</StatusPill>
                   <span
                     className={
-                      t.amount >= 0
+                      signed >= 0
                         ? 'wallet-panel__tx-amount is-plus tabular'
                         : 'wallet-panel__tx-amount is-minus tabular'
                     }
                   >
-                    {formatSignedAmount(t.amount)}
+                    {formatSignedAmount(signed)}
                   </span>
                 </span>
                 <span className="wallet-panel__tx-meta">
@@ -88,7 +91,8 @@ export function WalletDetailPanel({ userId }: { userId: number }) {
                   <span className="wallet-panel__tx-ref tabular">{t.refId}</span>
                 ) : null}
               </li>
-            ))}
+              );
+            })}
           </ul>
         ) : (
           <EmptyState title="거래 내역이 없습니다" />

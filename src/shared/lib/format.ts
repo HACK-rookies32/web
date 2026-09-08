@@ -132,7 +132,16 @@ export function maskAddress(address: string): string {
 
 /* ---------------------------------------------------------------- CSV ---- */
 
-/** 값 하나를 CSV 셀로 이스케이프한다. */
+/**
+ * 값 하나를 CSV 셀로 이스케이프한다.
+ *
+ * [VULN-WEB-09] CSV 수식 주입(CWE-1236) — 수식 접두 문자를 막지 않는다.
+ *   Excel·구글시트는 =·+·-·@·탭·개행 으로 시작하는 셀을 수식으로 실행한다.
+ *   회원이 이름·주소에 `=HYPERLINK("http://evil","보기")` 나 `=cmd|...` 를 넣어
+ *   두면 관리자가 CSV 를 내려받아 여는 순간 실행된다. 여기서는 따옴표만
+ *   이스케이프하고 수식 접두는 그대로 통과시킨다. 대응: 위험 접두 셀 앞에
+ *   작은따옴표를 붙여 텍스트로 강제.
+ */
 function csvCell(value: unknown): string {
   const s = value === null || value === undefined ? '' : String(value);
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
@@ -146,9 +155,20 @@ export function toCsv(headers: string[], rows: unknown[][]): string {
   return `﻿${lines.join('\r\n')}`;
 }
 
-/** 브라우저에서 CSV 문자열을 파일로 내려받는다. */
+/** UTF-8 BOM. 엑셀이 파일을 UTF-8 로 인식하게 하는 표식이다. */
+const UTF8_BOM = '﻿';
+
+/**
+ * 브라우저에서 CSV 문자열을 파일로 내려받는다.
+ *
+ * BOM 을 반드시 앞에 붙인다. 서버가 BOM 을 실어 보내도 **브라우저가 응답을
+ * 문자열로 디코드할 때 선행 BOM 을 떼어낸다.** 그대로 저장하면 BOM 이 사라져
+ * 엑셀(특히 한국어 윈도우)이 UTF-8 을 cp949 로 오인해 한글이 깨진다.
+ * 목 모드의 toCsv 는 이미 BOM 을 넣으므로 중복해서 붙이지 않는다.
+ */
 export function downloadCsv(filename: string, csv: string): void {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const withBom = csv.startsWith(UTF8_BOM) ? csv : `${UTF8_BOM}${csv}`;
+  const blob = new Blob([withBom], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
@@ -239,4 +259,14 @@ export function attachmentName(url: string): string {
   })();
   const cut = decoded.indexOf('_');
   return cut > 0 ? decoded.slice(cut + 1) : decoded;
+}
+
+/**
+ * 첨부가 브라우저에서 바로 볼 수 있는 이미지인지 확장자로 판별한다.
+ *
+ * 이미지면 화면 안에서 확대해 보여주고(라이트박스), 그 외 파일은 링크로 연다.
+ */
+export function isImageAttachment(url: string): boolean {
+  const name = attachmentName(url).toLowerCase();
+  return /\.(png|jpe?g|gif|webp|bmp|avif|svg)$/.test(name);
 }

@@ -41,8 +41,23 @@ server {
     }
 
     # react-router-dom 사용. 이 폴백이 없으면 /members 등에서 새로고침 시 404.
+    #
+    # [VULN-WEB-08] 보안 응답 헤더 부재 (A05).
+    #   이 문서 응답에 CSP·X-Frame-Options·X-Content-Type-Options·Referrer-Policy·
+    #   Strict-Transport-Security·Permissions-Policy 가 없다. 그래서 XSS
+    #   (VULN-WEB-01~03)가 성립했을 때 막을 2차 방어선(CSP)이 없고, iframe 삽입
+    #   으로 클릭재킹이 열린다. 대응: 이 블록에 보안 헤더 6종을 add_header 로 추가
+    #   (특히 CSP script-src 'self' 로 인라인 스크립트·이벤트 핸들러 실행 차단).
     location / {
         try_files $uri $uri/ /index.html;
+
+        # index.html 은 캐시하지 않는다.
+        #
+        # 이 파일이 캐시되면 브라우저가 옛 index.html 을 붙들고 옛 해시 청크
+        # (/assets/*.js)를 계속 불러와, 새 배포가 사용자에게 전파되지 않는다.
+        # 해시 자산은 immutable 로 길게 캐시하되(아래 /assets/), 그 자산을 가리키는
+        # index.html 만은 매번 새로 받게 해야 배포가 즉시 반영된다.
+        add_header Cache-Control "no-store" always;
     }
 
     # 해시가 박힌 빌드 산출물은 내용이 바뀌면 파일명이 바뀌므로 길게 캐시한다.
@@ -86,6 +101,59 @@ server {
         # ALB idle_timeout(300s) 과 맞춘다. 세 구간 중 가장 짧은 값이
         # 실제 타임아웃이 되므로 여기가 더 짧으면 의미가 없다.
         proxy_read_timeout 300s;
+    }
+
+    # ------------------------------------------------------------------
+    # Swagger UI / OpenAPI 문서
+    #
+    # 백엔드의 springdoc 은 설정을 따로 주지 않아 기본 경로를 쓴다.
+    #   /swagger-ui.html          -> /swagger-ui/index.html 로 리다이렉트
+    #   /swagger-ui/*             -> UI 정적 리소스(webjar)
+    #   /v3/api-docs, .yaml       -> OpenAPI 문서
+    #   /v3/api-docs/swagger-config
+    # 전부 /api 밖(루트)이라 위 location /api/ 로는 잡히지 않는다. 이 블록이
+    # 없으면 SPA 폴백(try_files ... /index.html)에 걸려 React 페이지가 200 으로
+    # 돌아간다 — 404 가 아니라 "엉뚱한 200" 이라 원인을 찾기 더 어렵다.
+    #
+    # 🔓 이 문서는 인증 없이 공개된다 — 빠뜨린 게 아니라 의도한 설정이다.
+    #   백엔드 SecurityConfig 가 anyRequest().permitAll() 이라 Swagger 자체에
+    #   인증이 없고, 여기에도 auth_basic 을 걸지 않았다. 즉 API 명세와 스키마,
+    #   Try it out 실행까지 인터넷에 그대로 열린다.
+    #
+    #   다만 이게 없던 구멍을 만드는 것은 아니다. /api/** 는 이미 외부에서
+    #   닿고, 그중 /api/users/me, /api/community, /api/boards, /api/chat,
+    #   /api/files 는 시큐리티 매처에 안 잡혀 원래부터 무인증이다.
+    #   이 블록이 바꾸는 것은 "뚫리느냐" 가 아니라 "지도를 넘기느냐" 다.
+    #
+    # ▶ 다시 닫는 방법: 이 location 블록을 통째로 지우면 끝이다.
+    #   swagger 경로가 다시 SPA 폴백(try_files ... /index.html)으로 떨어져
+    #   문서가 닫힌다. 백엔드도 인프라도 건드릴 필요가 없다.
+    #
+    # ▶ 닫는 대신 인증을 걸고 싶다면 이 블록 안에 두 줄을 넣는다.
+    #     auth_basic           "kidhack api docs";
+    #     auth_basic_user_file /etc/nginx/.htpasswd;
+    #   이때 htpasswd 를 이미지에 굽지 말 것 — Docker Hub 에 해시가 박히고,
+    #   private 저장소라도 레지스트리 자격증명이 새면 함께 샌다. WAS 가
+    #   firebase.json 을 다루는 방식대로 SSM SecureString 에 넣고 호스트가
+    #   부팅 시 파일로 떨궈 마운트하는 것이 이 저장소의 기존 패턴이다.
+    #
+    # 정규식 location 이라 위 프리픽스 블록들보다 먼저 평가된다. 다만 여기
+    # 걸리는 것은 swagger 경로뿐이라 /api/ 프록시와 겹치지 않는다.
+    # ------------------------------------------------------------------
+    location ~ ^/(swagger-ui|v3/api-docs) {
+        resolver ${DNS_RESOLVER} valid=10s;
+        set $docs_upstream "${NLB_DNS}";
+        proxy_pass http://$docs_upstream:8080;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+
+        # springdoc 이 /swagger-ui.html -> /swagger-ui/index.html 리다이렉트를
+        # 만들 때 이 헤더로 스킴을 정한다. 빼면 https 로 들어온 요청에
+        # http 리다이렉트가 나가 브라우저가 혼합 콘텐츠로 막는다.
+        proxy_set_header X-Forwarded-Proto $fwd_proto;
     }
 
     # ------------------------------------------------------------------

@@ -20,7 +20,7 @@ import {
   maskPhone,
   memberRef,
 } from '@/shared/lib/format';
-import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
+import { formatSignedAmount, walletTxMeta, walletTxSignedAmount } from '@/shared/lib/wallet';
 import { fetchMemberDevices, fetchMemberWallet, memberKeys } from '../api';
 import type { Member } from '../types';
 import { DeviceGlyph } from './Glyphs';
@@ -157,20 +157,24 @@ export function MemberQuickView({ member, onClose }: MemberQuickViewProps) {
 
                 {wallet.data.recentTransactions.length > 0 ? (
                   <ul className="quickview__ledger">
-                    {wallet.data.recentTransactions.slice(0, 3).map((t) => (
+                    {wallet.data.recentTransactions.slice(0, 3).map((t) => {
+                      /* 증감 부호는 금액이 아니라 type 으로 정한다(REFUND 는 회원 역할로 방향 결정). */
+                      const signed = walletTxSignedAmount(t.type, t.amount, member.role);
+                      return (
                       <li key={t.txId} className="quickview__tx">
-                        <StatusPill tone={WALLET_TX[t.type].tone}>{WALLET_TX[t.type].label}</StatusPill>
+                        <StatusPill tone={walletTxMeta(t.type).tone}>{walletTxMeta(t.type).label}</StatusPill>
                         <span
                           className={
-                            t.amount >= 0
+                            signed >= 0
                               ? 'quickview__tx-amount is-plus tabular'
                               : 'quickview__tx-amount is-minus tabular'
                           }
                         >
-                          {formatSignedAmount(t.amount)}
+                          {formatSignedAmount(signed)}
                         </span>
                       </li>
-                    ))}
+                      );
+                    })}
                   </ul>
                 ) : null}
 

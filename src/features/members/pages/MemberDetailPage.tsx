@@ -25,7 +25,7 @@ import {
   memberRef,
 } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
-import { WALLET_TX, formatSignedAmount } from '@/shared/lib/wallet';
+import { formatSignedAmount, walletTxMeta, walletTxSignedAmount } from '@/shared/lib/wallet';
 import {
   fetchMember,
   fetchMemberDevices,
@@ -248,29 +248,29 @@ export function MemberDetailPage() {
                     <DetailBox>
                       <DetailRow label="현재 잔액" value={formatCurrency(wallet.data.balance)} />
                       <DetailRow label="최근 변동" value={formatDateTime(wallet.data.updatedAt)} />
-                      <DetailRow
-                        label="연결 자녀 지갑"
-                        value={wallet.data.relatedNames.map(maskName).join(', ') || '-'}
-                      />
                     </DetailBox>
 
                     {wallet.data.recentTransactions.length > 0 ? (
                       <ul className="detail__ledger">
-                        {wallet.data.recentTransactions.slice(0, 4).map((t) => (
+                        {wallet.data.recentTransactions.slice(0, 4).map((t) => {
+                          /* 증감 부호는 금액이 아니라 type 으로 정한다(REFUND 는 회원 역할로 방향 결정). */
+                          const signed = walletTxSignedAmount(t.type, t.amount, m.role);
+                          return (
                           <li key={t.txId} className="detail__tx">
-                            <StatusPill tone={WALLET_TX[t.type].tone}>{WALLET_TX[t.type].label}</StatusPill>
+                            <StatusPill tone={walletTxMeta(t.type).tone}>{walletTxMeta(t.type).label}</StatusPill>
                             <span className="detail__tx-time">{formatDateTime(t.createdAt)}</span>
                             <span
                               className={
-                                t.amount >= 0
+                                signed >= 0
                                   ? 'detail__tx-amount is-plus tabular'
                                   : 'detail__tx-amount is-minus tabular'
                               }
                             >
-                              {formatSignedAmount(t.amount)}
+                              {formatSignedAmount(signed)}
                             </span>
                           </li>
-                        ))}
+                          );
+                        })}
                       </ul>
                     ) : null}
                   </>
@@ -317,6 +317,7 @@ export function MemberDetailPage() {
               loading={inquiries.isPending}
               error={inquiries.isError ? '문의 기록을 불러오지 못했습니다.' : undefined}
               onRowClick={(i) => navigate(`/inquiries?id=${i.id}`)}
+              rowLabel={(i) => `${i.title} 문의 상세 보기`}
               emptyState={<EmptyState title="문의 기록이 없습니다" />}
             />
           </Card>

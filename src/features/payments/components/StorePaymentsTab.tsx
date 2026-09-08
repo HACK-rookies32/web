@@ -4,7 +4,7 @@ import type { SetURLSearchParams } from 'react-router-dom';
 import { Column, Select, StackedCell, StatusPill } from '@/shared/ui';
 import { FundsTabLayout } from './FundsTabLayout';
 import { formatCurrency, formatDateTime, maskName, memberRef } from '@/shared/lib/format';
-import { STORE_PAYMENT_STATUS, type StorePaymentStatus } from '@/shared/lib/wallet';
+import { storePaymentStatusMeta, type StorePaymentStatus } from '@/shared/lib/wallet';
 import { DEFAULT_PAGE_SIZE } from '@/shared/lib/constants';
 import { fetchStorePayments, fundKeys } from '../api';
 import type { StorePayment } from '../types';
@@ -53,10 +53,18 @@ export function StorePaymentsTab({
       key: 'child',
       header: '자녀 / 보호자',
       width: '24%',
+      /*
+       * 페어링된 보호자가 없으면 서버가 parentId·parentName 을 null 로 준다.
+       * 그대로 찍으면 "회원 #null" 이라는 없는 회원이 생기므로 문구로 대체한다.
+       */
       render: (row) => (
         <StackedCell
-          primary={`${maskName(row.childName)} (${memberRef(row.childId, '자녀')})`}
-          secondary={`보호자 ${maskName(row.parentName)} (${memberRef(row.parentId)})`}
+          primary={`${maskName(row.childName ?? '')} (${memberRef(row.childId, '자녀')})`}
+          secondary={
+            row.parentId != null
+              ? `보호자 ${maskName(row.parentName ?? '')} (${memberRef(row.parentId)})`
+              : '보호자 미연결'
+          }
         />
       ),
     },
@@ -82,8 +90,8 @@ export function StorePaymentsTab({
       header: '상태',
       width: '104px',
       render: (row) => (
-        <StatusPill tone={STORE_PAYMENT_STATUS[row.status].tone}>
-          {STORE_PAYMENT_STATUS[row.status].label}
+        <StatusPill tone={storePaymentStatusMeta(row.status).tone}>
+          {storePaymentStatusMeta(row.status).label}
         </StatusPill>
       ),
     },
@@ -98,7 +106,8 @@ export function StorePaymentsTab({
 
   return (
     <FundsTabLayout
-      searchPlaceholder="자녀명 · 보호자명 · 매장명 검색"
+      /* 서버 keyword 는 자녀·보호자 실명만 본다. 매장명은 별도 파라미터라 여기서 못 찾는다. */
+      searchPlaceholder="자녀명 · 보호자명 검색"
       searchLabel="매장 결제 검색"
       keyword={keyword}
       onSearch={handleSearch}

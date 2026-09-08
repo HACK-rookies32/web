@@ -23,6 +23,62 @@ export const noticeKeys = {
   detail: (id: number) => ['notice', id] as const,
 };
 
+/* ----------------------------------------------------------- 첨부 업로드 ---- */
+
+/** POST /files/notice/presign 응답. */
+interface PresignResponse {
+  /** 브라우저가 파일 본문을 PUT 할 S3 서명 URL (서로 다른 출처, 인증 헤더 금지). */
+  uploadUrl: string;
+  /** 업로드 후 이 파일을 가리킬 공개 경로. 공지 attachments 에 넣을 값. */
+  url: string;
+  filename: string;
+  contentType: string;
+}
+
+/**
+ * 공지 첨부파일 하나를 업로드하고 **공개 경로**를 돌려준다.
+ *
+ * 서버는 공지 저장 시 attachments 의 각 경로가 실제로 올라온 파일인지 검증한다
+ * (AttachmentValidator). 그래서 파일명만 넘기면 400 이 난다 — 반드시 아래 흐름으로
+ * 실제 업로드한 뒤 받은 공개 경로를 넣어야 한다.
+ *
+ *   1) POST /files/notice/presign  { filename, contentType }  → { uploadUrl, url }
+ *   2) PUT  {uploadUrl}  (파일 본문, Content-Type 은 presign 과 동일)  ← S3 직접
+ *   3) presign 의 url(공개 경로)을 attachments 에 넣어 공지 저장
+ *
+ * PUT 은 다른 출처(S3)로 나가므로 앱의 axios(request) 를 타지 않는다 — 인증 헤더가
+ * 붙으면 서명과 충돌한다. raw fetch 로 보낸다.
+ *
+ * 저장소가 로컬 디스크 모드면 presign 이 409 를 준다(운영은 S3 전제). 그 경우는
+ * 호출부에서 안내 토스트를 띄운다.
+ */
+export async function uploadNoticeAttachment(file: File): Promise<string> {
+  const contentType = file.type || 'application/octet-stream';
+
+  if (USE_MOCK) {
+    // 목 모드는 서버가 없다. 실제 서버 경로와 같은 모양의 공개 경로를 만들어 준다.
+    const stamp = Date.now().toString(36);
+    return mockResponse(`/api/files/notice/${stamp}_${file.name}`, 400);
+  }
+
+  const presigned = await request<PresignResponse>({
+    url: '/files/notice/presign',
+    method: 'POST',
+    data: { filename: file.name, contentType },
+  });
+
+  const put = await fetch(presigned.uploadUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': contentType },
+    body: file,
+  });
+  if (!put.ok) {
+    throw new Error(`업로드에 실패했습니다 (${put.status})`);
+  }
+
+  return presigned.url;
+}
+
 /* 목 모드에서 CRUD 결과를 세션 동안 유지하기 위한 작업 사본. */
 let noticeStore: NoticeDetail[] = [...MOCK_NOTICES];
 let nextNoticeId = 9100;
@@ -168,7 +224,7 @@ export async function deleteNotice(vars: {
 
 /**
  * POST /admin/notifications/broadcast — 전체 알림 발송 (SUPER_ADMIN)
- * 되돌릴 수 없으므로 호출 전 확인 절차를 반드시 거친다. 응답은 202(비동기 접수).
+ * 되돌릴 수 없으므로 호출 전 확인 절차를 반드시 거친다. 서버는 발송까지 마친 뒤 200 을 준다.
  */
 export async function broadcastNotification(vars: {
   body: BroadcastRequest;

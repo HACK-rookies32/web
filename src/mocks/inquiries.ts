@@ -58,7 +58,7 @@ export const MOCK_INQUIRIES: InquiryDetail[] = [
     answer: {
       id: 501,
       content:
-        '안녕하세요, 케어가드입니다.\n자녀 기기는 계정당 최대 5대까지 등록하실 수 있습니다. 마이페이지 > 자녀 관리에서 추가해 주세요.',
+        '안녕하세요, kidhack입니다.\n자녀 기기는 계정당 최대 5대까지 등록하실 수 있습니다. 마이페이지 > 자녀 관리에서 추가해 주세요.',
       createdAt: daysAgo(1, 16),
       updatedAt: daysAgo(1, 16),
     },

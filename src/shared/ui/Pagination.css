@@ -43,8 +43,9 @@
 }
 
 .pagination__page.is-active {
-  background: var(--accent);
-  color: var(--accent-on-fill);
+  /* 활성 번호 버튼도 채움 버튼과 같은 밤색으로 통일(흰 글자). */
+  background: var(--accent-strong);
+  color: var(--text-on-accent);
 }
 
 .pagination__arrow {
@@ -69,4 +70,51 @@
 /* Figma: 더 이동할 수 없는 화살표는 opacity 0.5 */
 .pagination__arrow:disabled {
   opacity: 0.5;
+}
+
+/* ---- CleanPay 식 "더 보기 ( 1/12 )" ------------------------------------- */
+
+.pagination--more {
+  justify-content: center;
+  padding: var(--space-3) var(--space-4);
+}
+
+.pagination__more {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 500;
+  color: var(--text-strong);
+  transition:
+    background-color var(--transition),
+    color var(--transition);
+}
+
+.pagination__more:hover:not(:disabled) {
+  background: var(--surface-subtle);
+  color: var(--accent-strong);
+}
+
+.pagination__more:disabled {
+  opacity: 0.5;
+}
+
+/* chevron-right 를 돌려 아래를 향하게 한다. */
+.pagination__more-icon {
+  transform: rotate(90deg);
+}
+
+.pagination__more-count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.pagination__more-count b {
+  color: var(--text-strong);
 }

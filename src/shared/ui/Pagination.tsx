@@ -9,6 +9,11 @@ interface PaginationProps {
   totalElements: number;
   size: number;
   onChange: (page: number) => void;
+  /**
+   * 'pages' — 왼쪽 요약 + 오른쪽 번호 버튼(Figma 131:3667). 기본값.
+   * 'more'  — "더 보기 ( 1/12 )" 한 줄. 누르면 다음 페이지로 간다(이어 붙이기 아님).
+   */
+  variant?: 'more' | 'pages';
 }
 
 /** 현재 페이지 주변으로 최대 5개의 번호를 만든다. */
@@ -23,10 +28,40 @@ function pageWindow(page: number, totalPages: number): number[] {
 
 /**
  * 목록 페이지네이션.
- * Figma 131:3667 — 왼쪽에 "총 N건 중 x-y건", 오른쪽에 번호 버튼(32×32, radius 4).
- * 활성 버튼은 accent 배경 + accent-on-fill 글자.
+ *
+ * ⚠️ 'more' 는 목록에 이어 붙이는(append) 방식이 아니라 다음 페이지로 **이동**한다.
+ * 목록이 서버 페이지 단위로 조회되고 페이지 번호가 URL 에 있어, 뒤로 가기로 이전
+ * 페이지에 돌아갈 수 있다. 진짜 이어 붙이기가 필요하면 useInfiniteQuery 로 바꿔야 한다.
  */
-export function Pagination({ page, totalPages, totalElements, size, onChange }: PaginationProps) {
+export function Pagination({
+  page,
+  totalPages,
+  totalElements,
+  size,
+  onChange,
+  variant = 'pages',
+}: PaginationProps) {
+  if (variant === 'more') {
+    const isLast = page >= totalPages - 1;
+    return (
+      <nav className="pagination pagination--more" aria-label="페이지 이동">
+        <button
+          type="button"
+          className="pagination__more"
+          onClick={() => onChange(page + 1)}
+          disabled={isLast}
+          aria-label={isLast ? '마지막 페이지입니다' : '다음 페이지 보기'}
+        >
+          <Icon name="chevron-right" className="pagination__more-icon" />
+          더 보기
+          <span className="pagination__more-count" aria-hidden="true">
+            ( <b>{formatNumber(page + 1)}</b>/{formatNumber(totalPages)} )
+          </span>
+        </button>
+      </nav>
+    );
+  }
+
   const from = totalElements === 0 ? 0 : page * size + 1;
   const to = Math.min((page + 1) * size, totalElements);
 

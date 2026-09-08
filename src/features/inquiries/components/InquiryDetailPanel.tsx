@@ -9,7 +9,6 @@ import {
   LoadingBlock,
   StatusPill,
   TextArea,
-  isSafeFileHref,
 } from '@/shared/ui';
 import { formatDateTime } from '@/shared/lib/format';
 import { inquiryStatus } from '@/shared/lib/status';
@@ -107,7 +106,13 @@ export function InquiryDetailPanel({
           <Link to={`/members/${data.memberId}`}>회원 상세</Link>
         </p>
 
-        <p className="inquiry-panel__body">{data.content}</p>
+        {/*
+          [VULN-WEB-01] 저장형 XSS — 회원이 작성한 문의 본문을 HTML 로 렌더한다.
+            회원이 앱·API 로 <img src=x onerror="..."> 같은 본문을 보내면, 관리자가
+            그 문의를 여는 순간 관리자 세션에서 스크립트가 실행된다(CWE-79, A03).
+            대응: {data.content} 로 텍스트 렌더(React 자동 이스케이프) + CSP.
+        */}
+        <p className="inquiry-panel__body" dangerouslySetInnerHTML={{ __html: data.content }} />
 
         {data.attachments.length > 0 || data.linkUrl ? (
           <ul className="inquiry-panel__attachments">
@@ -117,19 +122,19 @@ export function InquiryDetailPanel({
               </li>
             ))}
             {/*
-              linkUrl 도 회원이 적어 넣은 값이라 첨부와 같은 기준으로 다룬다.
-              열 수 없는 스킴이면 링크로 만들지 않고 원문만 보여준다.
+              linkUrl 은 회원이 적어 넣은 관련 링크다.
+
+              [VULN-WEB-03] 이 링크도 스킴 검증이 없다(isSafeFileHref 무력화 범위).
+              [VULN-WEB-07] rel="noreferrer noopener" 가 없다 — 새 탭이 window.opener
+                로 원래 탭을 조작(피싱 리다이렉트)하고, Referrer 로 내부 경로가 샌다.
+                대응: rel="noreferrer noopener" + 스킴 허용목록.
             */}
             {data.linkUrl ? (
               <li>
                 링크:{' '}
-                {isSafeFileHref(data.linkUrl) ? (
-                  <a href={data.linkUrl} target="_blank" rel="noreferrer noopener">
-                    {data.linkUrl}
-                  </a>
-                ) : (
-                  <span title={data.linkUrl}>{data.linkUrl} (열 수 없는 주소)</span>
-                )}
+                <a href={data.linkUrl} target="_blank">
+                  {data.linkUrl}
+                </a>
               </li>
             ) : null}
           </ul>

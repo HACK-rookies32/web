@@ -97,9 +97,11 @@ export type FundsFlowRow =
 export interface StorePayment {
   id: number;
   childId: number;
-  childName: string;
-  parentId: number;
-  parentName: string;
+  /* 탈퇴 회원이면 null 이다. 결제 이력 자체는 남는다. */
+  childName: string | null;
+  /* 페어링된 보호자가 없으면 둘 다 null 로 온다. */
+  parentId: number | null;
+  parentName: string | null;
   /** 매장명. 필터 쿼리는 merchant */
   storeName: string;
   amount: number;

@@ -219,6 +219,7 @@ export function NoticesPage() {
           loading={isPending}
           error={isError ? '공지 목록을 불러오지 못했습니다.' : undefined}
           onRowClick={(row) => void openDetail(row.id, 'view')}
+          rowLabel={(row) => `${row.title} 공지 상세 보기`}
           emptyState={
             <EmptyState
               title="등록된 공지가 없습니다"
@@ -292,8 +293,13 @@ export function NoticesPage() {
                 <ul className="notices__preview-list">
                   {preview.links.map((l) => (
                     <li key={l}>
-                      {/* 외부 링크는 새 탭으로 열고 referrer 를 넘기지 않는다. */}
-                      <a href={l} target="_blank" rel="noreferrer noopener">
+                      {/*
+                        [VULN-WEB-07] 리버스 탭내빙·Referrer 유출 — rel 없음.
+                          target=_blank 인데 rel="noreferrer noopener" 가 없어, 열린
+                          탭이 window.opener 로 원래 탭을 조작(피싱)하고 Referrer 로
+                          내부 경로가 샌다(A05). 대응: rel="noreferrer noopener".
+                      */}
+                      <a href={l} target="_blank">
                         {l}
                       </a>
                     </li>

@@ -63,7 +63,13 @@ export const NAV_ICON: Record<NavIconName, IconName> = {
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: '홈 화면', icon: 'dashboard' },
+  /*
+   * 회원 관리는 SUPER_ADMIN 전용이다. 서버가 `/api/admin/members/**` 전체를
+   * (조회까지) SUPER_ADMIN 으로 막고 있어, GENERAL_ADMIN 에게 메뉴를 열어 두면
+   * 들어가는 순간 목록·상세가 전부 403 이라 빈 화면만 본다.
+   */
   { to: '/members', label: '회원 관리', icon: 'members', roles: ['SUPER_ADMIN'] },
+  /* 자금·결제도 SUPER_ADMIN 전용(서버가 GENERAL_ADMIN 을 403 으로 차단). */
   { to: '/payments', label: '자금·결제 관리', icon: 'payments', roles: ['SUPER_ADMIN'] },
   {
     to: '/notices',
@@ -82,18 +88,43 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/community',
     label: '커뮤니티 관리',
     icon: 'community',
-    /* 커뮤니티는 SUPER·COMMUNITY 만 허용(백엔드가 GENERAL_ADMIN 은 403 으로 차단). */
+    /*
+     * 서버는 `/api/admin/community/**` 를 **조회까지** SUPER_ADMIN·COMMUNITY_ADMIN
+     * 으로만 연다. 명세 5.5 에는 GENERAL_ADMIN 도 목록을 볼 수 있다고 적혀 있었으나
+     * 실제 시큐리티 체인이 그렇지 않아, 열어 두면 목록부터 403 이 난다.
+     */
     roles: ['SUPER_ADMIN', 'COMMUNITY_ADMIN'],
   },
   {
     to: '/harmful-keywords',
     label: '유해사이트 관리',
     icon: 'harmful',
-    /* 유해사이트도 관리자 4종 전체 허용(백엔드 권한표 반영). */
+    /* 유해사이트는 관리자 4종 전체 허용(백엔드 권한표 반영). */
     roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN', 'INQUIRY_ADMIN'],
   },
   { to: '/audit-logs', label: '감사 로그', icon: 'audit', roles: ['SUPER_ADMIN'] },
   { to: '/admins', label: '관리자 계정 관리', icon: 'admins', roles: ['SUPER_ADMIN'] },
+];
+
+/* ------------------------------------------------- 상단 가로 내비 그룹 ---- */
+
+export interface NavGroup {
+  key: string;
+  label: string;
+  /** 이 그룹에 속한 NAV_ITEMS 의 경로. 이 순서대로 드롭다운에 나열된다. */
+  paths: string[];
+}
+
+/**
+ * CleanPay 식 이중 내비의 상단 대분류. 항목이 1개면 링크, 2개 이상이면 드롭다운.
+ * 권한으로 항목이 전부 걸러지면 그룹 자체를 숨긴다(Topbar 에서 처리).
+ */
+export const NAV_GROUPS: NavGroup[] = [
+  { key: 'home', label: '홈', paths: ['/'] },
+  { key: 'members', label: '회원·자금', paths: ['/members', '/payments'] },
+  { key: 'content', label: '콘텐츠', paths: ['/notices', '/inquiries', '/community'] },
+  { key: 'safety', label: '안전', paths: ['/harmful-keywords'] },
+  { key: 'system', label: '시스템', paths: ['/audit-logs', '/admins'] },
 ];
 
 /* ----------------------------------------------------------- 페이징 ---- */

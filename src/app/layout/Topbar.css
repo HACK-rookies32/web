@@ -1,27 +1,32 @@
+/* 시안 A — 전폭 컨텍스트 바(브랜드 + 제목 + 프로필). */
 .topbar {
   grid-area: header;
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 30;
   height: var(--header-height);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-5);
-  padding: 0 var(--space-5);
-  background: var(--bg-header);
-  backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-sm);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding-right: var(--space-5);
 }
 
-.topbar__left {
+.topbar__brand {
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  min-width: 0;
+  justify-content: center;
+  height: 100%;
+  /* 로고만 남으므로 레일 폭(72px)에 맞춰 아이콘이 그 위에 정렬되게 한다. */
+  width: var(--rail-width);
+  border-right: 1px solid var(--border);
+  color: var(--accent-strong);
 }
+.topbar__brand:hover { text-decoration: none; }
+.topbar__logo { width: 28px; height: 28px; object-fit: contain; }
 
 .topbar__title {
+  padding-left: var(--space-5);
   font-size: var(--fs-title);
   line-height: var(--lh-title);
   color: var(--text-strong);
@@ -31,47 +36,18 @@
 }
 
 .topbar__right {
+  margin-left: auto;
   display: flex;
   align-items: center;
-  gap: var(--space-5);
   flex-shrink: 0;
 }
 
-/* ---- 아이콘 버튼 ------------------------------------------------------ */
-
-.topbar__icon-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--text);
-  transition:
-    background-color var(--transition),
-    color var(--transition);
-}
-
-.topbar__icon-btn:hover {
-  background: var(--surface-tint);
-  color: var(--accent-strong);
-}
-
-/* ---- 프로필 ----------------------------------------------------------- */
-
-.topbar__profile {
-  position: relative;
-  padding-left: var(--space-4);
-  border-left: 1px solid var(--border);
-}
+.topbar__profile { position: relative; }
 
 .topbar__profile-btn {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
   border: 0;
   background: transparent;
   padding: 0;
@@ -81,17 +57,15 @@
 .topbar__profile-text {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 1px;
 }
-
 .topbar__name {
   font-size: var(--fs-label);
   line-height: var(--lh-label);
   font-weight: 700;
   color: var(--text-strong);
 }
-
 .topbar__role {
   padding: 0 6px;
   border-radius: var(--radius-sm);
@@ -100,7 +74,6 @@
   font-size: var(--fs-badge);
   line-height: var(--lh-badge);
 }
-
 .topbar__avatar {
   display: inline-flex;
   align-items: center;
@@ -111,8 +84,6 @@
   background: var(--accent-strong);
   color: var(--text-on-accent);
 }
-
-/* ---- 프로필 메뉴 ------------------------------------------------------ */
 
 .topbar__menu {
   position: absolute;
@@ -126,7 +97,6 @@
   box-shadow: var(--shadow-lg);
   z-index: 30;
 }
-
 .topbar__menu-item {
   display: block;
   width: 100%;
@@ -139,25 +109,10 @@
   line-height: var(--lh-body);
   color: var(--text);
 }
+.topbar__menu-item:hover { background: var(--surface-subtle); color: var(--accent-strong); }
+.topbar__menu-sep { height: 1px; margin: var(--space-1) 0; background: var(--border-subtle); }
 
-.topbar__menu-item:hover {
-  background: var(--surface-subtle);
-  color: var(--accent-strong);
-}
-
-.topbar__menu-sep {
-  height: 1px;
-  margin: var(--space-1) 0;
-  background: var(--border-subtle);
-}
-
-/* ---- 테마 전환 -------------------------------------------------------- */
-
-.theme-switch {
-  display: flex;
-  flex-direction: column;
-}
-
+.theme-switch { display: flex; flex-direction: column; }
 .theme-switch__label {
   padding: var(--space-2) var(--space-3) var(--space-1);
   font-size: var(--fs-caption);
@@ -165,16 +120,10 @@
   font-weight: 700;
   color: var(--text-muted);
 }
-
-/* .topbar__menu-item 의 block 을 flex 로 덮어 체크 표시를 오른쪽에 붙인다. */
 .theme-switch__item {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-5);
 }
-
-.theme-switch__item.is-selected {
-  color: var(--accent-strong);
-  font-weight: 500;
-}
+.theme-switch__item.is-selected { color: var(--accent-strong); font-weight: 500; }
