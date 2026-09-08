@@ -97,18 +97,36 @@ export function App() {
                   <Route element={<AppLayout />}>
                     <Route index element={<HomePage />} />
 
-                    <Route path="members" element={<MembersPage />} />
-                    <Route path="members/:memberId" element={<MemberDetailPage />} />
-                    <Route path="payments" element={<PaymentsPage />} />
+                    {/* SUPER_ADMIN 전용 — 회원·자금결제·감사로그·관리자계정 (백엔드 권한표 반영) */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN']} />}>
+                      <Route path="members" element={<MembersPage />} />
+                      <Route path="members/:memberId" element={<MemberDetailPage />} />
+                      <Route path="payments" element={<PaymentsPage />} />
+                      <Route path="audit-logs" element={<AuditLogsPage />} />
+                      <Route path="admins" element={<AdminsPage />} />
+                    </Route>
 
-                    <Route path="notices" element={<NoticesPage />} />
-                    <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
-                    <Route path="audit-logs" element={<AuditLogsPage />} />
-                    <Route path="admins" element={<AdminsPage />} />
+                    {/* 공지·유해사이트 — 관리자 4종 전체 (백엔드 권한표 반영) */}
+                    <Route
+                      element={
+                        <ProtectedRoute
+                          roles={['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN', 'INQUIRY_ADMIN']}
+                        />
+                      }
+                    >
+                      <Route path="notices" element={<NoticesPage />} />
+                      <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
+                    </Route>
 
-                    <Route path="inquiries" element={<InquiriesPage />} />
+                    {/* 1:1 문의 — SUPER_ADMIN · INQUIRY_ADMIN (명세 5.4) */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'INQUIRY_ADMIN']} />}>
+                      <Route path="inquiries" element={<InquiriesPage />} />
+                    </Route>
 
-                    <Route path="community" element={<CommunityPage />} />
+                    {/* 커뮤니티 관리 — SUPER_ADMIN · COMMUNITY_ADMIN (백엔드가 GENERAL_ADMIN 은 403 차단) */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'COMMUNITY_ADMIN']} />}>
+                      <Route path="community" element={<CommunityPage />} />
+                    </Route>
 
                     {/* 공통 UI 스타일 가이드 (개발 모드 전용) */}
                     {UiKitPage ? <Route path="ui-kit" element={<UiKitPage />} /> : null}
