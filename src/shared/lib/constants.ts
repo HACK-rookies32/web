@@ -63,9 +63,15 @@ export const NAV_ICON: Record<NavIconName, IconName> = {
 
 export const NAV_ITEMS: NavItem[] = [
   { to: '/', label: '홈 화면', icon: 'dashboard' },
-  { to: '/members', label: '회원 관리', icon: 'members', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
-  { to: '/payments', label: '자금·결제 관리', icon: 'payments', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
-  { to: '/notices', label: '공지 관리', icon: 'notices', roles: ['SUPER_ADMIN'] },
+  { to: '/members', label: '회원 관리', icon: 'members', roles: ['SUPER_ADMIN'] },
+  { to: '/payments', label: '자금·결제 관리', icon: 'payments', roles: ['SUPER_ADMIN'] },
+  {
+    to: '/notices',
+    label: '공지 관리',
+    icon: 'notices',
+    /* 공지는 관리자 4종 전체 조회·관리 허용(백엔드 권한표 반영). */
+    roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN', 'INQUIRY_ADMIN'],
+  },
   {
     to: '/inquiries',
     label: '1:1 문의',
@@ -76,10 +82,16 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/community',
     label: '커뮤니티 관리',
     icon: 'community',
-    /* 명세 5.5 GET /admin/community/posts 는 GENERAL_ADMIN 도 허용한다. */
-    roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN'],
+    /* 커뮤니티는 SUPER·COMMUNITY 만 허용(백엔드가 GENERAL_ADMIN 은 403 으로 차단). */
+    roles: ['SUPER_ADMIN', 'COMMUNITY_ADMIN'],
   },
-  { to: '/harmful-keywords', label: '유해사이트 관리', icon: 'harmful', roles: ['SUPER_ADMIN'] },
+  {
+    to: '/harmful-keywords',
+    label: '유해사이트 관리',
+    icon: 'harmful',
+    /* 유해사이트도 관리자 4종 전체 허용(백엔드 권한표 반영). */
+    roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN', 'INQUIRY_ADMIN'],
+  },
   { to: '/audit-logs', label: '감사 로그', icon: 'audit', roles: ['SUPER_ADMIN'] },
   { to: '/admins', label: '관리자 계정 관리', icon: 'admins', roles: ['SUPER_ADMIN'] },
 ];

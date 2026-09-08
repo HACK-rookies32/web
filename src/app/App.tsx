@@ -90,19 +90,25 @@ export function App() {
                   <Route element={<AppLayout />}>
                     <Route index element={<HomePage />} />
 
-                    {/* 회원 관리 — SUPER_ADMIN · GENERAL_ADMIN */}
-                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN']} />}>
+                    {/* SUPER_ADMIN 전용 — 회원·자금결제·감사로그·관리자계정 (백엔드 권한표 반영) */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN']} />}>
                       <Route path="members" element={<MembersPage />} />
                       <Route path="members/:memberId" element={<MemberDetailPage />} />
                       <Route path="payments" element={<PaymentsPage />} />
-                    </Route>
-
-                    {/* 공지 관리 — SUPER_ADMIN */}
-                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN']} />}>
-                      <Route path="notices" element={<NoticesPage />} />
-                      <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
                       <Route path="audit-logs" element={<AuditLogsPage />} />
                       <Route path="admins" element={<AdminsPage />} />
+                    </Route>
+
+                    {/* 공지·유해사이트 — 관리자 4종 전체 (백엔드 권한표 반영) */}
+                    <Route
+                      element={
+                        <ProtectedRoute
+                          roles={['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN', 'INQUIRY_ADMIN']}
+                        />
+                      }
+                    >
+                      <Route path="notices" element={<NoticesPage />} />
+                      <Route path="harmful-keywords" element={<HarmfulKeywordsPage />} />
                     </Route>
 
                     {/* 1:1 문의 — SUPER_ADMIN · INQUIRY_ADMIN (명세 5.4) */}
@@ -110,16 +116,8 @@ export function App() {
                       <Route path="inquiries" element={<InquiriesPage />} />
                     </Route>
 
-                    {/*
-                      커뮤니티 관리 — 명세 5.5 의 목록 조회(GET /admin/community/posts)만
-                      GENERAL_ADMIN 에 열려 있다. 화면 진입은 3개 역할에 열어 두고,
-                      상세·삭제·밴은 CommunityPage 안에서 SUPER · COMMUNITY 로 좁힌다.
-                    */}
-                    <Route
-                      element={
-                        <ProtectedRoute roles={['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN']} />
-                      }
-                    >
+                    {/* 커뮤니티 관리 — SUPER_ADMIN · COMMUNITY_ADMIN (백엔드가 GENERAL_ADMIN 은 403 차단) */}
+                    <Route element={<ProtectedRoute roles={['SUPER_ADMIN', 'COMMUNITY_ADMIN']} />}>
                       <Route path="community" element={<CommunityPage />} />
                     </Route>
 
