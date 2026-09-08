@@ -69,8 +69,15 @@ export const NAV_ITEMS: NavItem[] = [
    * 들어가는 순간 목록·상세가 전부 403 이라 빈 화면만 본다.
    */
   { to: '/members', label: '회원 관리', icon: 'members', roles: ['SUPER_ADMIN'] },
-  { to: '/payments', label: '자금·결제 관리', icon: 'payments', roles: ['SUPER_ADMIN', 'GENERAL_ADMIN'] },
-  { to: '/notices', label: '공지 관리', icon: 'notices', roles: ['SUPER_ADMIN'] },
+  /* 자금·결제도 SUPER_ADMIN 전용(서버가 GENERAL_ADMIN 을 403 으로 차단). */
+  { to: '/payments', label: '자금·결제 관리', icon: 'payments', roles: ['SUPER_ADMIN'] },
+  {
+    to: '/notices',
+    label: '공지 관리',
+    icon: 'notices',
+    /* 공지는 관리자 4종 전체 조회·관리 허용(백엔드 권한표 반영). */
+    roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN', 'INQUIRY_ADMIN'],
+  },
   {
     to: '/inquiries',
     label: '1:1 문의',
@@ -88,7 +95,13 @@ export const NAV_ITEMS: NavItem[] = [
      */
     roles: ['SUPER_ADMIN', 'COMMUNITY_ADMIN'],
   },
-  { to: '/harmful-keywords', label: '유해사이트 관리', icon: 'harmful', roles: ['SUPER_ADMIN'] },
+  {
+    to: '/harmful-keywords',
+    label: '유해사이트 관리',
+    icon: 'harmful',
+    /* 유해사이트는 관리자 4종 전체 허용(백엔드 권한표 반영). */
+    roles: ['SUPER_ADMIN', 'GENERAL_ADMIN', 'COMMUNITY_ADMIN', 'INQUIRY_ADMIN'],
+  },
   { to: '/audit-logs', label: '감사 로그', icon: 'audit', roles: ['SUPER_ADMIN'] },
   { to: '/admins', label: '관리자 계정 관리', icon: 'admins', roles: ['SUPER_ADMIN'] },
 ];
