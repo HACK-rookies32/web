@@ -26,19 +26,30 @@ function toListItem(post: CommunityPostDetail): CommunityPostListItem {
   return item;
 }
 
-/** GET /admin/community/posts — 최신순 고정 (화면에 정렬 선택이 없다) */
+/**
+ * GET /admin/community/posts — 작성일시 최신순 고정 (화면에 정렬 선택이 없다).
+ *
+ * 정렬 기준은 `createdAt,desc` 다. 한때 `id,desc` 였는데, 그러면 신규 글이
+ * 목록 뒤로 사라진다 — DB 시드 데이터가 id 를 수동으로 큰 값(990055~)으로
+ * 박아 넣은 반면, 실제 신규 글은 auto-increment 로 작은 id(1,2,3…)를 받기
+ * 때문이다. id 순으로는 시드가 늘 위에 깔리고 실사용자 글이 맨 뒤 페이지로
+ * 밀려, 관리자가 새 글을 못 본다. id 순 = 시간 순이라는 가정이 깨진 상태라
+ * 시간 자체로 정렬한다(모바일 부모 피드 GET /community/posts 도 시간순이다).
+ */
 export async function fetchCommunityPosts(
   params: CommunityPostListParams,
 ): Promise<Page<CommunityPostListItem>> {
   if (USE_MOCK) {
-    const sorted = [...postStore].sort((a, b) => b.id - a.id);
+    const sorted = [...postStore].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
     return mockResponse(paginate(sorted.map(toListItem), params));
   }
 
   const data = await request<SpringPage<CommunityPostListItem>>({
     url: '/admin/community/posts',
     method: 'GET',
-    params: { page: params.page ?? 0, size: params.size ?? 10, sort: 'id,desc' },
+    params: { page: params.page ?? 0, size: params.size ?? 10, sort: 'createdAt,desc' },
   });
 
   return toPage(data);
