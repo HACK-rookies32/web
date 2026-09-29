@@ -63,7 +63,7 @@ FROM nginx:1.27-alpine
 RUN rm -f /etc/nginx/conf.d/default.conf
 
 # 공식 이미지가 기동 시 이 디렉터리의 *.template 을 envsubst 로 처리해
-# /etc/nginx/conf.d/ 로 내보낸다. NLB_DNS 와 DNS_RESOLVER 가 이때 채워진다.
+# /etc/nginx/conf.d/ 로 내보낸다. NLB_DNS, DNS_RESOLVER, ADMIN_HOST 가 이때 채워진다.
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 
 COPY --from=build /app/dist /usr/share/nginx/html

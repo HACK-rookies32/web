@@ -11,7 +11,20 @@
 # ⚠️ envsubst 는 "정의된 환경변수" 이름의 중괄호 형태만 치환한다.
 #   따라서 아래 $uri, $host, $remote_addr 같은 nginx 변수는 안전하다.
 #   다만 nginx 변수를 중괄호로 감싸 쓰면 치환 대상이 될 수 있으니 쓰지 말 것.
-#   달러+중괄호는 아래 두 자리(DNS_RESOLVER, NLB_DNS)에만 등장해야 한다.
+#   달러+중괄호는 아래 세 자리(ADMIN_HOST, DNS_RESOLVER, NLB_DNS)에만 등장해야 한다.
+#
+# ${ADMIN_HOST} (예: manage.kidhackapp.com) 는 infra 가 docker run -e 로 넘긴다.
+# 이 값이 없으면 server_name 이 빈 채로 렌더링되어 nginx 가 기동하지 못한다.
+# 따라서 반드시 infra(app apply, ADMIN_HOST 주입)를 먼저 반영한 뒤 이 이미지를 배포한다.
+#
+# 호스트 분기 (ALB 는 전부 같은 web_tg 로 보내고, 분기는 여기서 한다)
+#   1) 관리자 블록  server_name ${ADMIN_HOST}
+#        관리자 SPA + /api·/uploads·swagger·/ws-chat 프록시.
+#   2) 기본 블록    default_server, server_name _
+#        kidhackapp.com / www / ALB IP 등 그 외 모든 Host.
+#        모바일용 /api 등 프록시만 유지하고 SPA·정적자산은 서빙하지 않는다(404).
+#        관리자 콘솔 위치가 드러나지 않도록 manage 로 리다이렉트하지도 않는다.
+#   프록시 location 은 블록마다 자기완결이 되도록 양쪽에 중복 기재한다.
 # ==================================================================
 
 # ALB 가 TLS 를 종단하고 nginx 로는 HTTP 로 넘어온다. 따라서 여기서
@@ -22,9 +35,12 @@ map $http_x_forwarded_proto $fwd_proto {
     ""      $scheme;
 }
 
+# ==================================================================
+# 1) 관리자 블록 — ${ADMIN_HOST} 로 직접 들어온 요청만
+# ==================================================================
 server {
-    listen 80 default_server;
-    server_name _;
+    listen 80;
+    server_name ${ADMIN_HOST};
 
     root /usr/share/nginx/html;
     index index.html;
@@ -199,6 +215,90 @@ server {
     # 열려 있는다. 기본 60 초면 대화가 없을 때 nginx 가 먼저 끊는다.
     # ALB idle_timeout 이 300 초이므로 그 밑으로 두면 의미가 없다.
     # ------------------------------------------------------------------
+    location /ws-chat {
+        resolver ${DNS_RESOLVER} valid=10s;
+        set $ws_upstream "${NLB_DNS}";
+        proxy_pass http://$ws_upstream:8080;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $fwd_proto;
+
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 300s;
+        proxy_send_timeout 300s;
+    }
+}
+
+# ==================================================================
+# 2) 기본 블록 — kidhackapp.com / www / ALB IP 헬스체크 / 그 외 Host
+# ==================================================================
+server {
+    listen 80 default_server;
+    server_name _;
+
+    # ALB 헬스체크는 Host 가 타깃 IP 로 오므로 반드시 이 기본 블록에 있어야 한다.
+    location = /healthz {
+        access_log off;
+        add_header Content-Type text/plain;
+        return 200 "ok
+";
+    }
+
+    # 관리자 SPA·정적자산(/assets/*.js 포함)은 여기서 서빙하지 않는다.
+    # 리다이렉트도 하지 않는다 — Location 헤더가 관리자 서브도메인을 노출한다.
+    location / {
+        return 404;
+    }
+
+    # 아래 프록시 location 들은 관리자 블록과 동일하다(설명은 위 블록 참고).
+    location /api/ {
+        resolver ${DNS_RESOLVER} valid=10s;
+        set $was_upstream "${NLB_DNS}";
+        proxy_pass http://$was_upstream:8080;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $fwd_proto;
+
+        proxy_set_header Upgrade    $http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_read_timeout 300s;
+    }
+
+    location /uploads/ {
+        resolver ${DNS_RESOLVER} valid=10s;
+        set $uploads_upstream "${NLB_DNS}";
+        proxy_pass http://$uploads_upstream:8080;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $fwd_proto;
+
+        proxy_read_timeout 300s;
+    }
+
+    location ~ ^/(swagger-ui|v3/api-docs) {
+        resolver ${DNS_RESOLVER} valid=10s;
+        set $docs_upstream "${NLB_DNS}";
+        proxy_pass http://$docs_upstream:8080;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host              $host;
+        proxy_set_header X-Real-IP         $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $fwd_proto;
+    }
+
     location /ws-chat {
         resolver ${DNS_RESOLVER} valid=10s;
         set $ws_upstream "${NLB_DNS}";
